@@ -6,8 +6,29 @@ export function getDaysUntilExpiry(expiryDate) {
   return diffDays
 }
 
+export function formatDaysUntil(daysUntil) {
+  if (daysUntil === 0) return 'Due today'
+  const n = Math.abs(daysUntil)
+  const suffix = daysUntil < 0 ? 'ago' : 'left'
+
+  if (n >= 365) {
+    const years = Math.floor(n / 365)
+    const months = Math.floor((n % 365) / 30)
+    const yearPart = `${years} ${years === 1 ? 'year' : 'years'}`
+    const monthPart = months > 0 ? `, ${months} ${months === 1 ? 'month' : 'months'}` : ''
+    return `${yearPart}${monthPart} ${suffix}`
+  }
+  if (n >= 30) {
+    const months = Math.floor(n / 30)
+    return `${months} ${months === 1 ? 'month' : 'months'} ${suffix}`
+  }
+  const unit = n === 1 ? 'day' : 'days'
+  return `${n} ${unit} ${suffix}`
+}
+
 export function getUrgencyLevel(daysUntil) {
   if (daysUntil < 0) return 'expired'
+  if (daysUntil <= 7) return 'critical'
   if (daysUntil <= 30) return 'urgent'
   if (daysUntil <= 90) return 'upcoming'
   return 'safe'

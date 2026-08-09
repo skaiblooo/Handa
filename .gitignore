@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .env
+
+# Supabase CLI local cache — contains a live DB connection string
+supabase/.temp/

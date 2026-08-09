@@ -1,5 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+const THRESHOLDS = [30, 7, 1]
+
 Deno.serve(async (req) => {
   const supabaseAdmin = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -7,38 +9,66 @@ Deno.serve(async (req) => {
   )
 
   const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
+  function toDateOnly(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+}
 
-  // Get all documents expiring within the next 30 days
-  const today = new Date()
-  const thirtyDaysOut = new Date()
-  thirtyDaysOut.setDate(today.getDate() + 30)
+const today = toDateOnly(new Date())
 
+  // Application-intent documents don't exist yet, so their expiry_date is
+  // only an internal placeholder — never real. Excluding them here is what
+  // keeps that placeholder from ever turning into a misleading email.
   const { data: documents, error } = await supabaseAdmin
     .from('documents')
     .select('id, title, doc_type, expiry_date, user_id')
-    .lte('expiry_date', thirtyDaysOut.toISOString())
-    .gte('expiry_date', today.toISOString())
+    .eq('intent', 'renewal')
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 })
   }
 
-  // Group documents by user so each person gets ONE email, not one per document
-  const byUser: Record<string, typeof documents> = {}
+  const toSend: Record<string, { title: string; expiry_date: string; threshold: number }[]> = {}
+
   for (const doc of documents) {
-    if (!byUser[doc.user_id]) byUser[doc.user_id] = []
-    byUser[doc.user_id].push(doc)
+    const expiry = toDateOnly(new Date(doc.expiry_date))
+const daysUntil = Math.round((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+    const matchedThreshold = THRESHOLDS.find((t) => daysUntil === t)
+    if (!matchedThreshold) continue
+
+    // Check if we've already sent this exact threshold for this document
+    const { data: existing } = await supabaseAdmin
+      .from('reminder_log')
+      .select('id')
+      .eq('document_id', doc.id)
+      .eq('threshold_days', matchedThreshold)
+      .maybeSingle()
+
+    if (existing) continue // already sent, skip
+
+    if (!toSend[doc.user_id]) toSend[doc.user_id] = []
+    toSend[doc.user_id].push({
+      title: doc.title,
+      expiry_date: doc.expiry_date,
+      threshold: matchedThreshold,
+    })
+
+    // Log it immediately so we don't double-send if this function runs twice
+    await supabaseAdmin.from('reminder_log').insert({
+      document_id: doc.id,
+      threshold_days: matchedThreshold,
+    })
   }
 
   let emailsSent = 0
 
-  for (const userId of Object.keys(byUser)) {
+  for (const userId of Object.keys(toSend)) {
     const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId)
     const email = userData?.user?.email
     if (!email) continue
 
-    const docsList = byUser[userId]
-      .map((d) => `<li>${d.title} — expires ${d.expiry_date}</li>`)
+    const docsList = toSend[userId]
+      .map((d) => `<li>${d.title}, expires ${d.expiry_date} (${d.threshold} days left)</li>`)
       .join('')
 
     await fetch('https://api.resend.com/emails', {
@@ -48,7 +78,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Handa <onboarding@resend.dev>',
+        from: 'Orbit <onboarding@resend.dev>',
         to: email,
         subject: 'You have documents expiring soon',
         html: `<p>Hi, here's what's coming up:</p><ul>${docsList}</ul>`,
