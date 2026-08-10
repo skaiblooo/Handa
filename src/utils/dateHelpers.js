@@ -12,8 +12,12 @@ export function formatDaysUntil(daysUntil) {
   const suffix = daysUntil < 0 ? 'ago' : 'left'
 
   if (n >= 365) {
-    const years = Math.floor(n / 365)
-    const months = Math.floor((n % 365) / 30)
+    // Deriving years/months independently (n/365 and (n%365)/30) can round
+    // up to "12 months" within a year that hasn't turned over yet — carry
+    // the total month count into years first so months always lands 0-11.
+    const totalMonths = Math.floor(n / 30)
+    const years = Math.floor(totalMonths / 12)
+    const months = totalMonths % 12
     const yearPart = `${years} ${years === 1 ? 'year' : 'years'}`
     const monthPart = months > 0 ? `, ${months} ${months === 1 ? 'month' : 'months'}` : ''
     return `${yearPart}${monthPart} ${suffix}`

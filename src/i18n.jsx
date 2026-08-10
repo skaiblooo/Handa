@@ -84,6 +84,8 @@ export const translations = {
     linked_docs_tracked: 'tracked',
     linked_docs_not_tracked: 'Not tracked yet',
     linked_docs_add: 'Add',
+    linked_docs_search_placeholder: 'Search documents...',
+    linked_docs_no_results: 'No documents match your search.',
 
     // Language panel
     language_title: 'Language',
@@ -399,6 +401,8 @@ export const translations = {
     linked_docs_tracked: 'sinusubaybayan',
     linked_docs_not_tracked: 'Wala pang sinusubaybayan',
     linked_docs_add: 'Idagdag',
+    linked_docs_search_placeholder: 'Maghanap ng dokumento...',
+    linked_docs_no_results: 'Walang dokumentong tumutugma sa iyong hinanap.',
 
     language_title: 'Wika',
     language_desc: 'Piliin ang wikang ipapakita ng Orbit.',

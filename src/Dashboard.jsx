@@ -60,11 +60,23 @@ export function BlankAvatar({ size = 40 }) {
   )
 }
 
-function IDCardFace({ children, minHeight = 208, faceStyle }) {
+// Intentionally NOT glass-dark/glass-light here — those utilities are
+// translucent, tinted by whatever page background shows through them, so on
+// a light-mode page (or the light Earth photo) the "dark" card washed out
+// to near-white with unreadable white-on-white text. An ID card face is
+// meant to look like a physical card regardless of the app's own theme, so
+// it gets its own always-dark, always-opaque-enough gradient background
+// instead (per document type, via CARD_THEME).
+function IDCardFace({ docType, children, minHeight = 208, faceStyle }) {
+  const gradient = CARD_THEME[docType]?.gradient || 'from-slate-700 to-slate-950'
   return (
     <div
-      className="glass-dark rounded-2xl overflow-hidden text-white flex flex-col"
-      style={{ minHeight, ...faceStyle }}
+      className={`bg-gradient-to-br ${gradient} rounded-2xl overflow-hidden text-white flex flex-col border border-white/15`}
+      style={{
+        minHeight,
+        boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.22), inset 0 0 22px 0 rgba(255,255,255,0.03), 0 10px 30px -12px rgba(0,0,0,0.55)',
+        ...faceStyle,
+      }}
     >
       {children}
     </div>
@@ -84,9 +96,7 @@ export function IDCardFront({ docType, title, fields, onFieldChange, expiryDate,
           <p className="text-[8px] font-semibold tracking-wide opacity-75 truncate">{theme.office}</p>
           <p className="text-sm font-bold tracking-wide mt-1">{theme.docName}</p>
         </div>
-        <div className={`w-8 h-8 rounded-full ${agency.color} flex items-center justify-center shrink-0 ring-2 ring-white/25`}>
-          <span className="text-white text-[8px] font-bold">{agency.label}</span>
-        </div>
+        <AgencyBubble code={agency.label} size={32} ringClass="ring-white/25" />
       </div>
       <div className="p-4 flex gap-3 flex-1">
         <div className="w-14 h-[68px] rounded-lg bg-white/15 flex items-center justify-center shrink-0 text-white/70">
@@ -247,21 +257,28 @@ function AgencyBadge({ docType }) {
   )
 }
 
-// Small circular agency mark used in the category picker's bubble row —
-// same logo/fallback-badge logic as AgencyBadge, just round and tiny, and
-// keyed directly by agency code (LTO, PSA, ...) instead of a doc type.
-function AgencyBubble({ isDark, code, ringClass }) {
+// Small circular agency mark — real logo whenever one exists for that
+// agency, falling back to a colored initial(s) badge only when it doesn't.
+// Used everywhere an agency needs to show up small and round: the category
+// picker's bubble row, the ID card corner mark, the urgent-doc rail's tiny
+// tag. One component so every one of those spots stays in sync instead of
+// drifting into slightly different badge styles.
+function AgencyBubble({ isDark, code, size = 28, ring = true, ringClass, letterOnly = false }) {
   const logo = DEPARTMENT_LOGOS[code]
   const color = AGENCY_BADGE_COLOR[code] || 'bg-slate-600'
+  const px = `${size}px`
   return (
     <div
-      className={`w-7 h-7 rounded-full overflow-hidden flex items-center justify-center shrink-0 ring-2 ${ringClass || t(isDark, 'ring-[#0b1120]', 'ring-white')} ${logo ? 'bg-white' : color}`}
+      className={`rounded-full overflow-hidden flex items-center justify-center shrink-0 ${
+        ring ? `ring-2 ${ringClass || t(isDark, 'ring-[#0b1120]', 'ring-white')}` : ''
+      } ${logo ? 'bg-white' : color}`}
+      style={{ width: px, height: px }}
     >
       {logo ? (
-        <img src={logo} alt="" className="w-full h-full object-contain p-1" />
+        <img src={logo} alt="" className="w-full h-full object-contain" style={{ padding: size <= 20 ? 1.5 : 4 }} />
       ) : (
-        <span className="text-white text-[7px] font-bold tracking-tight leading-none text-center px-0.5">
-          {code}
+        <span className="text-white font-bold tracking-tight leading-none text-center px-0.5" style={{ fontSize: Math.max(6, size * 0.28) }}>
+          {letterOnly ? code[0] : code}
         </span>
       )}
     </div>
@@ -703,9 +720,9 @@ function ApplicationConfirmCard({ isDark, docType, title, onTitleChange, onBack,
             type="button"
             title={translate('add_doc_back')}
             onClick={onBack}
-            className={`glass-interactive p-1.5 rounded-full transition-colors ${t(isDark,
-              'text-slate-500 hover:text-slate-100 hover:bg-white/10',
-              'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+            className={`glass-interactive p-1.5 rounded-full transition-all duration-200 ${t(isDark,
+              'text-slate-500 hover:text-slate-100 hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.55)]',
+              'text-slate-400 hover:text-slate-700 hover:drop-shadow-[0_0_6px_rgba(15,23,42,0.35)]'
             )}`}
           >
             <Icon size={16}><path d="M15 18l-6-6 6-6" /></Icon>
@@ -715,9 +732,9 @@ function ApplicationConfirmCard({ isDark, docType, title, onTitleChange, onBack,
             title={translate('add_doc_save')}
             onClick={onSave}
             disabled={saving}
-            className={`glass-interactive p-1.5 rounded-full transition-colors disabled:opacity-40 ${t(isDark,
-              'text-emerald-400 hover:bg-emerald-400/10',
-              'text-emerald-600 hover:bg-emerald-50'
+            className={`glass-interactive p-1.5 rounded-full transition-all duration-200 disabled:opacity-40 ${t(isDark,
+              'text-emerald-400 hover:drop-shadow-[0_0_6px_rgba(52,211,153,0.9)]',
+              'text-emerald-600 hover:drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]'
             )}`}
           >
             <Icon size={16}><path d="M20 6L9 17l-5-5" /></Icon>
@@ -726,9 +743,9 @@ function ApplicationConfirmCard({ isDark, docType, title, onTitleChange, onBack,
             type="button"
             title={translate('add_doc_cancel')}
             onClick={onCancel}
-            className={`glass-interactive p-1.5 rounded-full transition-colors ${t(isDark,
-              'text-slate-500 hover:text-slate-100 hover:bg-white/10',
-              'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+            className={`glass-interactive p-1.5 rounded-full transition-all duration-200 ${t(isDark,
+              'text-slate-500 hover:text-slate-100 hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.55)]',
+              'text-slate-400 hover:text-slate-700 hover:drop-shadow-[0_0_6px_rgba(15,23,42,0.35)]'
             )}`}
           >
             <Icon size={16}><path d="M18 6L6 18M6 6l12 12" /></Icon>
@@ -798,7 +815,7 @@ function computeSmartDefaults(type, existingDocs) {
   return { expiryDate, fields }
 }
 
-function AddDocumentCard({ isDark, userId, existingDocs, initialType, onAdded, onCancel }) {
+function AddDocumentCard({ isDark, userId, existingDocs, initialType, initialAgency, onAdded, onCancel }) {
   const { translate } = useLanguage()
   const [step, setStep] = useState('intent')
   const [intent, setIntent] = useState(null)
@@ -820,7 +837,7 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, onAdded, o
   function selectIntent(chosenIntent) {
     setIntent(chosenIntent)
     if (!initialType) {
-      setStep('category')
+      setStep(initialAgency ? 'type' : 'category')
       return
     }
     if (chosenIntent === 'application') {
@@ -889,12 +906,17 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, onAdded, o
   }
 
   if (step === 'type') {
+    const docTypeIds = initialAgency
+      ? DOC_TYPE_OPTIONS.filter((o) => AGENCY_BADGE[o.value].label === initialAgency).map((o) => o.value)
+      : category
+        ? category.docTypeIds
+        : DOC_TYPE_OPTIONS.map((o) => o.value)
     return (
       <DocTypePicker
         isDark={isDark}
-        docTypeIds={category ? category.docTypeIds : DOC_TYPE_OPTIONS.map((o) => o.value)}
+        docTypeIds={docTypeIds}
         onSelect={selectType}
-        onBack={() => setStep('category')}
+        onBack={() => setStep(initialAgency ? 'intent' : 'category')}
         onCancel={onCancel}
       />
     )
@@ -951,9 +973,9 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, onAdded, o
             type="button"
             title={translate('add_doc_back')}
             onClick={() => setStep(initialType ? 'intent' : 'type')}
-            className={`glass-interactive p-1.5 rounded-full transition-colors ${t(isDark,
-              'text-slate-500 hover:text-slate-100 hover:bg-white/10',
-              'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+            className={`glass-interactive p-1.5 rounded-full transition-all duration-200 ${t(isDark,
+              'text-slate-500 hover:text-slate-100 hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.55)]',
+              'text-slate-400 hover:text-slate-700 hover:drop-shadow-[0_0_6px_rgba(15,23,42,0.35)]'
             )}`}
           >
             <Icon size={16}><path d="M15 18l-6-6 6-6" /></Icon>
@@ -963,9 +985,9 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, onAdded, o
             title={translate('add_doc_save')}
             onClick={handleSave}
             disabled={saving}
-            className={`glass-interactive p-1.5 rounded-full transition-colors disabled:opacity-40 ${t(isDark,
-              'text-emerald-400 hover:bg-emerald-400/10',
-              'text-emerald-600 hover:bg-emerald-50'
+            className={`glass-interactive p-1.5 rounded-full transition-all duration-200 disabled:opacity-40 ${t(isDark,
+              'text-emerald-400 hover:drop-shadow-[0_0_6px_rgba(52,211,153,0.9)]',
+              'text-emerald-600 hover:drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]'
             )}`}
           >
             <Icon size={16}><path d="M20 6L9 17l-5-5" /></Icon>
@@ -974,9 +996,9 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, onAdded, o
             type="button"
             title={translate('add_doc_cancel')}
             onClick={onCancel}
-            className={`glass-interactive p-1.5 rounded-full transition-colors ${t(isDark,
-              'text-slate-500 hover:text-slate-100 hover:bg-white/10',
-              'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+            className={`glass-interactive p-1.5 rounded-full transition-all duration-200 ${t(isDark,
+              'text-slate-500 hover:text-slate-100 hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.55)]',
+              'text-slate-400 hover:text-slate-700 hover:drop-shadow-[0_0_6px_rgba(15,23,42,0.35)]'
             )}`}
           >
             <Icon size={16}><path d="M18 6L6 18M6 6l12 12" /></Icon>
@@ -1226,9 +1248,7 @@ function UrgentDocCard({ isDark, doc, big, onSelect, delay }) {
       {big ? (
         <>
           <p className={`flex items-center gap-1.5 text-xs ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>
-            <span className={`w-4 h-4 rounded-full ${agency.color} flex items-center justify-center text-[7px] font-bold text-white shrink-0`}>
-              {agency.label[0]}
-            </span>
+            <AgencyBubble isDark={isDark} code={agency.label} size={16} ring={false} letterOnly />
             <span className="truncate">{label}</span>
           </p>
           <p className={`text-4xl font-medium tracking-tight mt-3 ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>{dayText}</p>
@@ -1638,40 +1658,62 @@ function NotificationsPanel({ isDark, emailAlerts, onEmailAlerts, pushAlerts, on
 
 function LinkedDocumentsPanel({ isDark, documents, onAddType }) {
   const { translate } = useLanguage()
+  const [query, setQuery] = useState('')
   const trackedTypes = new Set(documents.map((d) => d.doc_type))
+  const q = query.trim().toLowerCase()
+  const options = q ? DOC_TYPE_OPTIONS.filter((opt) => opt.label.toLowerCase().includes(q)) : DOC_TYPE_OPTIONS
   return (
     <div>
       <SettingsPanelHeader isDark={isDark} title={translate('linked_docs_title')} description={translate('linked_docs_desc')} />
-      <div className="grid sm:grid-cols-2 gap-3 max-w-2xl">
-        {DOC_TYPE_OPTIONS.map((opt) => {
-          const count = documents.filter((d) => d.doc_type === opt.value).length
-          const tracked = trackedTypes.has(opt.value)
-          return (
-            <div
-              key={opt.value}
-              onClick={() => onAddType(opt.value)}
-              className={`glass-interactive cursor-pointer flex items-center gap-3 rounded-xl p-3 border ${t(isDark, 'border-white/10', 'border-slate-200')}`}
-            >
-              <AgencyBadge docType={opt.value} />
-              <div className="flex-1 min-w-0">
-                <p className={t(isDark, 'text-sm font-medium text-slate-200 truncate', 'text-sm font-medium text-slate-700 truncate')}>{opt.label}</p>
-                <p className={t(isDark, 'text-xs text-slate-500', 'text-xs text-slate-400')}>
-                  {tracked ? `${count} ${translate('linked_docs_tracked')}` : translate('linked_docs_not_tracked')}
-                </p>
-              </div>
-              {!tracked && (
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); onAddType(opt.value) }}
-                  className="glass-accent glass-interactive shrink-0 text-xs font-medium text-white px-3 py-1.5 rounded-lg"
-                >
-                  {translate('linked_docs_add')}
-                </button>
-              )}
-            </div>
-          )
-        })}
+      <div className="relative mb-4 max-w-sm">
+        <span className={t(isDark, 'absolute left-3 top-1/2 -translate-y-1/2 text-slate-500', 'absolute left-3 top-1/2 -translate-y-1/2 text-slate-400')}>
+          <Icon size={15}><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></Icon>
+        </span>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={translate('linked_docs_search_placeholder')}
+          className={t(isDark,
+            'w-full pl-9 pr-3 py-2 rounded-xl text-sm bg-white/5 border border-white/10 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-white/25 transition-colors',
+            'w-full pl-9 pr-3 py-2 rounded-xl text-sm bg-slate-50 border border-slate-200 text-slate-700 placeholder-slate-400 focus:outline-none focus:border-slate-400 transition-colors'
+          )}
+        />
       </div>
+      {options.length === 0 ? (
+        <p className={t(isDark, 'text-sm text-slate-500', 'text-sm text-slate-400')}>{translate('linked_docs_no_results')}</p>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {options.map((opt) => {
+            const count = documents.filter((d) => d.doc_type === opt.value).length
+            const tracked = trackedTypes.has(opt.value)
+            return (
+              <div
+                key={opt.value}
+                onClick={() => onAddType(opt.value)}
+                className={`glass-interactive cursor-pointer flex items-center gap-3 rounded-xl p-3 border ${t(isDark, 'border-white/10', 'border-slate-200')}`}
+              >
+                <AgencyBadge docType={opt.value} />
+                <div className="flex-1 min-w-0">
+                  <p className={t(isDark, 'text-sm font-medium text-slate-200 truncate', 'text-sm font-medium text-slate-700 truncate')}>{opt.label}</p>
+                  <p className={t(isDark, 'text-xs text-slate-500', 'text-xs text-slate-400')}>
+                    {tracked ? `${count} ${translate('linked_docs_tracked')}` : translate('linked_docs_not_tracked')}
+                  </p>
+                </div>
+                {!tracked && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onAddType(opt.value) }}
+                    className="glass-accent glass-interactive shrink-0 text-xs font-medium text-white px-3 py-1.5 rounded-lg"
+                  >
+                    {translate('linked_docs_add')}
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -1784,7 +1826,7 @@ function DataPrivacyPanel({ isDark, documents }) {
 // as a lazy render function so it's only built while actually visible.
 // useDelayedUnmount keeps the content mounted a beat past the collapse so it
 // fades out instead of vanishing the instant you close it.
-function OrbitAccordionItem({ isDark, orbit, isOpen, onToggle, logo, renderContent, delay }) {
+function OrbitAccordionItem({ isDark, orbit, isOpen, onToggle, renderContent, delay }) {
   const shouldRenderContent = useDelayedUnmount(isOpen, 300)
   return (
     <div
@@ -1797,16 +1839,7 @@ function OrbitAccordionItem({ isDark, orbit, isOpen, onToggle, logo, renderConte
         className="glass-interactive w-full flex items-center justify-between gap-3 p-5 text-left"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <span className={`w-10 h-10 rounded-full overflow-hidden flex items-center justify-center shrink-0 ${t(isDark, 'glass-chip-dark', 'glass-chip-light')}`}>
-            {logo ? (
-              <img src={logo} alt="" className="w-full h-full object-contain p-1 rounded-full bg-white" />
-            ) : (
-              <Icon size={16}>
-                <circle cx="10" cy="12" r="5" />
-                <ellipse cx="10" cy="12" rx="8.5" ry="2.4" transform="rotate(-20 10 12)" />
-              </Icon>
-            )}
-          </span>
+          <AgencyBubble isDark={isDark} code={orbit.docType} size={40} ring={false} />
           <div className="min-w-0">
             <p className={`text-sm font-medium truncate ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>{orbit.label}</p>
             <p className={`text-xs mt-0.5 ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>
@@ -1855,10 +1888,12 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
   const [addCardWidth, setAddCardWidth] = useState(null)
   const addTileRef = useRef(null)
   const [pendingDocType, setPendingDocType] = useState(null)
+  const [pendingAgency, setPendingAgency] = useState(null)
 
-  function openAddDocument(initialType) {
+  function openAddDocument(initialType, initialAgency) {
     if (addTileRef.current) setAddCardWidth(addTileRef.current.getBoundingClientRect().width)
     setPendingDocType(typeof initialType === 'string' ? initialType : null)
+    setPendingAgency(typeof initialType !== 'string' && typeof initialAgency === 'string' ? initialAgency : null)
     setAddingDocument(true)
   }
   const [activeFilter, setActiveFilter] = useState('all')
@@ -2385,7 +2420,11 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
           <p className="text-slate-500">{translate('loading')}</p>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <AddDocumentTile isDark={isDark} onClick={() => openAddDocument()} tileRef={addTileRef} />
+            <AddDocumentTile
+              isDark={isDark}
+              onClick={() => openAddDocument(undefined, activeNav === 'my_documents' ? selectedOrbit : null)}
+              tileRef={addTileRef}
+            />
             {filtered.length === 0 && (
               <p className="text-slate-500 col-span-full">{translate('card_no_match')}</p>
             )}
@@ -2995,7 +3034,6 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                       isDark={isDark}
                       orbit={{ ...orbit, countText: translate(orbit.count === 1 ? 'orbit_count_one' : 'orbit_count_other', { count: orbit.count }) }}
                       isOpen={isOpen}
-                      logo={DEPARTMENT_LOGOS[orbit.docType]}
                       delay={Math.min(0.05 + i * 0.05, 0.4)}
                       onToggle={() => {
                         if (isOpen) {
@@ -3041,6 +3079,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
               userId={session.user.id}
               existingDocs={documents}
               initialType={pendingDocType}
+              initialAgency={pendingAgency}
               onAdded={(title) => { fetchDocuments(); setAddingDocument(false); logAction(`Added ${title}`, 'add') }}
               onCancel={() => setAddingDocument(false)}
             />
