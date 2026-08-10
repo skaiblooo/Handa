@@ -377,11 +377,6 @@ const SETTINGS_NAV = [
         icon: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></>,
       },
       {
-        id: 'reminders',
-        labelKey: 'settings_tab_reminders',
-        icon: <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />,
-      },
-      {
         id: 'notifications',
         labelKey: 'settings_tab_notifications',
         icon: <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />,
@@ -959,16 +954,23 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, onAdded, o
   )
 }
 
-const TIME_AGNOSTIC_GREETING_KEYS = ['greeting_welcome_back', 'greeting_hello', 'greeting_hi', 'greeting_hey_there', 'greeting_good_to_see_you', 'greeting_great_to_see_you']
+const TIME_AGNOSTIC_GREETING_KEYS = [
+  'greeting_welcome_back', 'greeting_hello', 'greeting_hi', 'greeting_hey_there', 'greeting_good_to_see_you', 'greeting_great_to_see_you',
+  'greeting_wb_aboard', 'greeting_wb_good_to_have', 'greeting_wb_captain', 'greeting_wb_ready', 'greeting_wb_missed', 'greeting_wb_aligned', 'greeting_wb_nav_standby',
+]
 
-function getTimeOfDayGreetingKey(hour) {
-  if (hour < 12) return 'greeting_good_morning'
-  if (hour < 18) return 'greeting_good_afternoon'
-  return 'greeting_good_evening'
+const MORNING_GREETING_KEYS = [
+  'greeting_good_morning', 'greeting_morning_rise_and_shine', 'greeting_morning_beautiful_orbit', 'greeting_morning_stars_calling', 'greeting_morning_cryosleep', 'greeting_morning_sunrise_detected',
+]
+
+function getTimeOfDayGreetingKeys(hour) {
+  if (hour < 12) return MORNING_GREETING_KEYS
+  if (hour < 18) return ['greeting_good_afternoon']
+  return ['greeting_good_evening']
 }
 
 function pickGreetingKey() {
-  const pool = [...TIME_AGNOSTIC_GREETING_KEYS, getTimeOfDayGreetingKey(new Date().getHours())]
+  const pool = [...TIME_AGNOSTIC_GREETING_KEYS, ...getTimeOfDayGreetingKeys(new Date().getHours())]
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
@@ -1045,7 +1047,7 @@ function buildSmoothPath(points) {
 // plotting how many tracked documents expire per month (application-intent
 // documents excluded — they have no real expiry to plot) instead of temps.
 function DocumentStatsChart({ isDark, documents }) {
-  const { lang } = useLanguage()
+  const { lang, translate } = useLanguage()
   const width = 835
   const height = 200
   const topPad = 24
@@ -1075,6 +1077,10 @@ function DocumentStatsChart({ isDark, documents }) {
 
   return (
     <div className="mt-10" style={{ animation: 'rise-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.75s both' }}>
+      <div className="flex items-baseline justify-between mb-2">
+        <p className={`text-sm font-semibold ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>{translate('chart_expiring_title')}</p>
+        <p className={`text-xs ${t(isDark, 'text-slate-500', 'text-slate-400')}`}>{translate('chart_expiring_subtitle')}</p>
+      </div>
       <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="w-full" style={{ height: 180, display: 'block' }}>
         <defs>
           <linearGradient id="doc-chart-line" x1="0" y1="0" x2="1" y2="0">
@@ -1102,6 +1108,21 @@ function DocumentStatsChart({ isDark, documents }) {
             pathLength="1"
             style={{ strokeDasharray: 1, strokeDashoffset: 1, animation: 'chart-draw 1.3s cubic-bezier(0.37,0.01,0.2,1) 0.85s both' }}
           />
+          {points.map((p, i) => (
+            <g key={`pt-${i}`} style={{ animation: `rise-in 0.5s cubic-bezier(0.16,1,0.3,1) ${1.5 + i * 0.06}s both` }}>
+              <circle cx={p.x} cy={p.y} r="5" fill={fillColor} stroke={isDark ? '#0b1120' : '#ffffff'} strokeWidth="2" />
+              <text
+                x={p.x}
+                y={p.y - 14}
+                textAnchor={i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'}
+                fontSize="14"
+                fontWeight="700"
+                fill={lineColor}
+              >
+                {months[i].count}
+              </text>
+            </g>
+          ))}
         </g>
       </svg>
       <div className="flex justify-between mt-1">
@@ -1154,37 +1175,6 @@ function UrgentDocsRail({ isDark, documents, onSelectDoc }) {
   )
 }
 
-// Radius shrinks and orbital period speeds up as a document's runway
-// shrinks — reads as decay rather than a generic status dot. Expired
-// documents don't orbit at all; they've already come down.
-// How far the rocket sits from Earth — 1 is the far corner, 0 is docked
-// at Earth's edge. Expiring soon reads as "almost home."
-// Placeholder for the rocket/Earth widget while that visual gets redesigned
-// — just a colored triangle pointing at the urgency direction.
-const URGENCY_ARROW_COLOR = {
-  safe: '#34d399',
-  upcoming: '#60a5fa',
-  urgent: '#fbbf24',
-  critical: '#f87171',
-  expired: '#f87171',
-}
-
-function UrgencyArrow({ urgency, size = 48 }) {
-  const color = URGENCY_ARROW_COLOR[urgency] || '#60a5fa'
-  return (
-    <div className="shrink-0 flex items-center justify-center" style={{ width: size, height: size }} aria-hidden="true">
-      <svg
-        width={size * 0.5}
-        height={size * 0.5}
-        viewBox="0 0 24 24"
-        style={{ animation: 'icon-bob 3s ease-in-out infinite' }}
-      >
-        <path d="M12 3 L21 20 L12 15.5 L3 20 Z" fill={color} />
-      </svg>
-    </div>
-  )
-}
-
 function UrgentDocCard({ isDark, doc, big, onSelect, delay }) {
   const { translate } = useLanguage()
   const agency = AGENCY_BADGE[doc.doc_type]
@@ -1200,10 +1190,7 @@ function UrgentDocCard({ isDark, doc, big, onSelect, delay }) {
     >
       {big ? (
         <>
-          <div className="absolute top-4 right-4">
-            <UrgencyArrow urgency={doc.urgency} size={64} />
-          </div>
-          <p className={`flex items-center gap-1.5 text-xs pr-16 ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>
+          <p className={`flex items-center gap-1.5 text-xs ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>
             <span className={`w-4 h-4 rounded-full ${agency.color} flex items-center justify-center text-[7px] font-bold text-white shrink-0`}>
               {agency.label[0]}
             </span>
@@ -1213,13 +1200,10 @@ function UrgentDocCard({ isDark, doc, big, onSelect, delay }) {
           <p className={`text-xs mt-2 ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>{translate(urgencyStatusKey(doc.urgency))}</p>
         </>
       ) : (
-        <>
-          <div className="min-w-0">
-            <p className={`text-xs truncate ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>{label}</p>
-            <p className={`text-sm font-semibold mt-0.5 ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>{dayText}</p>
-          </div>
-          <UrgencyArrow urgency={doc.urgency} size={32} />
-        </>
+        <div className="min-w-0">
+          <p className={`text-xs truncate ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>{label}</p>
+          <p className={`text-sm font-semibold mt-0.5 ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>{dayText}</p>
+        </div>
       )}
     </button>
   )
@@ -1340,20 +1324,6 @@ function ThemePanel({ isDark, themeMode, onSetMode, accentColor, onSetAccentColo
             )}`}
           />
         ))}
-      </div>
-    </div>
-  )
-}
-
-function RemindersPanel({ isDark }) {
-  const { translate } = useLanguage()
-  return (
-    <div className="mb-8">
-      <SettingsPanelHeader isDark={isDark} title={translate('reminders_title')} description={translate('reminders_desc')} />
-      <div className={`rounded-xl p-4 max-w-md ${t(isDark, 'glass-dark', 'glass-light')}`}>
-        <p className={t(isDark, 'text-sm text-slate-300', 'text-sm text-slate-600')}>
-          {translate('reminders_body')}
-        </p>
       </div>
     </div>
   )
@@ -2573,8 +2543,8 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                     type="button"
                     title={translate(item.labelKey)}
                     onClick={(e) => { e.stopPropagation(); setSettingsTab(item.id) }}
-                    className={`glass-interactive flex items-center gap-3 py-2 rounded-xl text-sm text-left whitespace-nowrap ${
-                      sidebarOpen ? 'px-2' : 'px-0 justify-center'
+                    className={`glass-interactive flex items-center rounded-xl text-sm text-left ${
+                      sidebarOpen ? 'gap-3 py-2 px-2 whitespace-nowrap' : 'flex-col gap-0.5 py-2 px-1 justify-center text-center'
                     } ${
                       item.id === settingsTab
                         ? t(isDark, 'glass-chip-dark', 'glass-chip-light')
@@ -2584,7 +2554,11 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                     <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
                       <Icon size={15}>{item.icon}</Icon>
                     </span>
-                    {sidebarOpen && translate(item.labelKey)}
+                    {sidebarOpen ? (
+                      translate(item.labelKey)
+                    ) : (
+                      <span className="text-[9px] leading-tight font-medium">{translate(item.labelKey)}</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -2602,8 +2576,8 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                 type="button"
                 title={translate(item.labelKey)}
                 onClick={(e) => { e.stopPropagation(); selectNav(item.id) }}
-                className={`glass-interactive flex items-center gap-3 py-2 rounded-xl text-sm text-left whitespace-nowrap ${
-                  sidebarOpen ? 'px-2' : 'px-0 justify-center'
+                className={`glass-interactive flex items-center rounded-xl text-sm text-left ${
+                  sidebarOpen ? 'gap-3 py-2 px-2 whitespace-nowrap' : 'flex-col gap-0.5 py-2 px-1 justify-center text-center'
                 } ${
                   item.id === activeNav
                     ? t(isDark, 'glass-chip-dark', 'glass-chip-light')
@@ -2618,7 +2592,11 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                     style={isDark ? { filter: 'invert(1) brightness(1.3)' } : undefined}
                   />
                 </span>
-                {sidebarOpen && translate(item.labelKey)}
+                {sidebarOpen ? (
+                  translate(item.labelKey)
+                ) : (
+                  <span className="text-[9px] leading-tight font-medium">{translate(item.labelKey)}</span>
+                )}
               </button>
             ))}
           </nav>
@@ -2629,7 +2607,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
           <button
             title={translate('nav_settings')}
             onClick={(e) => { e.stopPropagation(); setShowSettings(true) }}
-            className={`glass-interactive flex items-center gap-3 py-2 rounded-xl text-sm text-left transition-colors duration-75 whitespace-nowrap ${sidebarOpen ? 'px-2' : 'px-0 justify-center'} ${t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-slate-100', 'text-slate-500 hover:bg-slate-50 hover:text-slate-900')}`}
+            className={`glass-interactive flex items-center rounded-xl text-sm text-left transition-colors duration-75 ${sidebarOpen ? 'gap-3 py-2 px-2 whitespace-nowrap' : 'flex-col gap-0.5 py-2 px-1 justify-center text-center'} ${t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-slate-100', 'text-slate-500 hover:bg-slate-50 hover:text-slate-900')}`}
           >
             <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
               <Icon size={15}>
@@ -2637,18 +2615,26 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                 <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
               </Icon>
             </span>
-            {sidebarOpen && translate('nav_settings')}
+            {sidebarOpen ? (
+              translate('nav_settings')
+            ) : (
+              <span className="text-[9px] leading-tight font-medium">{translate('nav_settings')}</span>
+            )}
           </button>
           )}
           <button
             title={translate('nav_logout')}
             onClick={(e) => { e.stopPropagation(); setConfirmLogout(true) }}
-            className={`glass-interactive flex items-center gap-3 py-2 rounded-xl text-sm text-left transition-colors duration-75 whitespace-nowrap ${sidebarOpen ? 'px-2' : 'px-0 justify-center'} ${t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-red-300', 'text-slate-500 hover:bg-slate-50 hover:text-red-500')}`}
+            className={`glass-interactive flex items-center rounded-xl text-sm text-left transition-colors duration-75 ${sidebarOpen ? 'gap-3 py-2 px-2 whitespace-nowrap' : 'flex-col gap-0.5 py-2 px-1 justify-center text-center'} ${t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-red-300', 'text-slate-500 hover:bg-slate-50 hover:text-red-500')}`}
           >
             <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
               <Icon size={15}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /></Icon>
             </span>
-            {sidebarOpen && translate('nav_logout')}
+            {sidebarOpen ? (
+              translate('nav_logout')
+            ) : (
+              <span className="text-[9px] leading-tight font-medium">{translate('nav_logout')}</span>
+            )}
           </button>
         </div>
       </aside>
@@ -2891,7 +2877,6 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                   onSetAccentColor={setProfileColor}
                 />
               )}
-              {settingsTab === 'reminders' && <RemindersPanel isDark={isDark} />}
               {settingsTab === 'notifications' && (
                 <NotificationsPanel
                   isDark={isDark}
