@@ -9,6 +9,29 @@ const corsHeaders = {
   'Content-Type': 'application/json',
 }
 
+// Only ever redirect back into the app itself — without this, someone could
+// POST straight to this function (bypassing Auth.jsx entirely) with an
+// arbitrary redirectTo and turn a legitimate password-reset email into a
+// phishing link. Set as an edge function secret (comma-separated origins);
+// with nothing set, every custom redirect is rejected and Supabase falls
+// back to its own dashboard-configured default — safe, just not branded.
+const allowedOrigins = (Deno.env.get('ALLOWED_APP_ORIGINS') || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+
+function safeRedirect(url: unknown): string | undefined {
+  if (typeof url !== 'string') return undefined
+  try {
+    return allowedOrigins.includes(new URL(url).origin) ? url : undefined
+  } catch {
+    return undefined
+  }
+}
+
+const RATE_LIMIT_MAX = 3
+const RATE_LIMIT_WINDOW_MINUTES = 60
+
 // Orbit sends this email itself (via Resend, the same service send-reminders
 // already uses) instead of Supabase's own default reset email, so the
 // message is branded and the link actually works: generateLink here gives
@@ -31,10 +54,30 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Email is required' }), { status: 400, headers: corsHeaders })
     }
 
+    // Caps how many reset emails a single address can be sent per window —
+    // without this, this endpoint (unlike Supabase's own rate-limited
+    // recovery flow, which this bypasses by design) could be hammered to
+    // spam-bomb an arbitrary inbox or burn through the Resend quota.
+    const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MINUTES * 60 * 1000).toISOString()
+    const { count } = await supabaseAdmin
+      .from('password_reset_attempts')
+      .select('id', { count: 'exact', head: true })
+      .eq('email', email.toLowerCase())
+      .gte('requested_at', windowStart)
+
+    if ((count ?? 0) >= RATE_LIMIT_MAX) {
+      console.warn('send-password-reset: rate limit hit for', email)
+      // Same success response as a normal send — doesn't confirm or deny
+      // anything about the account, just quietly skips sending.
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers: corsHeaders })
+    }
+
+    await supabaseAdmin.from('password_reset_attempts').insert({ email: email.toLowerCase() })
+
     const { data, error } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
       email,
-      options: redirectTo ? { redirectTo } : undefined,
+      options: { redirectTo: safeRedirect(redirectTo) },
     })
 
     // Same response whether the account exists or not, so this endpoint
@@ -66,6 +109,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({ success: true }), { status: 200, headers: corsHeaders })
   } catch (err) {
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : 'Unknown error' }), { status: 500, headers: corsHeaders })
+    console.error('send-password-reset: unexpected error', err)
+    return new Response(JSON.stringify({ error: 'Internal error' }), { status: 500, headers: corsHeaders })
   }
 })

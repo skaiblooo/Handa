@@ -10,7 +10,19 @@ import { AVATAR_COLORS, AVATAR_ACCENT_HEX } from './avatarColors'
 import { DOC_TYPE_LABELS, AGENCY_BADGE, URGENCY_META } from './data/docTypes'
 import ltoLogo from './assets/LTO LOGO.webp'
 import psaLogo from './assets/PSA LOGO.webp'
+import dfaLogo from './assets/DFA logo.webp'
+import nbiLogo from './assets/NBI logo.webp'
+import sssLogo from './assets/SSS logo.webp'
+import philhealthLogo from './assets/PHILHEALTH logo.webp'
+import hdmfLogo from './assets/HDMF logo.png'
+import birLogo from './assets/BIR logo.png'
 import orbitLogo from './assets/orbit logo.png'
+import satellitesIcon from './assets/satellites.png'
+import spaceTravelIcon from './assets/space-travel.png'
+import dangerIcon from './assets/danger.png'
+import fileIcon from './assets/file.png'
+import calendarIcon from './assets/calendar.png'
+import spaceIcon from './assets/space.png'
 
 // Full department names for the orbit-grouping view — AGENCY_BADGE only has
 // short codes (LTO, PSA, ...), which read as cryptic on their own outside a
@@ -26,12 +38,15 @@ const DEPARTMENT_NAMES = {
   BIR: 'Bureau of Internal Revenue',
 }
 
-// Real logos only exist for a couple departments so far — this is a first
-// look at the direction, not a complete set. Everything else still falls
-// back to the generic orbit icon.
 const DEPARTMENT_LOGOS = {
   LTO: ltoLogo,
   PSA: psaLogo,
+  DFA: dfaLogo,
+  NBI: nbiLogo,
+  SSS: sssLogo,
+  PH: philhealthLogo,
+  HDMF: hdmfLogo,
+  BIR: birLogo,
 }
 
 export { DOC_TYPE_LABELS, AGENCY_BADGE }
@@ -300,11 +315,16 @@ function Icon({ children, size = 18 }) {
 function AgencyBadge({ docType }) {
   const agency = AGENCY_BADGE[docType]
   if (!agency) return null
+  const logo = DEPARTMENT_LOGOS[agency.label]
   return (
-    <div className={`w-11 h-11 rounded-xl ${agency.color} flex items-center justify-center shrink-0`}>
-      <span className="text-white text-[10px] font-bold tracking-tight leading-none text-center px-1">
-        {agency.label}
-      </span>
+    <div className={`w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center shrink-0 ${logo ? 'bg-white' : agency.color}`}>
+      {logo ? (
+        <img src={logo} alt="" className="w-full h-full object-contain p-1.5" />
+      ) : (
+        <span className="text-white text-[10px] font-bold tracking-tight leading-none text-center px-1">
+          {agency.label}
+        </span>
+      )}
     </div>
   )
 }
@@ -331,25 +351,12 @@ function ThemedCheckbox({ isDark, checked, onClick, size = 18 }) {
 }
 
 export const NAV_ITEMS = [
-  { id: 'dashboard', labelKey: 'nav_dashboard', icon: <path d="M3 3h7v9H3V3zm11 0h7v5h-7V3zm0 9h7v9h-7v-9zM3 16h7v5H3v-5z" /> },
-  {
-    id: 'my_documents',
-    labelKey: 'nav_my_documents',
-    icon: (
-      <>
-        <circle cx="10" cy="12" r="5" />
-        <ellipse cx="10" cy="12" rx="8.5" ry="2.4" transform="rotate(-20 10 12)" />
-        <path d="M18.5 5.5l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z" strokeLinejoin="round" />
-        <path d="M19.2 16.8l.4 1.1 1.1.4-1.1.4-.4 1.1-.4-1.1-1.1-.4 1.1-.4z" strokeLinejoin="round" />
-        <circle cx="3.5" cy="6" r="0.7" fill="currentColor" stroke="none" />
-        <circle cx="21" cy="10.5" r="0.7" fill="currentColor" stroke="none" />
-      </>
-    ),
-  },
-  { id: 'reminders', labelKey: 'nav_reminders', icon: <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" /> },
-  { id: 'requirements', labelKey: 'nav_requirements', icon: <path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z" /> },
-  { id: 'appointments', labelKey: 'nav_appointments', icon: <path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" /> },
-  { id: 'history', labelKey: 'nav_history', icon: <path d="M12 8v4l3 3M12 21a9 9 0 100-18 9 9 0 000 18z" /> },
+  { id: 'dashboard', labelKey: 'nav_dashboard', iconSrc: satellitesIcon },
+  { id: 'my_documents', labelKey: 'nav_my_documents', iconSrc: spaceTravelIcon },
+  { id: 'reminders', labelKey: 'nav_reminders', iconSrc: dangerIcon },
+  { id: 'requirements', labelKey: 'nav_requirements', iconSrc: fileIcon },
+  { id: 'appointments', labelKey: 'nav_appointments', iconSrc: calendarIcon },
+  { id: 'history', labelKey: 'nav_history', iconSrc: spaceIcon },
 ]
 
 const PROFILE_ICON = <><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></>
@@ -486,7 +493,9 @@ function ThreeDotMenu({ isDark, options, id, openId, setOpenId }) {
   )
 }
 
-const DOC_TYPE_OPTIONS = Object.entries(DOC_TYPE_LABELS).map(([value, label]) => ({ value, label }))
+const DOC_TYPE_OPTIONS = Object.entries(DOC_TYPE_LABELS)
+  .map(([value, label]) => ({ value, label }))
+  .sort((a, b) => a.label.localeCompare(b.label))
 
 function AddDocumentTile({ isDark, onClick, tileRef, label, fullWidth }) {
   const { translate } = useLanguage()
@@ -649,6 +658,7 @@ function ApplicationConfirmCard({ isDark, docType, title, onTitleChange, onBack,
       <div className="flex justify-between items-center mb-3">
         <input
           type="text"
+          maxLength={100}
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
           placeholder={DOC_TYPE_LABELS[docType]}
@@ -878,6 +888,7 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, onAdded, o
       <div className="flex justify-between items-center mb-3">
         <input
           type="text"
+          maxLength={100}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={DOC_TYPE_LABELS[docType]}
@@ -1484,7 +1495,7 @@ function NotificationsFeed({ isDark, documents, onSelectDoc }) {
               <div
                 key={n.id}
                 onClick={() => onSelectDoc?.(n.doc)}
-                className={`glass-interactive cursor-pointer flex items-center gap-3 rounded-2xl p-3.5 border ${t(isDark, 'border-white/10', 'border-slate-200')}`}
+                className={`glass-interactive cursor-pointer flex items-center gap-3 rounded-2xl p-3.5 border transition-colors duration-75 ${t(isDark, 'border-white/10 hover:bg-white/5', 'border-slate-200 hover:bg-slate-50')}`}
                 style={{ animation: 'rise-in 0.4s cubic-bezier(0.16,1,0.3,1) both', animationDelay: `${Math.min(i * 0.04, 0.3)}s` }}
               >
                 <span className={`w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0 ${t(isDark, meta?.badgeDark, meta?.badgeLight)}`}>
@@ -1501,7 +1512,7 @@ function NotificationsFeed({ isDark, documents, onSelectDoc }) {
                 <button
                   onClick={(e) => { e.stopPropagation(); toggleFavorite(n.id) }}
                   title={isFav ? 'Unfavorite' : 'Favorite'}
-                  className={`glass-interactive p-1.5 rounded-full shrink-0 ${isFav ? 'text-amber-400' : t(isDark, 'text-slate-500 hover:text-slate-200', 'text-slate-400 hover:text-slate-700')}`}
+                  className={`glass-interactive p-1.5 rounded-full shrink-0 transition-colors duration-75 ${isFav ? 'text-amber-400' : t(isDark, 'text-slate-500 hover:bg-white/5 hover:text-slate-200', 'text-slate-400 hover:bg-slate-100 hover:text-slate-700')}`}
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -1510,7 +1521,7 @@ function NotificationsFeed({ isDark, documents, onSelectDoc }) {
                 <button
                   onClick={(e) => { e.stopPropagation(); toggleArchived(n.id) }}
                   title={isArchived ? 'Restore' : 'Archive'}
-                  className="glass-interactive p-1.5 rounded-full shrink-0 text-red-400/70 hover:text-red-400"
+                  className={`glass-interactive p-1.5 rounded-full shrink-0 text-red-400/70 hover:text-red-400 transition-colors duration-75 ${t(isDark, 'hover:bg-white/5', 'hover:bg-slate-100')}`}
                 >
                   <Icon size={15}><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" /></Icon>
                 </button>
@@ -1630,16 +1641,13 @@ function LinkedDocumentsPanel({ isDark, documents, onAddType }) {
         {DOC_TYPE_OPTIONS.map((opt) => {
           const count = documents.filter((d) => d.doc_type === opt.value).length
           const tracked = trackedTypes.has(opt.value)
-          const agency = AGENCY_BADGE[opt.value]
           return (
             <div
               key={opt.value}
               onClick={() => onAddType(opt.value)}
               className={`glass-interactive cursor-pointer flex items-center gap-3 rounded-xl p-3 border ${t(isDark, 'border-white/10', 'border-slate-200')}`}
             >
-              <div className={t(isDark, 'w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center shrink-0', 'w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0')}>
-                <span className={t(isDark, 'text-slate-300 text-[9px] font-bold tracking-tight', 'text-slate-600 text-[9px] font-bold tracking-tight')}>{agency?.label}</span>
-              </div>
+              <AgencyBadge docType={opt.value} />
               <div className="flex-1 min-w-0">
                 <p className={t(isDark, 'text-sm font-medium text-slate-200 truncate', 'text-sm font-medium text-slate-700 truncate')}>{opt.label}</p>
                 <p className={t(isDark, 'text-xs text-slate-500', 'text-xs text-slate-400')}>
@@ -2603,7 +2611,12 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                 }`}
               >
                 <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
-                  <Icon size={15}>{item.icon}</Icon>
+                  <img
+                    src={item.iconSrc}
+                    alt=""
+                    className="w-[18px] h-[18px] object-contain"
+                    style={isDark ? { filter: 'invert(1) brightness(1.3)' } : undefined}
+                  />
                 </span>
                 {sidebarOpen && translate(item.labelKey)}
               </button>
@@ -2616,7 +2629,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
           <button
             title={translate('nav_settings')}
             onClick={(e) => { e.stopPropagation(); setShowSettings(true) }}
-            className={`flex items-center gap-3 py-2 rounded-xl text-sm text-left transition-colors duration-75 whitespace-nowrap ${sidebarOpen ? 'px-2' : 'px-0 justify-center'} ${t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-slate-100', 'text-slate-500 hover:bg-slate-50 hover:text-slate-900')}`}
+            className={`glass-interactive flex items-center gap-3 py-2 rounded-xl text-sm text-left transition-colors duration-75 whitespace-nowrap ${sidebarOpen ? 'px-2' : 'px-0 justify-center'} ${t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-slate-100', 'text-slate-500 hover:bg-slate-50 hover:text-slate-900')}`}
           >
             <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
               <Icon size={15}>
@@ -2630,7 +2643,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
           <button
             title={translate('nav_logout')}
             onClick={(e) => { e.stopPropagation(); setConfirmLogout(true) }}
-            className={`flex items-center gap-3 py-2 rounded-xl text-sm text-left transition-colors duration-75 whitespace-nowrap ${sidebarOpen ? 'px-2' : 'px-0 justify-center'} ${t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-red-300', 'text-slate-500 hover:bg-slate-50 hover:text-red-500')}`}
+            className={`glass-interactive flex items-center gap-3 py-2 rounded-xl text-sm text-left transition-colors duration-75 whitespace-nowrap ${sidebarOpen ? 'px-2' : 'px-0 justify-center'} ${t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-red-300', 'text-slate-500 hover:bg-slate-50 hover:text-red-500')}`}
           >
             <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
               <Icon size={15}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /></Icon>

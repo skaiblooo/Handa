@@ -1,7 +1,39 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import { useLanguage } from './i18n'
 import { AVATAR_COLORS, AVATAR_ACCENT_HEX } from './avatarColors'
+
+const FIELD_ERROR_LIFETIME = 3500
+
+// Anchored under a field instead of the browser's own native validation
+// bubble — that one can't be restyled and looks out of place next to the
+// rest of the glass UI. Auto-dismisses so it reads as a nudge, not a
+// blocking wall of red.
+function FieldError({ message }) {
+  if (!message) return null
+  return (
+    <div
+      className="absolute left-0 top-full mt-2 z-20 glass-dark rounded-lg px-3 py-2 text-sm text-white/90"
+      style={{ animation: 'dropdown-in 140ms ease-out' }}
+    >
+      {message}
+    </div>
+  )
+}
+
+// "Orbit" stays in the cursive wordmark font even when the surrounding
+// sentence switches to the body font, so the brand name still stands out.
+function withCursiveOrbit(text) {
+  const idx = text.indexOf('Orbit')
+  if (idx === -1) return text
+  return (
+    <>
+      {text.slice(0, idx)}
+      <span className="font-dancing">Orbit</span>
+      {text.slice(idx + 5)}
+    </>
+  )
+}
 
 function LogoMark({ size = 32 }) {
   return (
@@ -35,15 +67,11 @@ function FillButton({ children, type = 'button', onClick, disabled, className = 
         backgroundColor: `${tint[600]}4d`,
         boxShadow: `inset 0 1px 0 0 rgba(255,255,255,0.3), 0 10px 24px -10px ${tint[500]}66`,
       }}
-      className={`glass-interactive group relative overflow-hidden rounded-lg font-semibold text-white border backdrop-blur-xl backdrop-saturate-150
+      className={`glass-interactive relative rounded-lg font-semibold text-white border backdrop-blur-xl backdrop-saturate-150
         disabled:opacity-60
         ${className}`}
     >
-      <span
-        className="absolute inset-0 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out"
-        style={{ backgroundColor: `${tint[600]}40` }}
-      />
-      <span className="relative z-10">{children}</span>
+      {children}
     </button>
   )
 }
@@ -100,6 +128,14 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
   const [errorMsg, setErrorMsg] = useState('')
   const [infoMsg, setInfoMsg] = useState('')
   const [loading, setLoading] = useState(false)
+  const [fieldError, setFieldError] = useState(null) // { field: 'email' | 'password', message }
+  const [startingDashboard, setStartingDashboard] = useState(false)
+
+  useEffect(() => {
+    if (!fieldError) return
+    const timer = setTimeout(() => setFieldError(null), FIELD_ERROR_LIFETIME)
+    return () => clearTimeout(timer)
+  }, [fieldError])
 
   // Signup only: a short "build your profile" step before email/password.
   // Letting people choose a username and color first — before they've
@@ -124,9 +160,24 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
     setErrorMsg('')
     setInfoMsg('')
+    setFieldError(null)
+
+    if (!email.trim()) {
+      setFieldError({ field: 'email', message: translate('auth_error_email_required') })
+      return
+    }
+    if (!email.includes('@')) {
+      setFieldError({ field: 'email', message: translate('auth_error_email_invalid') })
+      return
+    }
+    if (!password) {
+      setFieldError({ field: 'password', message: translate('auth_error_password_required') })
+      return
+    }
+
+    setLoading(true)
 
     if (isSignUp) {
       // A guest is already signed in with a real (anonymous) user id and
@@ -249,6 +300,7 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
                   </label>
                   <input
                     type="text"
+                    maxLength={40}
                     placeholder={translate('auth_username_placeholder')}
                     value={chosenUsername}
                     onChange={(e) => setChosenUsername(e.target.value)}
@@ -302,9 +354,19 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
                   </span>
                 </div>
 
-                <FillButton onClick={() => setProfileStep(false)} className="py-3 mt-1" accentHex={AVATAR_ACCENT_HEX[chosenColor]}>
-                  {translate('auth_continue')}
+                <FillButton
+                  onClick={async () => {
+                    setStartingDashboard(true)
+                    await onGuestStart?.({ username: chosenUsername.trim(), color: chosenColor })
+                    setStartingDashboard(false)
+                  }}
+                  disabled={startingDashboard}
+                  className="py-3 mt-1"
+                  accentHex={AVATAR_ACCENT_HEX[chosenColor]}
+                >
+                  {startingDashboard ? translate('auth_please_wait') : translate('auth_continue')}
                 </FillButton>
+                {guestError && <p className="text-red-400 text-sm text-center">{guestError}</p>}
               </div>
             </>
           ) : (
@@ -328,15 +390,15 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
               )}
 
               <div className="text-center mb-8">
-                <h2 className="font-instrument text-4xl text-white mb-2">
+                <h2 className="text-3xl font-semibold text-white mb-2">
                   {isGuestUpgrade ? translate('auth_guest_upgrade_title') : isSignUp ? translate('auth_get_started') : translate('auth_welcome_back')}
                 </h2>
-                <p className="font-instrument text-lg text-slate-400">
-                  {isGuestUpgrade ? translate('auth_guest_upgrade_subtitle') : isSignUp ? translate('auth_signup_subtitle') : translate('auth_login_subtitle')}
+                <p className="text-slate-400">
+                  {withCursiveOrbit(isGuestUpgrade ? translate('auth_guest_upgrade_subtitle') : isSignUp ? translate('auth_signup_subtitle') : translate('auth_login_subtitle'))}
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+              <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
                 <div>
                   <label className="text-sm text-blue-400 font-medium mb-1.5 block">{translate('auth_email_label')}</label>
                   <div className="relative">
@@ -345,12 +407,13 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
                     </span>
                     <input
                       type="email"
+                      autoComplete="email"
                       placeholder={translate('auth_email_placeholder')}
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => { setEmail(e.target.value); if (fieldError?.field === 'email') setFieldError(null) }}
                       className="w-full glass-dark-sm rounded-lg pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-400/50 transition-colors"
-                      required
                     />
+                    <FieldError message={fieldError?.field === 'email' ? fieldError.message : null} />
                   </div>
                 </div>
 
@@ -362,11 +425,11 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
                     </span>
                     <input
                       type={showPassword ? 'text' : 'password'}
+                      autoComplete={isSignUp ? 'new-password' : 'current-password'}
                       placeholder="••••••••"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => { setPassword(e.target.value); if (fieldError?.field === 'password') setFieldError(null) }}
                       className="w-full glass-dark-sm rounded-lg pl-10 pr-10 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-400/50 transition-colors"
-                      required
                     />
                     <button
                       type="button"
@@ -375,6 +438,7 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
                     >
                       <EyeIcon open={showPassword} />
                     </button>
+                    <FieldError message={fieldError?.field === 'password' ? fieldError.message : null} />
                   </div>
                   {!isSignUp && (
                     <button
@@ -455,12 +519,28 @@ export function ResetPasswordScreen({ onDone }) {
   const [showPassword, setShowPassword] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [loading, setLoading] = useState(false)
+  const [fieldError, setFieldError] = useState(null) // { field: 'password' | 'confirm', message }
+
+  useEffect(() => {
+    if (!fieldError) return
+    const timer = setTimeout(() => setFieldError(null), FIELD_ERROR_LIFETIME)
+    return () => clearTimeout(timer)
+  }, [fieldError])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErrorMsg('')
+    setFieldError(null)
+    if (!password) {
+      setFieldError({ field: 'password', message: translate('auth_error_password_required') })
+      return
+    }
     if (password.length < 6) {
       setErrorMsg(translate('auth_password_too_short'))
+      return
+    }
+    if (!confirmPassword) {
+      setFieldError({ field: 'confirm', message: translate('auth_error_confirm_password_required') })
       return
     }
     if (password !== confirmPassword) {
@@ -490,7 +570,7 @@ export function ResetPasswordScreen({ onDone }) {
           <p className="text-slate-400">{translate('auth_reset_password_subtitle')}</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
           <div>
             <label className="text-sm text-blue-400 font-medium mb-1.5 block">{translate('auth_new_password')}</label>
             <div className="relative">
@@ -501,10 +581,9 @@ export function ResetPasswordScreen({ onDone }) {
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); if (fieldError?.field === 'password') setFieldError(null) }}
                 autoComplete="new-password"
                 className="w-full glass-dark-sm rounded-lg pl-10 pr-10 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-400/50 transition-colors"
-                required
               />
               <button
                 type="button"
@@ -513,6 +592,7 @@ export function ResetPasswordScreen({ onDone }) {
               >
                 <EyeIcon open={showPassword} />
               </button>
+              <FieldError message={fieldError?.field === 'password' ? fieldError.message : null} />
             </div>
           </div>
 
@@ -526,11 +606,11 @@ export function ResetPasswordScreen({ onDone }) {
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => { setConfirmPassword(e.target.value); if (fieldError?.field === 'confirm') setFieldError(null) }}
                 autoComplete="new-password"
                 className="w-full glass-dark-sm rounded-lg pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-400/50 transition-colors"
-                required
               />
+              <FieldError message={fieldError?.field === 'confirm' ? fieldError.message : null} />
             </div>
           </div>
 

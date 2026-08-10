@@ -7,8 +7,8 @@ import { createContext, useContext, useState } from 'react'
 export const translations = {
   en: {
     // Nav
-    nav_dashboard: 'Dashboard',
-    nav_my_documents: 'My Space',
+    nav_dashboard: 'My Space',
+    nav_my_documents: 'My Orbits',
     nav_reminders: 'Reminders',
     nav_requirements: 'Requirements',
     nav_appointments: 'Appointments',
@@ -199,7 +199,7 @@ export const translations = {
     add_doc_step2_momentum: "You're almost done, just the details",
 
     // Auth
-    auth_get_started: 'Welcome to YOUR dashboard, where you are in control',
+    auth_get_started: 'Welcome, Astronaut',
     auth_welcome_back: 'Welcome back',
     auth_signup_subtitle: 'Create an account to continue to Orbit.',
     auth_login_subtitle: 'Log in to continue to Orbit.',
@@ -226,6 +226,10 @@ export const translations = {
     auth_reset_password_btn: 'Reset password',
     auth_password_too_short: 'Password must be at least 6 characters.',
     auth_passwords_dont_match: "Passwords don't match.",
+    auth_error_email_required: 'Please enter your email address.',
+    auth_error_email_invalid: "Please include an '@' in your email address.",
+    auth_error_password_required: 'Please enter your password.',
+    auth_error_confirm_password_required: 'Please confirm your new password.',
     auth_illustration_placeholder: 'Illustration placeholder',
     auth_profile_step_subtitle: "Let's get you straight into your space",
     auth_username_label: 'What should we call you?',
@@ -241,6 +245,8 @@ export const translations = {
     // Profile / Account page
     profile_edit: 'Edit Profile',
     profile_done_editing: 'Done Editing',
+    profile_photo_invalid_type: 'Please choose a PNG, JPG, WEBP, or GIF image.',
+    profile_photo_too_large: 'That image is too large — please choose one under 8MB.',
     profile_section_personal: 'PERSONAL INFORMATION',
     profile_section_contact: 'CONTACT DETAILS',
     profile_section_security: 'SECURITY',
@@ -313,8 +319,8 @@ export const translations = {
     playbook_submit_feedback: 'Submit Feedback',
   },
   fil: {
-    nav_dashboard: 'Dashboard',
-    nav_my_documents: 'Aking Espasyo',
+    nav_dashboard: 'Aking Espasyo',
+    nav_my_documents: 'Aking mga Orbit',
     nav_reminders: 'Mga Paalala',
     nav_requirements: 'Mga Kailangan',
     nav_appointments: 'Mga Appointment',
@@ -488,7 +494,7 @@ export const translations = {
     add_doc_duplicate_warning: 'Mayroon ka nang {count} {label} na sinusubaybayan. Okay lang iyan kung nagsu-subaybay ka ng renewal, bini-flag lang namin ito.',
     add_doc_step2_momentum: 'Malapit ka nang matapos, mga detalye na lang',
 
-    auth_get_started: 'Maligayang pagdating sa dashboard MO, kung saan ikaw ang may kontrol',
+    auth_get_started: 'Maligayang pagdating, Astronaut',
     auth_welcome_back: 'Maligayang pagbabalik',
     auth_signup_subtitle: 'Gumawa ng account para magpatuloy sa Orbit.',
     auth_login_subtitle: 'Mag-log in para magpatuloy sa Orbit.',
@@ -515,6 +521,10 @@ export const translations = {
     auth_reset_password_btn: 'I-reset ang password',
     auth_password_too_short: 'Dapat hindi bababa sa 6 na karakter ang password.',
     auth_passwords_dont_match: 'Hindi magkatugma ang mga password.',
+    auth_error_email_required: 'Pakilagay ang iyong email address.',
+    auth_error_email_invalid: "Kasama dapat ang '@' sa iyong email address.",
+    auth_error_password_required: 'Pakilagay ang iyong password.',
+    auth_error_confirm_password_required: 'Pakikumpirma ang iyong bagong password.',
     auth_illustration_placeholder: 'Illustration placeholder',
     auth_profile_step_subtitle: 'Diretso ka na sa sarili mong espasyo',
     auth_username_label: 'Ano ang itatawag namin sa iyo?',
@@ -529,6 +539,8 @@ export const translations = {
 
     profile_edit: 'I-edit ang Profile',
     profile_done_editing: 'Tapos na',
+    profile_photo_invalid_type: 'Pumili ng PNG, JPG, WEBP, o GIF na larawan.',
+    profile_photo_too_large: 'Masyadong malaki ang larawan — pumili ng mas mababa sa 8MB.',
     profile_section_personal: 'PERSONAL NA IMPORMASYON',
     profile_section_contact: 'DETALYE NG KONTAK',
     profile_section_security: 'SEGURIDAD',

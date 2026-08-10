@@ -22,7 +22,7 @@ export default function Hero({ onGetStarted }) {
 
       <div className="absolute inset-0 flex flex-col items-center justify-center -mt-[120px] px-6">
         <h1 className="font-instrument text-white text-[36px] md:text-7xl lg:text-[110px] leading-[0.9] tracking-tight text-center text-glow">
-          Your space. Your documents.
+          Your space. Your orbits.
         </h1>
         <p className="text-white/70 text-sm md:text-base text-center mt-5 md:mt-7 max-w-xl">
           A simplified tracker for all of your documents.

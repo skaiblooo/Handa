@@ -31,7 +31,7 @@ function FAQItem({ q, a, open, onToggle }) {
       <button
         type="button"
         onClick={onToggle}
-        className="glass-interactive w-full flex items-center justify-between gap-6 text-left"
+        className="w-full flex items-center justify-between gap-6 text-left"
         style={{ cursor: 'pointer' }}
       >
         <span className="font-instrument text-white text-xl md:text-2xl">{q}</span>
@@ -86,7 +86,7 @@ export default function FAQFooter() {
           <div>
             <span className="font-dancing text-white text-2xl">Orbit</span>
             <p className="text-white/60 text-sm mt-3 max-w-xs">
-              Your documents, tracked with intention — built for the Philippines.
+              A simplified tracker for all of your documents.
             </p>
           </div>
           {FOOTER_COLUMNS.map((col) => (

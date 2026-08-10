@@ -55,10 +55,27 @@ function App() {
 
   const isGuest = !!session?.user?.is_anonymous
 
-  async function startGuest() {
+  // `profile` carries the username/color a new signee just picked in Auth's
+  // profile step — signing in anonymously here (rather than making them set
+  // a password first) is what lets them land straight in the dashboard;
+  // they can add real credentials later from the guest banner.
+  async function startGuest(profile) {
     setGuestError('')
-    const { error } = await supabase.auth.signInAnonymously()
-    if (error) setGuestError(error.message)
+    const { data, error } = await supabase.auth.signInAnonymously()
+    if (error) {
+      setGuestError(error.message)
+      return
+    }
+    if (profile && data?.user?.id) {
+      try {
+        localStorage.setItem(
+          `handa_profile_meta_${data.user.id}`,
+          JSON.stringify({ photo: null, username: profile.username, color: profile.color })
+        )
+      } catch {
+        // best-effort persistence
+      }
+    }
   }
 
   return (

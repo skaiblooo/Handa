@@ -47,6 +47,13 @@ export default function SeamlessVideo({ src, className = '' }) {
     }
 
     a.play().catch(() => {})
+    // Warms up the back copy immediately (decode + first paint) while it's
+    // still fully transparent, instead of leaving that to happen for the
+    // first time at swap moment — decoding cold mid-crossfade is what read
+    // as a dark flash, since the browser had nothing painted yet to blend.
+    b.play()
+      .then(() => b.pause())
+      .catch(() => {})
     armNextSwap(a, b)
 
     return () => cancelAnimationFrame(raf)

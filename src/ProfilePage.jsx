@@ -909,13 +909,31 @@ export default function ProfilePage({ isDark, session, photoUrl, onPhotoChange, 
   const [openSecurityPanel, setOpenSecurityPanel] = useState(null) // null | 'password' | '2fa'
 
   const [pendingImageUrl, setPendingImageUrl] = useState(null)
+  const [photoError, setPhotoError] = useState('')
   const fileInputRef = useRef(null)
+
+  const MAX_PHOTO_BYTES = 8 * 1024 * 1024 // 8MB — generous for a phone photo, small enough that a bad file can't hang the crop canvas
+  const ALLOWED_PHOTO_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 
   function handlePhotoChange(e) {
     const file = e.target.files?.[0]
-    if (!file) return
-    setPendingImageUrl(URL.createObjectURL(file))
     e.target.value = ''
+    if (!file) return
+    setPhotoError('')
+
+    // `accept="image/*"` on the input is only a UI hint — the browser file
+    // picker doesn't enforce it, so anything selected still needs checking
+    // here before it's treated as an image.
+    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
+      setPhotoError(translate('profile_photo_invalid_type'))
+      return
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      setPhotoError(translate('profile_photo_too_large'))
+      return
+    }
+
+    setPendingImageUrl(URL.createObjectURL(file))
   }
 
   function handleCropCancel() {
@@ -981,6 +999,7 @@ export default function ProfilePage({ isDark, session, photoUrl, onPhotoChange, 
             {isEditing ? translate('profile_done_editing') : translate('profile_edit')}
           </button>
         </div>
+        {photoError && <p className="text-red-400 text-xs mt-3">{photoError}</p>}
       </div>
 
       <div className="flex flex-col gap-6 max-w-2xl">

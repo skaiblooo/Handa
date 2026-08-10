@@ -55,6 +55,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     // A tracking failure shouldn't block anyone from using the site, default
     // to the "first visit" experience (signup) rather than erroring out.
-    return new Response(JSON.stringify({ returning: false, error: err instanceof Error ? err.message : 'Unknown error' }), { status: 200, headers: corsHeaders })
+    console.error('check-visit: unexpected error', err)
+    return new Response(JSON.stringify({ returning: false }), { status: 200, headers: corsHeaders })
   }
 })

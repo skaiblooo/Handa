@@ -2,7 +2,27 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const THRESHOLDS = [30, 7, 1]
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 Deno.serve(async (req) => {
+  // This runs on a daily cron and fans out across every user's documents,
+  // which is only safe to expose to the cron trigger itself — not to
+  // anyone holding the public anon key. `verify_jwt` alone isn't enough to
+  // keep this cron-only, since any logged-in user's JWT would also pass
+  // that check; a dedicated secret (set only here and on the cron job,
+  // never shipped to the frontend) is what actually restricts the caller.
+  const cronSecret = Deno.env.get('CRON_SECRET')
+  if (!cronSecret || req.headers.get('X-Cron-Secret') !== cronSecret) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+  }
+
   const supabaseAdmin = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -24,7 +44,8 @@ const today = toDateOnly(new Date())
     .eq('intent', 'renewal')
 
   if (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 })
+    console.error('send-reminders: failed to fetch documents', error)
+    return new Response(JSON.stringify({ error: 'Internal error' }), { status: 500 })
   }
 
   const toSend: Record<string, { title: string; expiry_date: string; threshold: number }[]> = {}
@@ -68,7 +89,7 @@ const daysUntil = Math.round((expiry.getTime() - today.getTime()) / (1000 * 60 *
     if (!email) continue
 
     const docsList = toSend[userId]
-      .map((d) => `<li>${d.title}, expires ${d.expiry_date} (${d.threshold} days left)</li>`)
+      .map((d) => `<li>${escapeHtml(d.title)}, expires ${escapeHtml(d.expiry_date)} (${d.threshold} days left)</li>`)
       .join('')
 
     await fetch('https://api.resend.com/emails', {

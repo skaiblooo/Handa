@@ -16,9 +16,13 @@ export default function Navbar({ onGetStarted }) {
 
         <div className="hidden md:flex items-center justify-center gap-12">
           {NAV_LINKS.map((link) => (
-            <a key={link} href="#" className="text-white/80 hover:text-white text-sm tracking-wide transition-colors duration-300">
+            <button
+              key={link}
+              type="button"
+              className="text-white/80 hover:text-white text-sm tracking-wide transition-colors duration-300"
+            >
               {link}
-            </a>
+            </button>
           ))}
         </div>
 
@@ -77,11 +81,11 @@ export default function Navbar({ onGetStarted }) {
         }}
       >
         {NAV_LINKS.map((link, i) => (
-          <a
+          <button
             key={link}
-            href="#"
+            type="button"
             onClick={() => setIsOpen(false)}
-            className="font-instrument text-white text-3xl py-3 border-b border-white/10"
+            className="font-instrument text-white text-3xl py-3 border-b border-white/10 text-left"
             style={{
               transition: `opacity 400ms ${EASE}, transform 400ms ${EASE}`,
               transitionDelay: isOpen ? `${150 + i * 75}ms` : '0ms',
@@ -90,7 +94,7 @@ export default function Navbar({ onGetStarted }) {
             }}
           >
             {link}
-          </a>
+          </button>
         ))}
         <div
           className="mt-8"
