@@ -128,10 +128,6 @@ export const translations = {
     greeting_status_plus_more: '(+{count} more need attention)',
     greeting_status_ok: "You're all set. Everything is up to date.",
 
-    // Document stats chart
-    chart_expiring_title: 'Documents expiring per month',
-    chart_expiring_subtitle: 'Next 6 months',
-
     // Stat cards
     stat_on_track: 'On Track',
     stat_my_documents: 'My Documents',
@@ -197,7 +193,10 @@ export const translations = {
     add_doc_intent_renewal: 'I already have it',
     add_doc_intent_renewal_desc: "I'm renewing or managing an existing one",
     add_doc_choose_type: 'What are you adding?',
-    add_doc_choose_type_desc: 'Choose a document type to get started.',
+    add_doc_choose_type_desc: 'Choose a category to get started.',
+    add_doc_choose_specific_type: 'Which one exactly?',
+    add_doc_choose_specific_type_desc: 'Pick the specific document.',
+    add_doc_category_other: 'Other',
     add_doc_application_note: "You don't have this yet, so there's nothing to fill in. We'll track your progress through the steps instead.",
     add_doc_fill_details: 'Fill in the details',
     add_doc_expiry_date: 'Expiry Date',
@@ -441,9 +440,6 @@ export const translations = {
     greeting_status_plus_more: '(+{count} pa ang kailangan ng atensyon)',
     greeting_status_ok: 'Handa ka na. Updated na ang lahat ng dokumento mo.',
 
-    chart_expiring_title: 'Mga dokumentong mag-e-expire bawat buwan',
-    chart_expiring_subtitle: 'Susunod na 6 na buwan',
-
     stat_on_track: 'Nasa Tamang Landas',
     stat_my_documents: 'Mga Dokumento Ko',
     stat_renewals_due: 'Renewal (7 araw)',
@@ -503,7 +499,10 @@ export const translations = {
     add_doc_intent_renewal: 'Meron na akong ito',
     add_doc_intent_renewal_desc: 'Nag-re-renew ako o may hawak na akong isa',
     add_doc_choose_type: 'Ano ang idadagdag mo?',
-    add_doc_choose_type_desc: 'Pumili ng uri ng dokumento para magsimula.',
+    add_doc_choose_type_desc: 'Pumili ng kategorya para magsimula.',
+    add_doc_choose_specific_type: 'Alin eksakto?',
+    add_doc_choose_specific_type_desc: 'Piliin ang partikular na dokumento.',
+    add_doc_category_other: 'Iba pa',
     add_doc_application_note: 'Wala ka pa nito, kaya walang ilalagay. Susubaybayan na lang namin ang progreso mo sa mga hakbang.',
     add_doc_fill_details: 'Punan ang detalye',
     add_doc_expiry_date: 'Petsa ng Expiry',

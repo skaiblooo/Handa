@@ -7,7 +7,7 @@ import { getDaysUntilExpiry, getUrgencyLevel, formatDaysUntil } from './utils/da
 import { getActivityLog, logActivity } from './utils/activityLog'
 import { useLanguage } from './i18n'
 import { AVATAR_COLORS, AVATAR_ACCENT_HEX } from './avatarColors'
-import { DOC_TYPE_LABELS, AGENCY_BADGE, URGENCY_META } from './data/docTypes'
+import { DOC_TYPE_LABELS, AGENCY_BADGE, URGENCY_META, CARD_THEME, CARD_FIELD_SCHEMAS, DOC_CATEGORIES, AGENCY_NAMES, AGENCY_BADGE_COLOR } from './data/docTypes'
 import ltoLogo from './assets/LTO LOGO.webp'
 import psaLogo from './assets/PSA LOGO.webp'
 import dfaLogo from './assets/DFA logo.webp'
@@ -27,16 +27,7 @@ import spaceIcon from './assets/space.png'
 // Full department names for the orbit-grouping view — AGENCY_BADGE only has
 // short codes (LTO, PSA, ...), which read as cryptic on their own outside a
 // small badge context.
-const DEPARTMENT_NAMES = {
-  LTO: 'Land Transportation Office',
-  DFA: 'Department of Foreign Affairs',
-  NBI: 'National Bureau of Investigation',
-  PSA: 'Philippine Statistics Authority',
-  SSS: 'Social Security System',
-  PH: 'PhilHealth',
-  HDMF: 'Pag-IBIG Fund',
-  BIR: 'Bureau of Internal Revenue',
-}
+const DEPARTMENT_NAMES = AGENCY_NAMES
 
 const DEPARTMENT_LOGOS = {
   LTO: ltoLogo,
@@ -49,80 +40,7 @@ const DEPARTMENT_LOGOS = {
   BIR: birLogo,
 }
 
-export { DOC_TYPE_LABELS, AGENCY_BADGE }
-
-// Stylized, simplified mock-ID visuals — not exact reproductions of real PH
-// government IDs (no seals/logos/flags copied), just enough per-type
-// branding to feel like the real thing.
-export const CARD_THEME = {
-  drivers_license: { gradient: 'from-blue-700 to-blue-950', agency: 'REPUBLIC OF THE PHILIPPINES', office: 'LAND TRANSPORTATION OFFICE', docName: "DRIVER'S LICENSE" },
-  passport: { gradient: 'from-red-900 to-stone-950', agency: 'REPUBLIC OF THE PHILIPPINES', office: 'DEPARTMENT OF FOREIGN AFFAIRS', docName: 'PASSPORT' },
-  nbi_clearance: { gradient: 'from-purple-700 to-purple-950', agency: 'REPUBLIC OF THE PHILIPPINES', office: 'NATIONAL BUREAU OF INVESTIGATION', docName: 'NBI CLEARANCE' },
-  national_id: { gradient: 'from-orange-600 to-orange-900', agency: 'REPUBLIC OF THE PHILIPPINES', office: 'PHILIPPINE IDENTIFICATION SYSTEM', docName: 'NATIONAL ID' },
-  psa_birth_certificate: { gradient: 'from-amber-600 to-orange-900', agency: 'REPUBLIC OF THE PHILIPPINES', office: 'PHILIPPINE STATISTICS AUTHORITY', docName: 'BIRTH CERTIFICATE' },
-  sss: { gradient: 'from-emerald-700 to-emerald-950', agency: 'REPUBLIC OF THE PHILIPPINES', office: 'SOCIAL SECURITY SYSTEM', docName: 'SSS ID' },
-  philhealth: { gradient: 'from-red-700 to-red-950', agency: 'REPUBLIC OF THE PHILIPPINES', office: 'PHILHEALTH', docName: 'PHILHEALTH ID' },
-  pagibig: { gradient: 'from-yellow-600 to-yellow-900', agency: 'REPUBLIC OF THE PHILIPPINES', office: 'PAG-IBIG FUND', docName: 'PAG-IBIG MID CARD' },
-  tin_bir: { gradient: 'from-slate-700 to-slate-950', agency: 'REPUBLIC OF THE PHILIPPINES', office: 'BUREAU OF INTERNAL REVENUE', docName: 'TIN ID' },
-}
-
-export const CARD_FIELD_SCHEMAS = {
-  drivers_license: [
-    { key: 'fullName', label: 'Last Name, First Name, Middle Name', span: 2 },
-    { key: 'sex', label: 'Sex' },
-    { key: 'dob', label: 'Date of Birth' },
-    { key: 'address', label: 'Address', span: 2 },
-    { key: 'licenseNo', label: 'License No.' },
-    { key: 'bloodType', label: 'Blood Type' },
-  ],
-  passport: [
-    { key: 'fullName', label: 'Surname, Given Names', span: 2 },
-    { key: 'nationality', label: 'Nationality', default: 'FILIPINO' },
-    { key: 'sex', label: 'Sex' },
-    { key: 'dob', label: 'Date of Birth' },
-    { key: 'passportNo', label: 'Passport No.' },
-  ],
-  nbi_clearance: [
-    { key: 'fullName', label: 'Full Name', span: 2 },
-    { key: 'dob', label: 'Date of Birth' },
-    { key: 'address', label: 'Address', span: 2 },
-    { key: 'nbiNo', label: 'NBI No.' },
-  ],
-  national_id: [
-    { key: 'fullName', label: 'Full Name', span: 2 },
-    { key: 'sex', label: 'Sex' },
-    { key: 'dob', label: 'Date of Birth' },
-    { key: 'address', label: 'Address', span: 2 },
-    { key: 'pcn', label: 'PhilSys Card Number' },
-  ],
-  psa_birth_certificate: [
-    { key: 'fullName', label: 'Full Name', span: 2 },
-    { key: 'dob', label: 'Date of Birth' },
-    { key: 'placeOfBirth', label: 'Place of Birth' },
-    { key: 'motherName', label: "Mother's Maiden Name", span: 2 },
-    { key: 'registryNo', label: 'Registry No.' },
-  ],
-  sss: [
-    { key: 'fullName', label: 'Full Name', span: 2 },
-    { key: 'sssNo', label: 'SSS No.' },
-    { key: 'dob', label: 'Date of Birth' },
-  ],
-  philhealth: [
-    { key: 'fullName', label: 'Full Name', span: 2 },
-    { key: 'philhealthNo', label: 'PhilHealth No.' },
-    { key: 'dob', label: 'Date of Birth' },
-  ],
-  pagibig: [
-    { key: 'fullName', label: 'Full Name', span: 2 },
-    { key: 'midNo', label: 'Pag-IBIG MID No.' },
-    { key: 'dob', label: 'Date of Birth' },
-  ],
-  tin_bir: [
-    { key: 'fullName', label: 'Full Name', span: 2 },
-    { key: 'tin', label: 'TIN' },
-    { key: 'address', label: 'Address', span: 2 },
-  ],
-}
+export { DOC_TYPE_LABELS, AGENCY_BADGE, CARD_THEME, CARD_FIELD_SCHEMAS }
 
 // Only document types with a well-established, fixed official validity
 // period get a smart-default expiry date — inventing a number for types
@@ -323,6 +241,27 @@ function AgencyBadge({ docType }) {
       ) : (
         <span className="text-white text-[10px] font-bold tracking-tight leading-none text-center px-1">
           {agency.label}
+        </span>
+      )}
+    </div>
+  )
+}
+
+// Small circular agency mark used in the category picker's bubble row —
+// same logo/fallback-badge logic as AgencyBadge, just round and tiny, and
+// keyed directly by agency code (LTO, PSA, ...) instead of a doc type.
+function AgencyBubble({ isDark, code, ringClass }) {
+  const logo = DEPARTMENT_LOGOS[code]
+  const color = AGENCY_BADGE_COLOR[code] || 'bg-slate-600'
+  return (
+    <div
+      className={`w-7 h-7 rounded-full overflow-hidden flex items-center justify-center shrink-0 ring-2 ${ringClass || t(isDark, 'ring-[#0b1120]', 'ring-white')} ${logo ? 'bg-white' : color}`}
+    >
+      {logo ? (
+        <img src={logo} alt="" className="w-full h-full object-contain p-1" />
+      ) : (
+        <span className="text-white text-[7px] font-bold tracking-tight leading-none text-center px-0.5">
+          {code}
         </span>
       )}
     </div>
@@ -579,7 +518,27 @@ function IntentPicker({ isDark, onSelect, onCancel }) {
   )
 }
 
-function DocTypePicker({ isDark, onSelect, onCancel }) {
+// One plain line-icon per category — deliberately not agency logos, so the
+// category level reads as a distinct step from the agency-branded doc-type
+// grid underneath it.
+const CATEGORY_ICONS = {
+  civil_registry: <><path d="M8 3h8l4 4v14H4V3z" /><path d="M8 3v4H4M9 12h6M9 16h6" /></>,
+  local_gov: <><path d="M3 21h18M4 21V10l8-6 8 6v11M9 21v-6h6v6" /></>,
+  identification: <><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="11" r="1.8" /><path d="M6 16c.5-1.8 1.9-2.5 2.5-2.5s2 .7 2.5 2.5M14 9h5M14 13h5" /></>,
+  social_security: <><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" /><path d="M9 12l2 2 4-4" /></>,
+  background_checks: <><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" /></>,
+  taxation: <><path d="M4 3h13l3 3v15H4z" /><path d="M9 8h6M9 12h6M9 16h4" /></>,
+  transportation: <><path d="M5 11l1.5-5A2 2 0 018.4 4.5h7.2a2 2 0 011.9 1.5L19 11" /><rect x="3" y="11" width="18" height="6" rx="2" /><circle cx="7.5" cy="17" r="1.3" /><circle cx="16.5" cy="17" r="1.3" /></>,
+  travel: <><path d="M2.5 19.5L21 12.5 2.5 5.5l2 6.5-2 7.5z" /><path d="M4.5 12h5" /></>,
+  other: <><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></>,
+}
+
+// First step of "what are you adding" — a category, not an individual
+// document. Each tile shows the two most common agencies for that category
+// (a plain, static bubble stack, not a functional carousel) plus a "+N"
+// bubble for everything else it holds, so a category isn't a total mystery
+// before you tap it.
+function CategoryPicker({ isDark, onSelect, onCancel }) {
   const { translate } = useLanguage()
   return (
     <div
@@ -606,8 +565,85 @@ function DocTypePicker({ isDark, onSelect, onCancel }) {
           <Icon size={16}><path d="M18 6L6 18M6 6l12 12" /></Icon>
         </button>
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        {DOC_TYPE_OPTIONS.map((opt) => (
+      <div className="grid grid-cols-3 gap-2 max-h-[60vh] overflow-y-auto no-scrollbar">
+        {DOC_CATEGORIES.map((cat) => (
+          <button
+            key={cat.id}
+            type="button"
+            onClick={() => onSelect(cat)}
+            className={t(isDark,
+              'flex flex-col items-center gap-2 p-3 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20 transition-colors',
+              'flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-colors'
+            )}
+          >
+            <span className={t(isDark, 'w-11 h-11 rounded-xl bg-white/10 text-slate-200 flex items-center justify-center shrink-0', 'w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0')}>
+              <Icon size={20}>{CATEGORY_ICONS[cat.id]}</Icon>
+            </span>
+            <span className={t(isDark, 'text-[10px] text-center text-slate-300 leading-tight', 'text-[10px] text-center text-slate-600 leading-tight')}>
+              {cat.id === 'other' ? translate('add_doc_category_other') : cat.label}
+            </span>
+            {cat.topAgencies.length > 0 && (
+              <div className="flex items-center -space-x-1.5">
+                {cat.topAgencies.map((code) => (
+                  <AgencyBubble key={code} isDark={isDark} code={code} />
+                ))}
+                {cat.otherAgencyCount > 0 && (
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ring-2 ${t(isDark, 'ring-[#0b1120] bg-white/15 text-slate-200', 'ring-white bg-slate-200 text-slate-600')}`}>
+                    <span className="text-[7px] font-bold leading-none">+{cat.otherAgencyCount}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function DocTypePicker({ isDark, docTypeIds, onSelect, onBack, onCancel }) {
+  const { translate } = useLanguage()
+  const options = DOC_TYPE_OPTIONS.filter((opt) => docTypeIds.includes(opt.value))
+  return (
+    <div
+      onMouseDown={(e) => e.stopPropagation()}
+      className={t(isDark,
+        'relative text-left rounded-2xl glass-dark p-5',
+        'relative text-left rounded-2xl glass-light p-5'
+      )}
+    >
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-start gap-2">
+          <button
+            type="button"
+            title={translate('add_doc_back')}
+            onClick={onBack}
+            className={t(isDark,
+              'p-1.5 -ml-1.5 mt-0.5 rounded-full text-slate-500 hover:text-slate-100 hover:bg-white/10 transition-colors shrink-0',
+              'p-1.5 -ml-1.5 mt-0.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0'
+            )}
+          >
+            <Icon size={16}><path d="M15 18l-6-6 6-6" /></Icon>
+          </button>
+          <div>
+            <h3 className={t(isDark, 'font-semibold text-slate-100', 'font-semibold text-slate-900')}>{translate('add_doc_choose_specific_type')}</h3>
+            <p className={t(isDark, 'text-xs text-slate-400', 'text-xs text-slate-500')}>{translate('add_doc_choose_specific_type_desc')}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          title={translate('add_doc_cancel')}
+          onClick={onCancel}
+          className={t(isDark,
+            'p-1.5 rounded-full text-slate-500 hover:text-slate-100 hover:bg-white/10 transition-colors shrink-0',
+            'p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0'
+          )}
+        >
+          <Icon size={16}><path d="M18 6L6 18M6 6l12 12" /></Icon>
+        </button>
+      </div>
+      <div className="grid grid-cols-3 gap-2 max-h-[60vh] overflow-y-auto no-scrollbar">
+        {options.map((opt) => (
           <button
             key={opt.value}
             type="button"
@@ -766,6 +802,7 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, onAdded, o
   const { translate } = useLanguage()
   const [step, setStep] = useState('intent')
   const [intent, setIntent] = useState(null)
+  const [category, setCategory] = useState(null)
   const [docType, setDocType] = useState(initialType || 'drivers_license')
   const [title, setTitle] = useState('')
   const [expiryDate, setExpiryDate] = useState(() => (initialType ? computeSmartDefaults(initialType, existingDocs).expiryDate : ''))
@@ -783,7 +820,7 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, onAdded, o
   function selectIntent(chosenIntent) {
     setIntent(chosenIntent)
     if (!initialType) {
-      setStep('type')
+      setStep('category')
       return
     }
     if (chosenIntent === 'application') {
@@ -794,6 +831,11 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, onAdded, o
     setExpiryDate((prev) => prev || defaults.expiryDate)
     setFields((prev) => ({ ...defaults.fields, ...prev }))
     setStep('fill')
+  }
+
+  function selectCategory(cat) {
+    setCategory(cat)
+    setStep('type')
   }
 
   function selectType(type) {
@@ -842,8 +884,20 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, onAdded, o
     return <IntentPicker isDark={isDark} onSelect={selectIntent} onCancel={onCancel} />
   }
 
+  if (step === 'category') {
+    return <CategoryPicker isDark={isDark} onSelect={selectCategory} onCancel={onCancel} />
+  }
+
   if (step === 'type') {
-    return <DocTypePicker isDark={isDark} onSelect={selectType} onCancel={onCancel} />
+    return (
+      <DocTypePicker
+        isDark={isDark}
+        docTypeIds={category ? category.docTypeIds : DOC_TYPE_OPTIONS.map((o) => o.value)}
+        onSelect={selectType}
+        onBack={() => setStep('category')}
+        onCancel={onCancel}
+      />
+    )
   }
 
   if (step === 'confirm') {
@@ -1047,7 +1101,7 @@ function buildSmoothPath(points) {
 // plotting how many tracked documents expire per month (application-intent
 // documents excluded — they have no real expiry to plot) instead of temps.
 function DocumentStatsChart({ isDark, documents }) {
-  const { lang, translate } = useLanguage()
+  const { lang } = useLanguage()
   const width = 835
   const height = 200
   const topPad = 24
@@ -1077,10 +1131,6 @@ function DocumentStatsChart({ isDark, documents }) {
 
   return (
     <div className="mt-10" style={{ animation: 'rise-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.75s both' }}>
-      <div className="flex items-baseline justify-between mb-2">
-        <p className={`text-sm font-semibold ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>{translate('chart_expiring_title')}</p>
-        <p className={`text-xs ${t(isDark, 'text-slate-500', 'text-slate-400')}`}>{translate('chart_expiring_subtitle')}</p>
-      </div>
       <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="w-full" style={{ height: 180, display: 'block' }}>
         <defs>
           <linearGradient id="doc-chart-line" x1="0" y1="0" x2="1" y2="0">
@@ -1108,21 +1158,6 @@ function DocumentStatsChart({ isDark, documents }) {
             pathLength="1"
             style={{ strokeDasharray: 1, strokeDashoffset: 1, animation: 'chart-draw 1.3s cubic-bezier(0.37,0.01,0.2,1) 0.85s both' }}
           />
-          {points.map((p, i) => (
-            <g key={`pt-${i}`} style={{ animation: `rise-in 0.5s cubic-bezier(0.16,1,0.3,1) ${1.5 + i * 0.06}s both` }}>
-              <circle cx={p.x} cy={p.y} r="5" fill={fillColor} stroke={isDark ? '#0b1120' : '#ffffff'} strokeWidth="2" />
-              <text
-                x={p.x}
-                y={p.y - 14}
-                textAnchor={i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'}
-                fontSize="14"
-                fontWeight="700"
-                fill={lineColor}
-              >
-                {months[i].count}
-              </text>
-            </g>
-          ))}
         </g>
       </svg>
       <div className="flex justify-between mt-1">
