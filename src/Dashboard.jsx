@@ -3069,7 +3069,13 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
             className="w-full max-w-sm"
             style={{
               animation: addingDocument ? 'modal-in 180ms ease-out' : 'modal-out 180ms ease-in forwards',
-              ...(addCardWidth ? { maxWidth: `${addCardWidth}px` } : {}),
+              // Morphing the modal out of whatever tile was clicked reads well
+              // for the small "+ Add Document" tile inside a document grid,
+              // but the "Add Orbit" tile spans the full content width — using
+              // that measured width verbatim stretched the picker into a
+              // wide, oddly-proportioned box instead of the compact card it's
+              // designed as, so it's capped at the same width as max-w-sm.
+              ...(addCardWidth ? { maxWidth: `${Math.min(addCardWidth, 384)}px` } : {}),
             }}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}

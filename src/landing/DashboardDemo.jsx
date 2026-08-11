@@ -7,6 +7,9 @@ import fileIcon from '../assets/file.png'
 import calendarIcon from '../assets/calendar.png'
 import spaceIcon from '../assets/space.png'
 import dfaLogo from '../assets/DFA logo.webp'
+import nbiLogo from '../assets/NBI logo.webp'
+import ltoLogo from '../assets/LTO LOGO.webp'
+import philhealthLogo from '../assets/PHILHEALTH logo.webp'
 import orbitLogo from '../assets/orbit logo.png'
 
 const NAV_ITEMS = [
@@ -17,6 +20,8 @@ const NAV_ITEMS = [
   { id: 'calendar', label: 'Calendar', iconSrc: calendarIcon },
   { id: 'history', label: 'History', iconSrc: spaceIcon },
 ]
+
+const DEPARTMENT_LOGOS = { DFA: dfaLogo, NBI: nbiLogo, LTO: ltoLogo, PH: philhealthLogo }
 
 const TRAVEL_CATEGORY = DOC_CATEGORIES.find((c) => c.id === 'travel')
 const TRAVEL_TYPES = TRAVEL_CATEGORY.docTypeIds.slice(0, 6)
@@ -42,10 +47,18 @@ function Icon({ children, size = 18 }) {
 }
 
 function Bubble({ code, size = 26, ring = true }) {
+  const logo = DEPARTMENT_LOGOS[code]
   const color = AGENCY_BADGE_COLOR[code] || 'bg-slate-600'
   return (
-    <div className={`rounded-full flex items-center justify-center shrink-0 ${ring ? 'ring-2 ring-[#0b1120]' : ''} ${color}`} style={{ width: size, height: size }}>
-      <span className="text-white font-bold tracking-tight leading-none" style={{ fontSize: size * 0.28 }}>{code}</span>
+    <div
+      className={`rounded-full overflow-hidden flex items-center justify-center shrink-0 ${ring ? 'ring-2 ring-[#0b1120]' : ''} ${logo ? 'bg-white' : color}`}
+      style={{ width: size, height: size }}
+    >
+      {logo ? (
+        <img src={logo} alt="" className="w-full h-full object-contain" style={{ padding: size <= 20 ? 1.5 : 4 }} />
+      ) : (
+        <span className="text-white font-bold tracking-tight leading-none" style={{ fontSize: size * 0.28 }}>{code}</span>
+      )}
     </div>
   )
 }
@@ -69,7 +82,7 @@ function liftStyle(hovered, pressed) {
 
 // Sample data typed into the ID card mid-loop, to make "filling out a
 // document" a visible beat rather than a jump from blank to saved.
-const TYPED_NAME = 'Dela Cruz, Juan Miguel'
+const TYPED_NAME = 'Capacio, Marc Santos'
 const TYPED_DOB = '04/12/1998'
 
 // FillModal only ever mounts while the 'fill' step is active and unmounts
@@ -97,15 +110,21 @@ function useTypewriter(text, { startDelay = 0, speed = 42 } = {}) {
 }
 
 // Windows-style arrow pointer (white glyph, dark outline) — positioned by
-// its tip rather than centered, like a real cursor.
-function CursorGlyph({ x, y }) {
+// its tip rather than centered, like a real cursor. Tilts and shrinks
+// slightly on "click" instead of drawing a separate ripple, so it reads as
+// the cursor itself clicking rather than an overlay effect.
+function CursorGlyph({ x, y, clicking }) {
   return (
     <div
       className="absolute pointer-events-none z-30"
       style={{
         left: x - 2,
         top: y - 1,
-        transition: 'left 0.65s cubic-bezier(0.65,0,0.35,1), top 0.65s cubic-bezier(0.65,0,0.35,1)',
+        transform: clicking ? 'scale(0.82) rotate(-6deg)' : 'scale(1) rotate(0deg)',
+        transformOrigin: '4px 2px',
+        transition: clicking
+          ? 'left 0.65s cubic-bezier(0.65,0,0.35,1), top 0.65s cubic-bezier(0.65,0,0.35,1), transform 0.09s ease-out'
+          : 'left 0.65s cubic-bezier(0.65,0,0.35,1), top 0.65s cubic-bezier(0.65,0,0.35,1), transform 0.15s cubic-bezier(0.34,1.56,0.64,1)',
       }}
     >
       <svg width="22" height="22" viewBox="0 0 24 24" style={{ filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.55))' }}>
@@ -122,13 +141,13 @@ function CursorGlyph({ x, y }) {
   )
 }
 
-// Ten timeline "beats" driving the whole loop: which page/modal to show,
+// Twelve timeline "beats" driving the whole loop: which page/modal to show,
 // where the fake cursor should travel to (a registered ref id), how long to
-// rest there, and whether a click pulse fires before advancing.
+// rest there, and whether a click fires before advancing.
 const STEPS = [
   { page: 'dashboard', modal: null, target: null, hold: 3000 },
   { page: 'dashboard', modal: null, target: 'nav-my-orbits', hold: 500, click: true },
-  { page: 'my_orbits', modal: null, target: null, hold: 1000 },
+  { page: 'my_orbits', modal: null, target: null, hold: 1200 },
   { page: 'my_orbits', modal: null, target: 'add-orbit-tile', hold: 500, click: true },
   { page: 'my_orbits', modal: 'intent', target: null, hold: 750 },
   { page: 'my_orbits', modal: 'intent', target: 'intent-renewal', hold: 500, click: true },
@@ -138,7 +157,9 @@ const STEPS = [
   { page: 'my_orbits', modal: 'doctype', target: 'doctype-passport', hold: 500, click: true },
   { page: 'my_orbits', modal: 'fill', target: null, hold: 3200 },
   { page: 'my_orbits', modal: 'fill', target: 'save-check', hold: 500, click: true },
-  { page: 'my_orbits_saved', modal: null, target: null, hold: 2800 },
+  { page: 'my_orbits_saved', modal: null, target: null, hold: 1300 },
+  { page: 'my_orbits_saved', modal: null, target: 'saved-orbit-card', hold: 500, click: true },
+  { page: 'my_orbits_saved', modal: 'steps', target: null, hold: 3000 },
 ]
 
 function Sidebar({ page, hoveredId, pressedId, register }) {
@@ -172,10 +193,30 @@ function Sidebar({ page, hoveredId, pressedId, register }) {
           )
         })}
       </nav>
+      <div className="flex flex-col gap-1 pt-4">
+        <div className="flex items-center gap-3 px-2 py-2 rounded-xl text-sm text-slate-400">
+          <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
+            <Icon size={15}>
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+            </Icon>
+          </span>
+          Settings
+        </div>
+        <div className="flex items-center gap-3 px-2 py-2 rounded-xl text-sm text-slate-400">
+          <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
+            <Icon size={15}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /></Icon>
+          </span>
+          Log out
+        </div>
+      </div>
     </aside>
   )
 }
 
+// Matches the real topbar's user-menu pill exactly: letter avatar, name +
+// email stacked, chevron — just with a placeholder letter instead of a
+// real photo, since this is a demo account.
 function Topbar() {
   return (
     <div className="flex items-center justify-between mb-6">
@@ -187,15 +228,22 @@ function Topbar() {
         <span className="w-8 h-8 rounded-full glass-dark flex items-center justify-center text-slate-400">
           <Icon size={15}><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" /></Icon>
         </span>
-        <span className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">E</span>
+        <div className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-sm font-semibold text-white shrink-0">E</div>
+          <div className="hidden sm:flex flex-col items-start leading-tight">
+            <span className="text-sm font-semibold text-slate-100">Explorer</span>
+            <span className="text-xs text-slate-400">explorer@orbit.app</span>
+          </div>
+          <Icon size={14}><path d="M6 9l6 6 6-6" /></Icon>
+        </div>
       </div>
     </div>
   )
 }
 
 // Faithful, condensed recreation of buildSmoothPath + DocumentStatsChart —
-// same viewBox, same gradient defs, same chart-draw/chart-fill-wipe
-// animation names, same month-label row underneath.
+// same viewBox proportions, same gradient defs, same chart-draw/
+// chart-fill-wipe animation names, same month-label row underneath.
 function buildSmoothPath(points) {
   if (points.length < 2) return ''
   let d = `M ${points[0].x},${points[0].y}`
@@ -276,6 +324,11 @@ const RAIL_DOCS = [
   { label: 'PhilHealth', day: '2 years left' },
 ]
 
+// Mounts once per loop (DashboardPage only renders while step.page ===
+// 'dashboard', so it's a fresh mount every cycle) — the staggered
+// slide-in-right delays are relative to that mount, not to any external
+// clock, so they can't drift out of sync with re-renders from cursor state
+// changes elsewhere in the tree.
 function UrgentRail() {
   return (
     <div className="flex flex-col gap-3 lg:w-[190px] shrink-0">
@@ -328,6 +381,33 @@ function DashboardPage() {
   )
 }
 
+// Pre-existing orbits shown before the demo adds a 4th — matches the three
+// documents already visible in the My Space rail (NBI, Driver's License,
+// PhilHealth), so "3 documents tracked" reads the same on both tabs.
+const EXISTING_ORBITS = [
+  { code: 'NBI', name: 'National Bureau of Investigation', count: 1 },
+  { code: 'LTO', name: 'Land Transportation Office', count: 1 },
+  { code: 'PH', name: 'PhilHealth', count: 1 },
+]
+
+function OrbitRow({ code, name, count, id, register, hoveredId, pressedId }) {
+  const hovered = id && hoveredId === id
+  const pressed = id && pressedId === id
+  return (
+    <div
+      ref={id ? (el) => register(id, el) : undefined}
+      className="glass-dark rounded-2xl p-4 flex items-center gap-3"
+      style={{ animation: 'rise-in 0.5s cubic-bezier(0.16,1,0.3,1) both', ...liftStyle(hovered, pressed) }}
+    >
+      <Bubble code={code} size={36} ring={false} />
+      <div>
+        <p className="text-sm font-medium text-slate-100">{name}</p>
+        <p className="text-xs text-slate-500 mt-0.5">{count} document{count === 1 ? '' : 's'}</p>
+      </div>
+    </div>
+  )
+}
+
 function MyOrbitsPage({ page, hoveredId, pressedId, register }) {
   const saved = page === 'my_orbits_saved'
   const hovered = hoveredId === 'add-orbit-tile'
@@ -344,23 +424,22 @@ function MyOrbitsPage({ page, hoveredId, pressedId, register }) {
         <Icon size={16}><path d="M12 5v14M5 12h14" /></Icon>
         Add Orbit
       </div>
-      {saved && (
-        <div className="glass-dark rounded-2xl p-4 flex items-center gap-3" style={{ animation: 'rise-in 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
-          <img src={dfaLogo} alt="" className="w-9 h-9 rounded-full bg-white object-contain p-1" />
-          <div>
-            <p className="text-sm font-medium text-slate-100">Department of Foreign Affairs</p>
-            <p className="text-xs text-slate-500 mt-0.5">1 document</p>
-          </div>
-        </div>
-      )}
+      <div className="flex flex-col gap-3">
+        {EXISTING_ORBITS.map((orbit) => (
+          <OrbitRow key={orbit.code} {...orbit} register={register} hoveredId={hoveredId} pressedId={pressedId} />
+        ))}
+        {saved && (
+          <OrbitRow code="DFA" name="Department of Foreign Affairs" count={1} id="saved-orbit-card" register={register} hoveredId={hoveredId} pressedId={pressedId} />
+        )}
+      </div>
     </div>
   )
 }
 
-function ModalShell({ children }) {
+function ModalShell({ children, wide }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl">
-      <div className="glass-dark rounded-2xl p-5 w-[380px]" style={{ animation: 'rise-in 0.35s cubic-bezier(0.16,1,0.3,1) both' }}>
+    <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl p-4">
+      <div className={`glass-dark rounded-2xl p-5 ${wide ? 'w-full max-w-md' : 'w-[380px]'}`} style={{ animation: 'rise-in 0.35s cubic-bezier(0.16,1,0.3,1) both' }}>
         {children}
       </div>
     </div>
@@ -457,8 +536,8 @@ function DocTypeModal({ hoveredId, pressedId, register }) {
 function FillModal({ hoveredId, pressedId, register }) {
   const theme = CARD_THEME.passport
   const schema = CARD_FIELD_SCHEMAS.passport
-  const name = useTypewriter(TYPED_NAME, { startDelay: 400, speed: 40 })
-  const dob = useTypewriter(TYPED_DOB, { startDelay: 1400, speed: 65 })
+  const name = useTypewriter(TYPED_NAME, { startDelay: 400, speed: 38 })
+  const dob = useTypewriter(TYPED_DOB, { startDelay: 1500, speed: 65 })
   const typingName = name.length > 0 && name.length < TYPED_NAME.length
   const typingDob = dob.length > 0 && dob.length < TYPED_DOB.length
   const fieldValue = { fullName: name, dob, nationality: 'FILIPINO' }
@@ -510,10 +589,50 @@ function FillModal({ hoveredId, pressedId, register }) {
   )
 }
 
+// Condensed recreation of PlaybookModal's "How to Apply" step view — real
+// passport-renewal step data from data/playbooks.js, same header/progress/
+// step-card/all-steps chip language, as the loop's final beat.
+function StepsModal() {
+  return (
+    <ModalShell wide>
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2.5">
+          <span className="w-9 h-9 rounded-xl bg-blue-500/15 text-blue-300 flex items-center justify-center shrink-0">
+            <Icon size={17}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6" /></Icon>
+          </span>
+          <div>
+            <p className="text-xs font-semibold tracking-widest text-slate-400">PASSPORT</p>
+            <p className="text-[11px] text-slate-600">Last verified 2026-08-01</p>
+          </div>
+        </div>
+        <span className="text-slate-500 text-lg leading-none">&times;</span>
+      </div>
+      <h2 className="text-xl font-semibold text-slate-100 mb-3">How to Apply</h2>
+      <div className="flex gap-1.5 mb-3">
+        {[0, 1, 2, 3, 4].map((i) => <div key={i} className={`h-1.5 flex-1 rounded-full ${i === 0 ? 'bg-blue-400' : 'bg-white/10'}`} />)}
+      </div>
+      <div className="rounded-xl border border-blue-400/20 p-4" style={{ backgroundColor: 'rgba(96,165,250,0.04)' }}>
+        <div className="w-7 h-7 rounded-full bg-blue-400 text-slate-950 flex items-center justify-center text-xs font-bold mb-2">1</div>
+        <p className="text-sm font-semibold text-slate-100 mb-1">Book DFA Appointment</p>
+        <p className="text-xs text-slate-400 mb-2.5">Book an appointment through the DFA appointment website</p>
+        <div className="flex flex-wrap gap-1.5">
+          <span className="text-[10px] px-2 py-1 rounded-full border border-blue-400/20 text-blue-300">Stable internet connection</span>
+          <span className="text-[10px] px-2 py-1 rounded-full border border-blue-400/20 text-blue-300">Email address</span>
+        </div>
+      </div>
+      <div className="flex gap-1.5 mt-3.5">
+        {['1', '2', '3', '4', '5'].map((n, i) => (
+          <div key={n} className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold ${i === 0 ? 'bg-blue-400 text-slate-950' : 'bg-white/10 text-slate-400'}`}>{n}</div>
+        ))}
+      </div>
+    </ModalShell>
+  )
+}
+
 export default function DashboardDemo() {
   const [stepIndex, setStepIndex] = useState(0)
   const [cursor, setCursor] = useState({ x: 0, y: 0, visible: false })
-  const [pulseKey, setPulseKey] = useState(0)
+  const [clicking, setClicking] = useState(false)
   const [hoveredId, setHoveredId] = useState(null)
   const [pressedId, setPressedId] = useState(null)
   const [paused, setPaused] = useState(false)
@@ -556,8 +675,11 @@ export default function DashboardDemo() {
           if (step.click) {
             pressTimer = setTimeout(() => {
               setPressedId(step.target)
-              setPulseKey((k) => k + 1)
-              releaseTimer = setTimeout(() => setPressedId(null), 180)
+              setClicking(true)
+              releaseTimer = setTimeout(() => {
+                setPressedId(null)
+                setClicking(false)
+              }, 180)
             }, 200)
           }
           advanceTimer = setTimeout(() => {
@@ -604,24 +726,11 @@ export default function DashboardDemo() {
             {step.modal === 'category' && <CategoryModal hoveredId={hoveredId} pressedId={pressedId} register={register} />}
             {step.modal === 'doctype' && <DocTypeModal hoveredId={hoveredId} pressedId={pressedId} register={register} />}
             {step.modal === 'fill' && <FillModal hoveredId={hoveredId} pressedId={pressedId} register={register} />}
+            {step.modal === 'steps' && <StepsModal />}
           </div>
         </div>
 
-        {cursor.visible && !reducedMotion && (
-          <>
-            <CursorGlyph x={cursor.x} y={cursor.y} />
-            <div
-              key={pulseKey}
-              className="absolute w-3 h-3 rounded-full pointer-events-none z-20"
-              style={{
-                left: cursor.x,
-                top: cursor.y,
-                transform: 'translate(-50%, -50%)',
-                animation: pulseKey ? 'pulse-ring 0.6s ease-out' : 'none',
-              }}
-            />
-          </>
-        )}
+        {cursor.visible && !reducedMotion && <CursorGlyph x={cursor.x} y={cursor.y} clicking={clicking} />}
       </div>
     </div>
   )

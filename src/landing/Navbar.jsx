@@ -9,7 +9,11 @@ export default function Navbar({ onGetStarted }) {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 grid grid-cols-2 md:grid-cols-3 items-center px-6 md:px-12 py-5">
+      {/* backdrop-blur + a dark scrim keep the links legible once page content
+          scrolls underneath this fixed bar — without it, text from whatever
+          section is currently at the top of the viewport shows straight
+          through and visually collides with the nav links. */}
+      <nav className="fixed top-0 left-0 right-0 z-50 grid grid-cols-2 md:grid-cols-3 items-center px-6 md:px-12 py-5 bg-black/20 backdrop-blur-md">
         <a href="#" className="font-dancing text-white text-2xl md:text-3xl justify-self-start">
           Orbit
         </a>
