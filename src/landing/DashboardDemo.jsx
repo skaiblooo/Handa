@@ -180,7 +180,7 @@ function Sidebar({ page, hoveredId, pressedId, register }) {
             <div
               key={item.id}
               ref={isTarget ? (el) => register('nav-my-orbits', el) : undefined}
-              className={`flex items-center gap-3 px-2 py-2 rounded-xl text-sm ${
+              className={`flex items-center gap-3 px-2 py-2 rounded-xl text-sm transition-colors duration-150 ${
                 active ? 'glass-chip-dark text-slate-100' : hovered ? 'bg-white/5 text-slate-100' : 'text-slate-400'
               }`}
               style={liftStyle(hovered, pressed)}
@@ -365,7 +365,7 @@ function DashboardPage() {
       <div className="flex-1 min-w-0">
         <h1 className="font-instrument text-[30px] leading-[0.98] tracking-tight text-slate-100">
           <span className="block overflow-hidden pb-[0.15em] -mb-[0.15em]">
-            <span className="block" style={{ animation: 'hero-line-up 0.9s cubic-bezier(0.16,1,0.3,1) 0.05s both' }}>Good morning,</span>
+            <span className="block" style={{ animation: 'hero-line-up 0.9s cubic-bezier(0.16,1,0.3,1) 0.05s both' }}>Welcome Aboard,</span>
           </span>
           <span className="block overflow-hidden pb-[0.15em] -mb-[0.15em]">
             <span className="block" style={{ animation: 'hero-line-up 0.9s cubic-bezier(0.16,1,0.3,1) 0.16s both' }}>Explorer</span>
@@ -439,7 +439,10 @@ function MyOrbitsPage({ page, hoveredId, pressedId, register }) {
 function ModalShell({ children, wide }) {
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl p-4">
-      <div className={`glass-dark rounded-2xl p-5 ${wide ? 'w-full max-w-md' : 'w-[380px]'}`} style={{ animation: 'rise-in 0.35s cubic-bezier(0.16,1,0.3,1) both' }}>
+      <div
+        className={`overflow-y-auto no-scrollbar rounded-2xl p-5 md:p-6 ${wide ? 'w-full h-full bg-[#0a0a0f] border border-white/10' : 'w-[380px] glass-dark'}`}
+        style={{ animation: 'rise-in 0.35s cubic-bezier(0.16,1,0.3,1) both' }}
+      >
         {children}
       </div>
     </div>
@@ -589,10 +592,25 @@ function FillModal({ hoveredId, pressedId, register }) {
   )
 }
 
-// Condensed recreation of PlaybookModal's "How to Apply" step view — real
-// passport-renewal step data from data/playbooks.js, same header/progress/
-// step-card/all-steps chip language, as the loop's final beat.
+// Real passport-renewal step data (data/playbooks.js: passport.renewal),
+// since the demo's flow chose "I already have it" earlier.
+const PASSPORT_RENEWAL_STEPS = [
+  { title: 'Book DFA Appointment', description: 'Book an appointment through the DFA appointment website', tags: ['Stable internet connection', 'Email address'] },
+  { title: 'Fill Out & Pay Online', description: 'Fill out the online application form and pay the applicable fee', tags: ['Payment method', 'Basic personal info'] },
+  { title: 'Appear at DFA Site', description: 'Appear at your chosen DFA site on your appointment date with required documents', tags: ['Current passport', 'Valid ID', 'Confirmed appointment'] },
+  { title: 'Biometrics Capture', description: 'Have your biometrics (photo, fingerprints) captured on-site', tags: ['Appear in person'] },
+  { title: 'Track & Receive', description: 'Track your passport status online and claim or wait for delivery', tags: ['Reference number', 'Valid ID for claiming'] },
+]
+
+// Full recreation of PlaybookModal's "How to Apply" step view — header,
+// progress bar, step counter + dots, the illustration/number step card
+// with tags and a "mark as done" row, Previous/Next, the all-steps chip
+// grid, and the cost/time footer — using the real passport-renewal step
+// data. Parked on step 1 (static, not paginated) since this is a demo
+// beat, not an interactive session.
 function StepsModal() {
+  const totalSteps = PASSPORT_RENEWAL_STEPS.length
+  const step = PASSPORT_RENEWAL_STEPS[0]
   return (
     <ModalShell wide>
       <div className="flex items-start justify-between mb-3">
@@ -605,25 +623,89 @@ function StepsModal() {
             <p className="text-[11px] text-slate-600">Last verified 2026-08-01</p>
           </div>
         </div>
-        <span className="text-slate-500 text-lg leading-none">&times;</span>
+        <span className="text-slate-500 text-xl leading-none">&times;</span>
       </div>
-      <h2 className="text-xl font-semibold text-slate-100 mb-3">How to Apply</h2>
-      <div className="flex gap-1.5 mb-3">
-        {[0, 1, 2, 3, 4].map((i) => <div key={i} className={`h-1.5 flex-1 rounded-full ${i === 0 ? 'bg-blue-400' : 'bg-white/10'}`} />)}
+
+      <h2 className="text-2xl font-semibold text-slate-100 mb-4">How to Apply</h2>
+
+      <div className="flex gap-1.5 mb-2">
+        {PASSPORT_RENEWAL_STEPS.map((_, i) => (
+          <div key={i} className={`h-1.5 flex-1 rounded-full ${i === 0 ? 'bg-[var(--accent-400,#60a5fa)]' : 'bg-white/10'}`} />
+        ))}
       </div>
-      <div className="rounded-xl border border-blue-400/20 p-4" style={{ backgroundColor: 'rgba(96,165,250,0.04)' }}>
-        <div className="w-7 h-7 rounded-full bg-blue-400 text-slate-950 flex items-center justify-center text-xs font-bold mb-2">1</div>
-        <p className="text-sm font-semibold text-slate-100 mb-1">Book DFA Appointment</p>
-        <p className="text-xs text-slate-400 mb-2.5">Book an appointment through the DFA appointment website</p>
-        <div className="flex flex-wrap gap-1.5">
-          <span className="text-[10px] px-2 py-1 rounded-full border border-blue-400/20 text-blue-300">Stable internet connection</span>
-          <span className="text-[10px] px-2 py-1 rounded-full border border-blue-400/20 text-blue-300">Email address</span>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs text-slate-500">Step 1 of {totalSteps}</span>
+        <div className="flex items-center gap-1.5">
+          {PASSPORT_RENEWAL_STEPS.map((_, i) => (
+            <span key={i} className={`rounded-full ${i === 0 ? 'w-2.5 h-2.5 bg-[var(--accent-400,#60a5fa)]' : 'w-1.5 h-1.5 bg-white/15'}`} />
+          ))}
         </div>
       </div>
-      <div className="flex gap-1.5 mt-3.5">
-        {['1', '2', '3', '4', '5'].map((n, i) => (
-          <div key={n} className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold ${i === 0 ? 'bg-blue-400 text-slate-950' : 'bg-white/10 text-slate-400'}`}>{n}</div>
+
+      <div className="rounded-2xl border p-4 md:p-5 mb-4 overflow-hidden" style={{ borderColor: 'rgba(96,165,250,0.2)', backgroundColor: 'rgba(96,165,250,0.04)' }}>
+        <div className="w-8 h-8 rounded-full bg-[var(--accent-400,#60a5fa)] text-slate-950 flex items-center justify-center text-sm font-bold mb-3">1</div>
+        <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] gap-5 items-center">
+          <div
+            className="rounded-xl flex items-center justify-center h-32 md:h-36"
+            style={{
+              backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)',
+              backgroundSize: '18px 18px',
+              backgroundColor: 'color-mix(in srgb, #60a5fa 6%, transparent)',
+            }}
+          >
+            <div className="w-16 h-16 rounded-full flex items-center justify-center font-semibold bg-white/10 text-slate-400">
+              <span className="text-2xl">1</span>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-xl font-semibold text-slate-100 mb-1">{step.title}</h3>
+            <p className="text-sm text-slate-400 mb-3">{step.description}</p>
+            <p className="text-xs font-semibold tracking-widest text-slate-500 mb-2">WHAT YOU'LL NEED</p>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {step.tags.map((tag) => (
+                <span key={tag} className="text-xs px-3 py-1.5 rounded-full border" style={{ borderColor: 'rgba(96,165,250,0.2)', color: '#93c5fd', backgroundColor: 'rgba(96,165,250,0.05)' }}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+            <div className="flex items-center gap-2.5 text-sm text-slate-300">
+              <span className="w-5 h-5 rounded-md border border-white/20 shrink-0" />
+              Mark this step as done
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between mt-4">
+          <span className="flex items-center gap-1 text-sm font-medium text-slate-500 px-4 py-2">
+            <Icon size={15}><path d="M15 18l-6-6 6-6" /></Icon>
+            Previous
+          </span>
+          <span className="flex items-center gap-1 text-sm font-semibold text-white px-4 py-2 rounded-xl bg-[var(--accent-600,#2563eb)]">
+            Next Step
+            <Icon size={15}><path d="M9 18l6-6-6-6" /></Icon>
+          </span>
+        </div>
+      </div>
+
+      <p className="text-xs font-semibold tracking-widest text-slate-500 mb-2">ALL STEPS</p>
+      <div className="grid grid-cols-5 gap-2 mb-4">
+        {PASSPORT_RENEWAL_STEPS.map((s, i) => (
+          <div key={i} className={`rounded-xl border p-2.5 text-left ${i === 0 ? 'border-blue-400/50 bg-blue-400/5' : 'border-white/10'}`}>
+            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold mb-1.5 ${i === 0 ? 'bg-[var(--accent-400,#60a5fa)] text-slate-950' : 'bg-white/10 text-slate-400'}`}>{i + 1}</span>
+            <p className="text-xs text-slate-300 leading-tight">{s.title}</p>
+          </div>
         ))}
+      </div>
+
+      <div className="flex flex-col gap-1.5 text-sm text-slate-300">
+        <p className="flex items-center gap-2">
+          <span className="text-slate-500 shrink-0"><Icon size={15}><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2" /><path d="M6 12h.01M18 12h.01" /></Icon></span>
+          ₱950 (regular processing) to ₱1,200 (expedited)
+        </p>
+        <p className="flex items-center gap-2">
+          <span className="text-slate-500 shrink-0"><Icon size={15}><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></Icon></span>
+          6-15 business days depending on processing type
+        </p>
       </div>
     </ModalShell>
   )
@@ -712,9 +794,26 @@ export default function DashboardDemo() {
       <div
         ref={containerRef}
         className="relative w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
-        style={{ aspectRatio: '16 / 9.2', background: 'linear-gradient(160deg, #0b1220 0%, #060c16 100%)' }}
+        style={{ aspectRatio: '16 / 9.2', backgroundColor: '#050505' }}
       >
-        <div className="flex h-full">
+        {/* Same Earth photo + drift + dark gradient as the real dashboard's
+            dark-mode background (Dashboard.jsx) — the glass panels are
+            deliberately translucent, so without this they read as flat
+            dark cards instead of actual frosted glass over a scene. */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: 'url(https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2400&auto=format&fit=crop)',
+            backgroundSize: '115% auto',
+            backgroundRepeat: 'no-repeat',
+            animation: 'earth-drift 90s ease-in-out infinite alternate',
+          }}
+        />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'linear-gradient(180deg, rgba(3,6,10,0.32) 0%, rgba(3,6,10,0.52) 100%)' }}
+        />
+        <div className="relative flex h-full">
           <Sidebar page={step.page} hoveredId={hoveredId} pressedId={pressedId} register={register} />
           <div className="flex-1 min-w-0 p-6 pt-5 relative overflow-hidden">
             <Topbar />
