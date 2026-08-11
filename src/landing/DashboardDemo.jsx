@@ -41,11 +41,83 @@ function Icon({ children, size = 18 }) {
   )
 }
 
-function Bubble({ code, size = 26 }) {
+function Bubble({ code, size = 26, ring = true }) {
   const color = AGENCY_BADGE_COLOR[code] || 'bg-slate-600'
   return (
-    <div className={`rounded-full flex items-center justify-center shrink-0 ring-2 ring-[#0b1120] ${color}`} style={{ width: size, height: size }}>
+    <div className={`rounded-full flex items-center justify-center shrink-0 ${ring ? 'ring-2 ring-[#0b1120]' : ''} ${color}`} style={{ width: size, height: size }}>
       <span className="text-white font-bold tracking-tight leading-none" style={{ fontSize: size * 0.28 }}>{code}</span>
+    </div>
+  )
+}
+
+// Same hover/press visual language as the real dashboard's glass-interactive
+// utility (translateY(-1px) scale(1.012) + highlight on hover, scale(0.965)
+// on press) — reproduced with inline styles here because the demo's cursor
+// is scripted, not a real pointer, so CSS :hover/:active never fire on
+// their own; this is driven by the timeline instead.
+function liftStyle(hovered, pressed) {
+  if (pressed) return { transform: 'scale(0.965)', transition: 'transform 0.15s cubic-bezier(0.34,1.56,0.64,1)' }
+  if (hovered) {
+    return {
+      transform: 'translateY(-1px) scale(1.012)',
+      boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.4), 0 10px 24px -10px rgba(15,23,42,0.35)',
+      transition: 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease',
+    }
+  }
+  return { transition: 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease' }
+}
+
+// Sample data typed into the ID card mid-loop, to make "filling out a
+// document" a visible beat rather than a jump from blank to saved.
+const TYPED_NAME = 'Dela Cruz, Juan Miguel'
+const TYPED_DOB = '04/12/1998'
+
+// FillModal only ever mounts while the 'fill' step is active and unmounts
+// the moment it isn't (the parent conditionally renders it), so the typing
+// effect just needs to run once per mount — no separate "active" flag or
+// reset branch needed.
+function useTypewriter(text, { startDelay = 0, speed = 42 } = {}) {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    let i = 0
+    let interval
+    const start = setTimeout(() => {
+      interval = setInterval(() => {
+        i += 1
+        setCount(i)
+        if (i >= text.length) clearInterval(interval)
+      }, speed)
+    }, startDelay)
+    return () => {
+      clearTimeout(start)
+      clearInterval(interval)
+    }
+  }, [text, startDelay, speed])
+  return text.slice(0, count)
+}
+
+// Windows-style arrow pointer (white glyph, dark outline) — positioned by
+// its tip rather than centered, like a real cursor.
+function CursorGlyph({ x, y }) {
+  return (
+    <div
+      className="absolute pointer-events-none z-30"
+      style={{
+        left: x - 2,
+        top: y - 1,
+        transition: 'left 0.65s cubic-bezier(0.65,0,0.35,1), top 0.65s cubic-bezier(0.65,0,0.35,1)',
+      }}
+    >
+      <svg width="22" height="22" viewBox="0 0 24 24" style={{ filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.55))' }}>
+        <path
+          d="M4 2 L4 19.5 L8.4 15.6 L11.4 21.8 L14.2 20.4 L11.2 14.3 L17.2 14.3 Z"
+          fill="white"
+          stroke="#1a1a1a"
+          strokeWidth="1.3"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+      </svg>
     </div>
   )
 }
@@ -55,21 +127,21 @@ function Bubble({ code, size = 26 }) {
 // rest there, and whether a click pulse fires before advancing.
 const STEPS = [
   { page: 'dashboard', modal: null, target: null, hold: 3000 },
-  { page: 'dashboard', modal: null, target: 'nav-my-orbits', hold: 450, click: true },
+  { page: 'dashboard', modal: null, target: 'nav-my-orbits', hold: 500, click: true },
   { page: 'my_orbits', modal: null, target: null, hold: 1000 },
-  { page: 'my_orbits', modal: null, target: 'add-orbit-tile', hold: 450, click: true },
+  { page: 'my_orbits', modal: null, target: 'add-orbit-tile', hold: 500, click: true },
   { page: 'my_orbits', modal: 'intent', target: null, hold: 750 },
-  { page: 'my_orbits', modal: 'intent', target: 'intent-renewal', hold: 450, click: true },
+  { page: 'my_orbits', modal: 'intent', target: 'intent-renewal', hold: 500, click: true },
   { page: 'my_orbits', modal: 'category', target: null, hold: 750 },
-  { page: 'my_orbits', modal: 'category', target: 'category-travel', hold: 450, click: true },
+  { page: 'my_orbits', modal: 'category', target: 'category-travel', hold: 500, click: true },
   { page: 'my_orbits', modal: 'doctype', target: null, hold: 750 },
-  { page: 'my_orbits', modal: 'doctype', target: 'doctype-passport', hold: 450, click: true },
-  { page: 'my_orbits', modal: 'fill', target: null, hold: 1600 },
-  { page: 'my_orbits', modal: 'fill', target: 'save-check', hold: 450, click: true },
+  { page: 'my_orbits', modal: 'doctype', target: 'doctype-passport', hold: 500, click: true },
+  { page: 'my_orbits', modal: 'fill', target: null, hold: 3200 },
+  { page: 'my_orbits', modal: 'fill', target: 'save-check', hold: 500, click: true },
   { page: 'my_orbits_saved', modal: null, target: null, hold: 2800 },
 ]
 
-function Sidebar({ page, register }) {
+function Sidebar({ page, hoveredId, pressedId, register }) {
   const activeId = page === 'dashboard' ? 'dashboard' : 'my_orbits'
   return (
     <aside className="w-48 shrink-0 flex flex-col gap-6 py-5 px-3">
@@ -78,20 +150,27 @@ function Sidebar({ page, register }) {
         <span className="font-dancing text-lg text-slate-100">Orbit</span>
       </div>
       <nav className="flex flex-col gap-1.5 flex-1">
-        {NAV_ITEMS.map((item) => (
-          <div
-            key={item.id}
-            ref={item.id === 'my_orbits' ? (el) => register('nav-my-orbits', el) : undefined}
-            className={`flex items-center gap-3 px-2 py-2 rounded-xl text-sm ${
-              item.id === activeId ? 'glass-chip-dark text-slate-100' : 'text-slate-400'
-            }`}
-          >
-            <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0">
-              <img src={item.iconSrc} alt="" className="w-[16px] h-[16px] object-contain" style={{ filter: 'invert(1) brightness(1.3)' }} />
-            </span>
-            {item.label}
-          </div>
-        ))}
+        {NAV_ITEMS.map((item) => {
+          const isTarget = item.id === 'my_orbits'
+          const hovered = isTarget && hoveredId === 'nav-my-orbits'
+          const pressed = isTarget && pressedId === 'nav-my-orbits'
+          const active = item.id === activeId
+          return (
+            <div
+              key={item.id}
+              ref={isTarget ? (el) => register('nav-my-orbits', el) : undefined}
+              className={`flex items-center gap-3 px-2 py-2 rounded-xl text-sm ${
+                active ? 'glass-chip-dark text-slate-100' : hovered ? 'bg-white/5 text-slate-100' : 'text-slate-400'
+              }`}
+              style={liftStyle(hovered, pressed)}
+            >
+              <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0">
+                <img src={item.iconSrc} alt="" className="w-[16px] h-[16px] object-contain" style={{ filter: 'invert(1) brightness(1.3)' }} />
+              </span>
+              {item.label}
+            </div>
+          )
+        })}
       </nav>
     </aside>
   )
@@ -114,38 +193,153 @@ function Topbar() {
   )
 }
 
-function DashboardPage() {
-  const points = 'M0,120 C 60,60 100,140 160,90 C 220,40 260,110 320,70 C 380,30 420,95 480,55'
+// Faithful, condensed recreation of buildSmoothPath + DocumentStatsChart —
+// same viewBox, same gradient defs, same chart-draw/chart-fill-wipe
+// animation names, same month-label row underneath.
+function buildSmoothPath(points) {
+  if (points.length < 2) return ''
+  let d = `M ${points[0].x},${points[0].y}`
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i]
+    const p1 = points[i + 1]
+    const midX = (p0.x + p1.x) / 2
+    d += ` C ${midX},${p0.y} ${midX},${p1.y} ${p1.x},${p1.y}`
+  }
+  return d
+}
+
+const CHART_MONTHS = [
+  { label: 'Aug', count: 1 },
+  { label: 'Sep', count: 0 },
+  { label: 'Oct', count: 2 },
+  { label: 'Nov', count: 1 },
+  { label: 'Dec', count: 3 },
+  { label: 'Jan', count: 1 },
+]
+
+function DemoChart() {
+  const width = 500
+  const height = 160
+  const topPad = 18
+  const bottomPad = 24
+  const maxCount = Math.max(1, ...CHART_MONTHS.map((m) => m.count))
+  const points = CHART_MONTHS.map((m, i) => ({
+    x: (i / (CHART_MONTHS.length - 1)) * width,
+    y: height - bottomPad - (m.count / maxCount) * (height - topPad - bottomPad),
+  }))
+  const linePath = buildSmoothPath(points)
+  const fillPath = `${linePath} L ${width},${height} L 0,${height} Z`
+
   return (
-    <div key="dashboard" style={{ animation: 'rise-in 0.6s cubic-bezier(0.16,1,0.3,1) both' }}>
-      <h1 className="font-instrument text-[32px] leading-none text-slate-100" style={{ animation: 'hero-line-up 0.8s cubic-bezier(0.16,1,0.3,1) both' }}>
-        Good morning, Explorer
-      </h1>
-      <p className="text-slate-400 text-sm mt-3">You're all set. Everything is up to date.</p>
-      <svg viewBox="0 0 500 160" className="w-full mt-8" style={{ height: 140 }}>
-        <path d={points} fill="none" stroke="#60a5fa" strokeWidth="3" strokeLinecap="round" pathLength="1"
-          style={{ strokeDasharray: 1, strokeDashoffset: 1, animation: 'chart-draw 1.3s cubic-bezier(0.37,0.01,0.2,1) 0.4s forwards' }} />
+    <div className="mt-8" style={{ animation: 'rise-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.75s both' }}>
+      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="w-full" style={{ height: 140, display: 'block' }}>
+        <defs>
+          <linearGradient id="demo-chart-line" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+            <stop offset="12%" stopColor="#ffffff" stopOpacity="0.9" />
+            <stop offset="88%" stopColor="#ffffff" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="demo-chart-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#60a5fa" stopOpacity="0" />
+          </linearGradient>
+          <clipPath id="demo-chart-clip"><rect width={width} height={height} /></clipPath>
+        </defs>
+        <g clipPath="url(#demo-chart-clip)">
+          <g style={{ transformOrigin: '0px 0px', animation: 'chart-fill-wipe 1.1s cubic-bezier(0.37,0.01,0.2,1) 1.1s both' }}>
+            <path d={fillPath} fill="url(#demo-chart-fill)" />
+          </g>
+          <path
+            d={linePath}
+            fill="none"
+            stroke="url(#demo-chart-line)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            pathLength="1"
+            style={{ strokeDasharray: 1, strokeDashoffset: 1, animation: 'chart-draw 1.3s cubic-bezier(0.37,0.01,0.2,1) 0.85s both' }}
+          />
+        </g>
       </svg>
-      <div className="grid grid-cols-3 gap-3 mt-6">
-        {['Passport', "Driver's License", 'NBI Clearance'].map((label, i) => (
-          <div key={label} className="glass-dark rounded-xl p-3" style={{ animation: `slide-in-right 0.6s cubic-bezier(0.16,1,0.3,1) ${0.5 + i * 0.1}s both` }}>
-            <p className="text-xs text-slate-400 truncate">{label}</p>
-            <p className="text-sm font-semibold text-slate-100 mt-1">Active</p>
-          </div>
+      <div className="flex justify-between mt-1">
+        {CHART_MONTHS.map((m, i) => (
+          <span key={`${m.label}-${i}`} className={`text-xs ${i === 0 ? 'text-slate-100 font-semibold' : 'text-slate-500'}`}>{m.label}</span>
         ))}
       </div>
     </div>
   )
 }
 
-function MyOrbitsPage({ page, register }) {
+const RAIL_DOCS = [
+  { label: 'NBI Clearance', code: 'NBI', day: 'Expired', status: 'Expired', big: true },
+  { label: "Driver's License", day: '1 year, 6 months left' },
+  { label: 'PhilHealth', day: '2 years left' },
+]
+
+function UrgentRail() {
+  return (
+    <div className="flex flex-col gap-3 lg:w-[190px] shrink-0">
+      {RAIL_DOCS.map((doc, i) => (
+        <div
+          key={doc.label}
+          className={`glass-dark rounded-2xl w-full ${doc.big ? 'p-4' : 'p-3 flex items-center justify-between gap-3'}`}
+          style={{ animation: `slide-in-right 0.7s cubic-bezier(0.16,1,0.3,1) ${0.55 + i * 0.12}s both` }}
+        >
+          {doc.big ? (
+            <>
+              <p className="flex items-center gap-1.5 text-xs text-slate-400">
+                <Bubble code={doc.code} size={16} ring={false} />
+                <span className="truncate">{doc.label}</span>
+              </p>
+              <p className="text-2xl font-medium tracking-tight mt-2 text-slate-100">{doc.day}</p>
+              <p className="text-xs mt-1.5 text-slate-400">{doc.status}</p>
+            </>
+          ) : (
+            <div className="min-w-0">
+              <p className="text-xs truncate text-slate-400">{doc.label}</p>
+              <p className="text-sm font-semibold mt-0.5 text-slate-100">{doc.day}</p>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function DashboardPage() {
+  return (
+    <div key="dashboard" className="flex flex-col lg:flex-row gap-8" style={{ animation: 'rise-in 0.6s cubic-bezier(0.16,1,0.3,1) both' }}>
+      <div className="flex-1 min-w-0">
+        <h1 className="font-instrument text-[30px] leading-[0.98] tracking-tight text-slate-100">
+          <span className="block overflow-hidden pb-[0.15em] -mb-[0.15em]">
+            <span className="block" style={{ animation: 'hero-line-up 0.9s cubic-bezier(0.16,1,0.3,1) 0.05s both' }}>Good morning,</span>
+          </span>
+          <span className="block overflow-hidden pb-[0.15em] -mb-[0.15em]">
+            <span className="block" style={{ animation: 'hero-line-up 0.9s cubic-bezier(0.16,1,0.3,1) 0.16s both' }}>Explorer</span>
+          </span>
+        </h1>
+        <p className="mt-3 text-sm text-slate-400" style={{ animation: 'rise-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.5s both' }}>
+          You're all set. Everything is up to date.
+        </p>
+        <DemoChart />
+      </div>
+      <UrgentRail />
+    </div>
+  )
+}
+
+function MyOrbitsPage({ page, hoveredId, pressedId, register }) {
   const saved = page === 'my_orbits_saved'
+  const hovered = hoveredId === 'add-orbit-tile'
   return (
     <div key="my_orbits" style={{ animation: 'rise-in 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
       <h1 className="font-instrument text-3xl text-slate-100 mb-5">My Orbits</h1>
       <div
         ref={(el) => register('add-orbit-tile', el)}
-        className="flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/15 text-slate-500 py-4 mb-4"
+        className={`flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed py-4 mb-4 ${
+          hovered ? 'border-white/30 text-slate-300' : 'border-white/15 text-slate-500'
+        }`}
+        style={{ transition: 'color 0.2s ease, border-color 0.2s ease', ...(pressedId === 'add-orbit-tile' ? { transform: 'scale(0.98)' } : {}) }}
       >
         <Icon size={16}><path d="M12 5v14M5 12h14" /></Icon>
         Add Orbit
@@ -173,7 +367,21 @@ function ModalShell({ children }) {
   )
 }
 
-function IntentModal({ register }) {
+function OptionTile({ id, hoveredId, pressedId, register, children, className }) {
+  const hovered = hoveredId === id
+  const pressed = pressedId === id
+  return (
+    <div
+      ref={(el) => register(id, el)}
+      className={`${className} ${hovered ? 'bg-white/5 border-white/20' : 'border-white/10'}`}
+      style={pressed ? { transform: 'scale(0.97)', transition: 'transform 0.15s ease' } : { transition: 'background-color 0.2s ease, border-color 0.2s ease' }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function IntentModal({ hoveredId, pressedId, register }) {
   return (
     <ModalShell>
       <p className="font-semibold text-slate-100 mb-1">First time, or renewing?</p>
@@ -185,67 +393,78 @@ function IntentModal({ register }) {
           </span>
           <span className="text-xs font-medium text-slate-100">Applying first time</span>
         </div>
-        <div
-          ref={(el) => register('intent-renewal', el)}
-          className="flex flex-col items-center gap-2 p-4 rounded-xl border border-white/10 text-center"
-        >
+        <OptionTile id="intent-renewal" hoveredId={hoveredId} pressedId={pressedId} register={register} className="flex flex-col items-center gap-2 p-4 rounded-xl border text-center">
           <span className="w-9 h-9 rounded-full bg-emerald-500/15 text-emerald-300 flex items-center justify-center">
             <Icon size={16}><path d="M3 12a9 9 0 0115.3-6.4M21 12a9 9 0 01-15.3 6.4" /><path d="M21 3v6h-6M3 21v-6h6" /></Icon>
           </span>
           <span className="text-xs font-medium text-slate-100">I already have it</span>
-        </div>
+        </OptionTile>
       </div>
     </ModalShell>
   )
 }
 
-function CategoryModal({ register }) {
+function CategoryModal({ hoveredId, pressedId, register }) {
   return (
     <ModalShell>
       <p className="font-semibold text-slate-100 mb-1">What are you adding?</p>
       <p className="text-xs text-slate-400 mb-4">Choose a category to get started.</p>
       <div className="grid grid-cols-3 gap-2">
-        {DOC_CATEGORIES.slice(0, 6).map((cat) => (
-          <div
+        {DOC_CATEGORIES.map((cat) => (
+          <OptionTile
             key={cat.id}
-            ref={cat.id === 'travel' ? (el) => register('category-travel', el) : undefined}
-            className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl border border-white/10 text-center"
+            id={cat.id === 'travel' ? 'category-travel' : `cat-${cat.id}`}
+            hoveredId={hoveredId}
+            pressedId={pressedId}
+            register={register}
+            className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl border text-center"
           >
             <span className="w-8 h-8 rounded-lg bg-white/10 text-slate-200 flex items-center justify-center">
               <Icon size={15}>{CATEGORY_ICONS[cat.id]}</Icon>
             </span>
             <span className="text-[9px] text-slate-300 leading-tight">{cat.id === 'travel' ? 'Travel & Immigration' : cat.label}</span>
-          </div>
+          </OptionTile>
         ))}
       </div>
     </ModalShell>
   )
 }
 
-function DocTypeModal({ register }) {
+function DocTypeModal({ hoveredId, pressedId, register }) {
   return (
     <ModalShell>
       <p className="font-semibold text-slate-100 mb-1">Which one exactly?</p>
       <p className="text-xs text-slate-400 mb-4">Pick the specific document.</p>
       <div className="grid grid-cols-3 gap-2">
         {TRAVEL_TYPES.map((id) => (
-          <div
+          <OptionTile
             key={id}
-            ref={id === 'passport' ? (el) => register('doctype-passport', el) : undefined}
-            className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl border border-white/10 text-center"
+            id={id === 'passport' ? 'doctype-passport' : `doctype-${id}`}
+            hoveredId={hoveredId}
+            pressedId={pressedId}
+            register={register}
+            className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl border text-center"
           >
             <Bubble code={AGENCY_BADGE[id].label} size={28} />
             <span className="text-[9px] text-slate-300 leading-tight">{DOC_TYPE_LABELS[id]}</span>
-          </div>
+          </OptionTile>
         ))}
       </div>
     </ModalShell>
   )
 }
 
-function FillModal({ register }) {
+function FillModal({ hoveredId, pressedId, register }) {
   const theme = CARD_THEME.passport
   const schema = CARD_FIELD_SCHEMAS.passport
+  const name = useTypewriter(TYPED_NAME, { startDelay: 400, speed: 40 })
+  const dob = useTypewriter(TYPED_DOB, { startDelay: 1400, speed: 65 })
+  const typingName = name.length > 0 && name.length < TYPED_NAME.length
+  const typingDob = dob.length > 0 && dob.length < TYPED_DOB.length
+  const fieldValue = { fullName: name, dob, nationality: 'FILIPINO' }
+  const hovered = hoveredId === 'save-check'
+  const pressed = pressedId === 'save-check'
+
   return (
     <ModalShell>
       <div className="flex items-center gap-2 mb-3">
@@ -257,7 +476,11 @@ function FillModal({ register }) {
         <span className="text-sm font-medium text-slate-100">Passport</span>
         <div className="flex items-center gap-1">
           <span className="p-1.5 rounded-full text-slate-500"><Icon size={14}><path d="M15 18l-6-6 6-6" /></Icon></span>
-          <span ref={(el) => register('save-check', el)} className="p-1.5 rounded-full text-emerald-400">
+          <span
+            ref={(el) => register('save-check', el)}
+            className={`p-1.5 rounded-full text-emerald-400 ${hovered ? 'drop-shadow-[0_0_6px_rgba(52,211,153,0.9)]' : ''}`}
+            style={pressed ? { transform: 'scale(0.9)', transition: 'transform 0.15s ease' } : { transition: 'transform 0.2s ease' }}
+          >
             <Icon size={14}><path d="M20 6L9 17l-5-5" /></Icon>
           </span>
           <span className="p-1.5 rounded-full text-slate-500"><Icon size={14}><path d="M18 6L6 18M6 6l12 12" /></Icon></span>
@@ -268,12 +491,19 @@ function FillModal({ register }) {
         <p className="text-[8px] font-semibold tracking-wide opacity-75">{theme.office}</p>
         <p className="text-sm font-bold tracking-wide mt-1 mb-3">{theme.docName}</p>
         <div className="grid grid-cols-2 gap-x-3 gap-y-2">
-          {schema.slice(0, 4).map((f) => (
-            <div key={f.key} className={f.span === 2 ? 'col-span-2' : ''}>
-              <p className="text-[7px] uppercase tracking-wide opacity-70">{f.label}</p>
-              <p className="text-[11px] font-medium">{f.default || '—'}</p>
-            </div>
-          ))}
+          {schema.slice(0, 4).map((f) => {
+            const value = fieldValue[f.key]
+            const isTyping = (f.key === 'fullName' && typingName) || (f.key === 'dob' && typingDob)
+            return (
+              <div key={f.key} className={f.span === 2 ? 'col-span-2' : ''}>
+                <p className="text-[7px] uppercase tracking-wide opacity-70">{f.label}</p>
+                <p className="text-[11px] font-medium min-h-[13px]">
+                  {value || f.default || '—'}
+                  {isTyping && <span className="animate-pulse">|</span>}
+                </p>
+              </div>
+            )
+          })}
         </div>
       </div>
     </ModalShell>
@@ -284,6 +514,8 @@ export default function DashboardDemo() {
   const [stepIndex, setStepIndex] = useState(0)
   const [cursor, setCursor] = useState({ x: 0, y: 0, visible: false })
   const [pulseKey, setPulseKey] = useState(0)
+  const [hoveredId, setHoveredId] = useState(null)
+  const [pressedId, setPressedId] = useState(null)
   const [paused, setPaused] = useState(false)
   const refs = useRef({})
   const containerRef = useRef(null)
@@ -304,7 +536,7 @@ export default function DashboardDemo() {
   useEffect(() => {
     if (paused || reducedMotion) return
     const step = STEPS[stepIndex]
-    let mountTimer, arriveTimer, advanceTimer
+    let mountTimer, arriveTimer, pressTimer, releaseTimer, advanceTimer
 
     mountTimer = setTimeout(() => {
       if (step.target) {
@@ -320,8 +552,18 @@ export default function DashboardDemo() {
           })
         }
         arriveTimer = setTimeout(() => {
-          if (step.click) setPulseKey((k) => k + 1)
-          advanceTimer = setTimeout(() => setStepIndex((i) => (i + 1) % STEPS.length), step.hold)
+          setHoveredId(step.target)
+          if (step.click) {
+            pressTimer = setTimeout(() => {
+              setPressedId(step.target)
+              setPulseKey((k) => k + 1)
+              releaseTimer = setTimeout(() => setPressedId(null), 180)
+            }, 200)
+          }
+          advanceTimer = setTimeout(() => {
+            setHoveredId(null)
+            setStepIndex((i) => (i + 1) % STEPS.length)
+          }, step.hold)
         }, 650)
       } else {
         advanceTimer = setTimeout(() => setStepIndex((i) => (i + 1) % STEPS.length), step.hold)
@@ -331,6 +573,8 @@ export default function DashboardDemo() {
     return () => {
       clearTimeout(mountTimer)
       clearTimeout(arriveTimer)
+      clearTimeout(pressTimer)
+      clearTimeout(releaseTimer)
       clearTimeout(advanceTimer)
     }
   }, [stepIndex, paused, reducedMotion])
@@ -349,34 +593,26 @@ export default function DashboardDemo() {
         style={{ aspectRatio: '16 / 9.2', background: 'linear-gradient(160deg, #0b1220 0%, #060c16 100%)' }}
       >
         <div className="flex h-full">
-          <Sidebar page={step.page} register={register} />
+          <Sidebar page={step.page} hoveredId={hoveredId} pressedId={pressedId} register={register} />
           <div className="flex-1 min-w-0 p-6 pt-5 relative overflow-hidden">
             <Topbar />
             {step.page === 'dashboard' && <DashboardPage />}
             {(step.page === 'my_orbits' || step.page === 'my_orbits_saved') && (
-              <MyOrbitsPage page={step.page} register={register} />
+              <MyOrbitsPage page={step.page} hoveredId={hoveredId} pressedId={pressedId} register={register} />
             )}
-            {step.modal === 'intent' && <IntentModal register={register} />}
-            {step.modal === 'category' && <CategoryModal register={register} />}
-            {step.modal === 'doctype' && <DocTypeModal register={register} />}
-            {step.modal === 'fill' && <FillModal register={register} />}
+            {step.modal === 'intent' && <IntentModal hoveredId={hoveredId} pressedId={pressedId} register={register} />}
+            {step.modal === 'category' && <CategoryModal hoveredId={hoveredId} pressedId={pressedId} register={register} />}
+            {step.modal === 'doctype' && <DocTypeModal hoveredId={hoveredId} pressedId={pressedId} register={register} />}
+            {step.modal === 'fill' && <FillModal hoveredId={hoveredId} pressedId={pressedId} register={register} />}
           </div>
         </div>
 
         {cursor.visible && !reducedMotion && (
           <>
-            <div
-              className="absolute w-3.5 h-3.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.6)] pointer-events-none z-20"
-              style={{
-                left: cursor.x,
-                top: cursor.y,
-                transform: 'translate(-50%, -50%)',
-                transition: 'left 0.65s cubic-bezier(0.65,0,0.35,1), top 0.65s cubic-bezier(0.65,0,0.35,1)',
-              }}
-            />
+            <CursorGlyph x={cursor.x} y={cursor.y} />
             <div
               key={pulseKey}
-              className="absolute w-3.5 h-3.5 rounded-full pointer-events-none z-10"
+              className="absolute w-3 h-3 rounded-full pointer-events-none z-20"
               style={{
                 left: cursor.x,
                 top: cursor.y,
