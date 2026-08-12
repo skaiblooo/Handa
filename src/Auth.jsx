@@ -262,7 +262,7 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
       <img src={loginIllustration} alt="" className="hidden md:block absolute inset-0 w-full h-full object-cover" />
       <div
         className="hidden md:block absolute inset-0 pointer-events-none"
-        style={{ background: 'linear-gradient(90deg, rgba(10,10,15,0.15) 0%, rgba(10,10,15,0.6) 55%, rgba(10,10,15,0.9) 100%)' }}
+        style={{ background: 'linear-gradient(90deg, rgba(10,10,15,0) 0%, rgba(10,10,15,0) 40%, rgba(10,10,15,0.55) 62%, rgba(10,10,15,0.92) 100%)' }}
       />
 
       {/* Form column — same effective width/position as the old 1.7fr/1fr
