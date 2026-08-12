@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import { useLanguage } from './i18n'
 import { AVATAR_COLORS, AVATAR_ACCENT_HEX } from './avatarColors'
-import loginIllustration from './assets/login-illustration.webp'
+import loginIllustration from './assets/login page new bg.png'
 
 const FIELD_ERROR_LIFETIME = 3500
 
@@ -255,21 +255,18 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
   }
 
   return (
-    <div className="min-h-screen w-full grid md:grid-cols-[1.7fr_1fr] bg-[#0a0a0f]">
-      {/* Left: astronaut illustration, full-bleed like Hero's video */}
-      <div className="hidden md:block relative overflow-hidden bg-black">
-        <img src={loginIllustration} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        {/* Fades all the way to the form panel's exact color well before the
-            column boundary, so the photo visually dissolves into the rest of
-            the page instead of ending in a hard-edged rectangle. */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: 'linear-gradient(90deg, transparent 35%, #0a0a0f 88%)' }}
-        />
-      </div>
+    <div className="min-h-screen w-full relative overflow-hidden bg-[#0a0a0f]">
+      {/* Illustration behind the entire page, not just one side — hidden on
+          mobile (as before) where there's no room for it to read as
+          anything but noise behind the form. */}
+      <img src={loginIllustration} alt="" className="hidden md:block absolute inset-0 w-full h-full object-cover" />
+      <div
+        className="hidden md:block absolute inset-0 pointer-events-none"
+        style={{ background: 'linear-gradient(90deg, rgba(10,10,15,0.15) 0%, rgba(10,10,15,0.6) 55%, rgba(10,10,15,0.9) 100%)' }}
+      />
 
-      {/* Right: form */}
-      <div className="flex items-center justify-center px-6 md:px-16 py-16 bg-[#0a0a0f]">
+      {/* Form, anchored to the right like the reference design */}
+      <div className="relative min-h-screen w-full flex items-center justify-center md:justify-end px-6 md:px-16 lg:px-24 py-16">
         <div className="w-full max-w-sm">
           {isSignUp && profileStep ? (
             <>
