@@ -786,11 +786,14 @@ export default function DashboardDemo() {
   const step = STEPS[stepIndex]
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-6">
-      <div className="text-left mb-8">
+    <div className="w-full">
+      {/* Aligned to the page's own left margin (matching Navbar's px-6
+          md:px-12), not the mockup's centered max-w-6xl column below it. */}
+      <div className="w-full px-6 md:px-12 mb-8 text-left">
         <h2 className="font-instrument text-white text-3xl md:text-4xl">See Orbit in action</h2>
         <p className="text-white/50 text-sm mt-3">A quick look at tracking a document from start to finish.</p>
       </div>
+      <div className="w-full max-w-6xl mx-auto px-6">
       <div
         ref={containerRef}
         className="relative w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
@@ -830,6 +833,7 @@ export default function DashboardDemo() {
         </div>
 
         {cursor.visible && !reducedMotion && <CursorGlyph x={cursor.x} y={cursor.y} clicking={clicking} />}
+      </div>
       </div>
     </div>
   )
