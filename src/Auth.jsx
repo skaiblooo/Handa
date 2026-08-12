@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import { useLanguage } from './i18n'
 import { AVATAR_COLORS, AVATAR_ACCENT_HEX } from './avatarColors'
+import loginIllustration from './assets/login-illustration.webp'
 
 const FIELD_ERROR_LIFETIME = 3500
 
@@ -255,22 +256,16 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
 
   return (
     <div className="min-h-screen w-full grid md:grid-cols-2">
-      {/* Left: illustration placeholder (Canva graphic goes here later) */}
-<div
-  className="hidden md:flex items-center justify-center relative"
-  style={{
-    backgroundColor: '#000000',
-    backgroundImage: `
-      radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.3), transparent 50%),
-      radial-gradient(circle at 0% 100%, rgba(59, 130, 246, 0.2), transparent 45%),
-      linear-gradient(180deg, #000000 0%, #050505 100%)
-    `,
-  }}
->
-  <div className="w-full h-full flex items-center justify-center">
-    <span className="text-slate-600 text-sm">{translate('auth_illustration_placeholder')}</span>
-  </div>
-</div>
+      {/* Left: astronaut illustration, full-bleed like Hero's video */}
+      <div className="hidden md:block relative overflow-hidden bg-black">
+        <img src={loginIllustration} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        {/* Fades toward the form panel's own tone so the seam between photo
+            and panel disappears instead of reading as a hard vertical cut. */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'linear-gradient(90deg, transparent 55%, rgba(10,10,15,0.85) 100%)' }}
+        />
+      </div>
 
       {/* Right: form */}
       <div className="flex items-center justify-center px-6 md:px-16 py-16 bg-[#0a0a0f]">
