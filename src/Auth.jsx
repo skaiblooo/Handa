@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import { useLanguage } from './i18n'
 import { AVATAR_COLORS, AVATAR_ACCENT_HEX } from './avatarColors'
-import loginIllustration from './assets/login page new bg.png'
+import loginIllustration from './assets/login-bg.webp'
 
 const FIELD_ERROR_LIFETIME = 3500
 
@@ -265,8 +265,11 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
         style={{ background: 'linear-gradient(90deg, rgba(10,10,15,0.15) 0%, rgba(10,10,15,0.6) 55%, rgba(10,10,15,0.9) 100%)' }}
       />
 
-      {/* Form, anchored to the right like the reference design */}
-      <div className="relative min-h-screen w-full flex items-center justify-center md:justify-end px-6 md:px-16 lg:px-24 py-16">
+      {/* Form column — same effective width/position as the old 1.7fr/1fr
+          grid split (roughly the right third of the page), not flush
+          against the outer edge like a plain flex justify-end would put it. */}
+      <div className="relative min-h-screen w-full flex">
+        <div className="w-full md:w-[37%] md:ml-auto flex items-center justify-center px-6 md:px-12 lg:px-16 py-16">
         <div className="w-full max-w-sm">
           {isSignUp && profileStep ? (
             <>
@@ -494,6 +497,7 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
               )}
             </>
           )}
+        </div>
         </div>
       </div>
     </div>
