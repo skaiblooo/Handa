@@ -255,15 +255,16 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
   }
 
   return (
-    <div className="min-h-screen w-full grid md:grid-cols-2">
+    <div className="min-h-screen w-full grid md:grid-cols-[1.7fr_1fr] bg-[#0a0a0f]">
       {/* Left: astronaut illustration, full-bleed like Hero's video */}
       <div className="hidden md:block relative overflow-hidden bg-black">
         <img src={loginIllustration} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        {/* Fades toward the form panel's own tone so the seam between photo
-            and panel disappears instead of reading as a hard vertical cut. */}
+        {/* Fades all the way to the form panel's exact color well before the
+            column boundary, so the photo visually dissolves into the rest of
+            the page instead of ending in a hard-edged rectangle. */}
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ background: 'linear-gradient(90deg, transparent 55%, rgba(10,10,15,0.85) 100%)' }}
+          style={{ background: 'linear-gradient(90deg, transparent 35%, #0a0a0f 88%)' }}
         />
       </div>
 
