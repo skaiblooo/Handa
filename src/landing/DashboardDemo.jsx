@@ -787,7 +787,7 @@ export default function DashboardDemo() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-6">
-      <div className="text-center mb-8">
+      <div className="text-left mb-8">
         <h2 className="font-instrument text-white text-3xl md:text-4xl">See Orbit in action</h2>
         <p className="text-white/50 text-sm mt-3">A quick look at tracking a document from start to finish.</p>
       </div>
