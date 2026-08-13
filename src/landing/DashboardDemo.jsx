@@ -619,29 +619,46 @@ const PASSPORT_RENEWAL_STEPS = [
   { title: 'Track & Receive', description: 'Track your passport status online and claim or wait for delivery', tags: ['Reference number', 'Valid ID for claiming'] },
 ]
 
-// Full recreation of PlaybookModal's "How to Apply" step view — header,
-// progress bar, step counter + dots, the illustration/number step card
-// with tags, the all-steps chip grid, and the cost/time footer — using
-// the real passport-renewal step data. Compact sizing (vs. the real
-// modal's own max-w-6xl max-h-[90vh] scroll) so all five steps actually
-// fit inside the demo frame's fixed height instead of overflowing it, and
-// cycles currentStep on its own timer so every step gets shown, not just
-// the first.
+// Full recreation of PlaybookModal's "How to Apply" step view — same
+// pieces as the real modal (header, progress bar, step counter + dots,
+// the illustration/number step card with tags and a "mark as done" row,
+// Previous/Next controls, the emerald accent once the final step is
+// reached, the all-steps chip grid, the cost/time footer, and the
+// feedback prompt at the bottom) using the real passport-renewal step
+// data, just condensed to fit the demo frame's fixed height. Cycles
+// currentStep on its own timer, "checking off" each step shortly before
+// advancing, so every step — and the completed/final states — actually
+// gets shown rather than freezing on step 1.
 function StepsModal() {
   const totalSteps = PASSPORT_RENEWAL_STEPS.length
   const [currentStep, setCurrentStep] = useState(0)
+  const [checked, setChecked] = useState(false)
 
   useEffect(() => {
-    if (currentStep >= totalSteps - 1) return
-    const timer = setTimeout(() => setCurrentStep((i) => i + 1), 850)
-    return () => clearTimeout(timer)
+    setChecked(false)
+    const checkTimer = setTimeout(() => setChecked(true), 500)
+    let advanceTimer
+    if (currentStep < totalSteps - 1) {
+      advanceTimer = setTimeout(() => setCurrentStep((i) => i + 1), 850)
+    }
+    return () => {
+      clearTimeout(checkTimer)
+      clearTimeout(advanceTimer)
+    }
   }, [currentStep, totalSteps])
 
   const step = PASSPORT_RENEWAL_STEPS[currentStep]
+  const isStepDone = checked
+  const isFinalStep = currentStep === totalSteps - 1
+  const accent = isFinalStep ? 'emerald' : 'blue'
+  const accentBar = accent === 'emerald' ? 'bg-emerald-400' : 'bg-[var(--accent-400,#60a5fa)]'
+  const accentDot = accent === 'emerald' ? 'bg-emerald-400' : 'bg-[var(--accent-400,#60a5fa)]'
+  const accentText = accent === 'emerald' ? 'text-emerald-950' : 'text-slate-950'
+  const accentSolid = accent === 'emerald' ? 'bg-emerald-400' : 'bg-[var(--accent-400,#60a5fa)]'
 
   return (
     <ModalShell wide>
-      <div className="flex items-start justify-between mb-2">
+      <div className="flex items-start justify-between mb-1.5">
         <div className="flex items-center gap-2">
           <span className="w-7 h-7 rounded-lg bg-blue-500/15 text-blue-300 flex items-center justify-center shrink-0">
             <Icon size={14}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6" /></Icon>
@@ -654,71 +671,126 @@ function StepsModal() {
         <span className="text-slate-500 text-lg leading-none">&times;</span>
       </div>
 
-      <h2 className="text-lg font-semibold text-slate-100 mb-2">How to Apply</h2>
+      <h2 className="text-lg font-semibold text-slate-100 mb-1.5">How to Apply</h2>
 
       <div className="flex gap-1.5 mb-1.5">
         {PASSPORT_RENEWAL_STEPS.map((_, i) => (
-          <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${i <= currentStep ? 'bg-[var(--accent-400,#60a5fa)]' : 'bg-white/10'}`} />
+          <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${i <= currentStep ? accentBar : 'bg-white/10'}`} />
         ))}
       </div>
       <div className="flex items-center justify-between mb-2">
         <span className="text-[11px] text-slate-500">Step {currentStep + 1} of {totalSteps}</span>
         <div className="flex items-center gap-1.5">
           {PASSPORT_RENEWAL_STEPS.map((_, i) => (
-            <span key={i} className={`rounded-full transition-all duration-300 ${i === currentStep ? 'w-2.5 h-2.5 bg-[var(--accent-400,#60a5fa)]' : 'w-1.5 h-1.5 bg-white/15'}`} />
+            <span key={i} className={`rounded-full transition-all duration-300 ${i === currentStep ? `w-2.5 h-2.5 ${accentDot}` : 'w-1.5 h-1.5 bg-white/15'}`} />
           ))}
         </div>
       </div>
 
-      <div className="rounded-xl border p-3 mb-3 overflow-hidden" style={{ borderColor: 'rgba(96,165,250,0.2)', backgroundColor: 'rgba(96,165,250,0.04)' }}>
-        <div className="grid md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.3fr)] gap-3 items-center">
+      <div
+        className="rounded-xl border p-2.5 mb-2 overflow-hidden transition-colors duration-300"
+        style={
+          accent === 'emerald'
+            ? { borderColor: 'rgba(52,211,153,0.2)', backgroundColor: 'rgba(52,211,153,0.04)' }
+            : { borderColor: 'rgba(96,165,250,0.2)', backgroundColor: 'rgba(96,165,250,0.04)' }
+        }
+      >
+        <div className="grid md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.3fr)] gap-2.5 items-center">
           <div
-            className="rounded-lg flex items-center justify-center h-16 md:h-20"
+            className="rounded-lg flex items-center justify-center h-14 md:h-16"
             style={{
               backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)',
               backgroundSize: '16px 16px',
-              backgroundColor: 'color-mix(in srgb, #60a5fa 6%, transparent)',
+              backgroundColor: accent === 'emerald' ? 'rgba(52,211,153,0.05)' : 'color-mix(in srgb, #60a5fa 6%, transparent)',
             }}
           >
-            <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold bg-[var(--accent-400,#60a5fa)] text-slate-950">
-              <span className="text-base">{currentStep + 1}</span>
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-semibold ${isStepDone ? accentSolid : 'bg-white/10'} ${isStepDone ? accentText : 'text-slate-400'}`}>
+              {isStepDone ? <Icon size={16}><path d="M20 6L9 17l-5-5" /></Icon> : <span className="text-sm">{currentStep + 1}</span>}
             </div>
           </div>
           <div>
             <h3 className="text-sm font-semibold text-slate-100 mb-0.5">{step.title}</h3>
-            <p className="text-xs text-slate-400 mb-1.5 leading-snug">{step.description}</p>
-            <div className="flex flex-wrap gap-1">
+            <p className="text-[11px] text-slate-400 mb-1 leading-snug">{step.description}</p>
+            <div className="flex flex-wrap gap-1 mb-1">
               {step.tags.map((tag) => (
-                <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full border" style={{ borderColor: 'rgba(96,165,250,0.2)', color: '#93c5fd', backgroundColor: 'rgba(96,165,250,0.05)' }}>
+                <span
+                  key={tag}
+                  className="text-[9px] px-1.5 py-0.5 rounded-full border"
+                  style={
+                    accent === 'emerald'
+                      ? { borderColor: 'rgba(52,211,153,0.2)', color: '#6ee7b7', backgroundColor: 'rgba(52,211,153,0.05)' }
+                      : { borderColor: 'rgba(96,165,250,0.2)', color: '#93c5fd', backgroundColor: 'rgba(96,165,250,0.05)' }
+                  }
+                >
                   {tag}
                 </span>
               ))}
             </div>
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-300">
+              <span className={`w-4 h-4 rounded flex items-center justify-center shrink-0 transition-colors duration-200 ${isStepDone ? `${accentSolid} ${accentText}` : 'border border-white/20 text-transparent'}`}>
+                <Icon size={9}><path d="M20 6L9 17l-5-5" /></Icon>
+              </span>
+              Mark this step as done
+            </div>
           </div>
+        </div>
+
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
+          <span className={`flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-lg ${currentStep === 0 ? 'text-slate-600' : 'text-slate-300'}`}>
+            <Icon size={11}><path d="M15 18l-6-6 6-6" /></Icon>
+            Previous
+          </span>
+          {isFinalStep ? (
+            <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-300 bg-emerald-500/15 px-2.5 py-1 rounded-lg">
+              <Icon size={10}><path d="M20 6L9 17l-5-5" /></Icon>
+              {isStepDone ? 'All Steps Done' : 'Final Step'}
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-[10px] font-semibold text-white px-2.5 py-1 rounded-lg bg-[var(--accent-600,#2563eb)]">
+              Next Step
+              <Icon size={11}><path d="M9 18l6-6-6-6" /></Icon>
+            </span>
+          )}
         </div>
       </div>
 
-      <p className="text-[11px] font-semibold tracking-widest text-slate-500 mb-1.5">ALL STEPS</p>
-      <div className="grid grid-cols-5 gap-1.5 mb-3">
-        {PASSPORT_RENEWAL_STEPS.map((s, i) => (
-          <div key={i} className={`rounded-lg border p-2 text-left transition-colors duration-300 ${i === currentStep ? 'border-blue-400/50 bg-blue-400/5' : i < currentStep ? 'border-white/10' : 'border-white/10'}`}>
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold mb-1 transition-colors duration-300 ${i <= currentStep ? 'bg-[var(--accent-400,#60a5fa)] text-slate-950' : 'bg-white/10 text-slate-400'}`}>
-              {i < currentStep ? <Icon size={10}><path d="M20 6L9 17l-5-5" /></Icon> : i + 1}
-            </span>
-            <p className="text-[10px] text-slate-300 leading-tight">{s.title}</p>
-          </div>
-        ))}
+      <p className="text-[10px] font-semibold tracking-widest text-slate-500 mb-1.5">ALL STEPS</p>
+      <div className="grid grid-cols-5 gap-1.5 mb-2">
+        {PASSPORT_RENEWAL_STEPS.map((s, i) => {
+          const done = i < currentStep || (i === currentStep && checked)
+          const active = i === currentStep
+          return (
+            <div key={i} className={`rounded-lg border p-1.5 text-left transition-colors duration-300 ${active ? (accent === 'emerald' ? 'border-emerald-400/50 bg-emerald-400/5' : 'border-blue-400/50 bg-blue-400/5') : 'border-white/10'}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold mb-1 transition-colors duration-300 ${done ? 'bg-emerald-400 text-emerald-950' : 'bg-white/10 text-slate-400'}`}>
+                {done ? <Icon size={10}><path d="M20 6L9 17l-5-5" /></Icon> : i + 1}
+              </span>
+              <p className="text-[9px] text-slate-300 leading-tight">{s.title}</p>
+            </div>
+          )
+        })}
       </div>
 
-      <div className="flex flex-col gap-1 text-xs text-slate-300">
+      <div className="flex flex-col gap-1 text-[11px] text-slate-300 mb-2">
         <p className="flex items-center gap-2">
-          <span className="text-slate-500 shrink-0"><Icon size={13}><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2" /><path d="M6 12h.01M18 12h.01" /></Icon></span>
+          <span className="text-slate-500 shrink-0"><Icon size={12}><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2" /><path d="M6 12h.01M18 12h.01" /></Icon></span>
           ₱950 (regular processing) to ₱1,200 (expedited)
         </p>
         <p className="flex items-center gap-2">
-          <span className="text-slate-500 shrink-0"><Icon size={13}><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></Icon></span>
+          <span className="text-slate-500 shrink-0"><Icon size={12}><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></Icon></span>
           6-15 business days depending on processing type
         </p>
+      </div>
+
+      <div className="flex flex-col items-center text-center pt-1.5 border-t border-white/10">
+        <p className="text-[11px] font-medium text-slate-100 mb-1.5">Was this accurate for you?</p>
+        <div className="flex gap-1.5">
+          <span className="w-6 h-6 rounded-full bg-emerald-400/10 text-emerald-300 flex items-center justify-center">
+            <Icon size={12}><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" /></Icon>
+          </span>
+          <span className="w-6 h-6 rounded-full bg-red-400/10 text-red-300 flex items-center justify-center">
+            <Icon size={12}><circle cx="12" cy="12" r="10" /><path d="M16 16s-1.5-2-4-2-4 2-4 2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" /></Icon>
+          </span>
+        </div>
       </div>
     </ModalShell>
   )
@@ -807,9 +879,13 @@ export default function DashboardDemo() {
       <div className="w-full max-w-7xl mx-auto px-6">
       <div
         ref={containerRef}
-        className="relative w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
-        style={{ aspectRatio: '16 / 9.2', backgroundColor: '#050505' }}
+        className="relative w-full rounded-2xl overflow-hidden shadow-2xl glass-panel"
+        style={{ aspectRatio: '16 / 9.2' }}
       >
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'linear-gradient(180deg, rgba(3,6,10,0.28) 0%, rgba(3,6,10,0.48) 100%)' }}
+        />
         <div className="relative flex h-full">
           <Sidebar page={step.page} hoveredId={hoveredId} pressedId={pressedId} register={register} />
           <div className="flex-1 min-w-0 p-6 pt-5 relative overflow-hidden">
