@@ -16,6 +16,27 @@ import sssLogo from './assets/SSS logo.webp'
 import philhealthLogo from './assets/PHILHEALTH logo.webp'
 import hdmfLogo from './assets/HDMF logo.png'
 import birLogo from './assets/BIR logo.png'
+import courtLogo from './assets/court logo.webp'
+import pnpLogo from './assets/pnp logo.webp'
+import biLogo from './assets/bi logo.webp'
+import prcLogo from './assets/prc logo.webp'
+import marinaLogo from './assets/marina logo.webp'
+import comelecLogo from './assets/comelec logo.webp'
+import afpLogo from './assets/afp logo.webp'
+import dswdLogo from './assets/dswd logo.webp'
+import rdLogo from './assets/rd logo.webp'
+import ncipLogo from './assets/ncip logo.webp'
+import gsisLogo from './assets/gsis logo.webp'
+import owwaLogo from './assets/owwa logo.webp'
+import bjmpLogo from './assets/bjmp logo.webp'
+import bucorLogo from './assets/bucor logo.webp'
+import praLogo from './assets/pra logo.webp'
+import ibpLogo from './assets/ibp logo.webp'
+import cscLogo from './assets/csc logo.webp'
+import postLogo from './assets/post logo.webp'
+import pcgLogo from './assets/pcg logo.webp'
+import pvaoLogo from './assets/pvao logo.webp'
+import ncmfLogo from './assets/ncmf logo.webp'
 import orbitLogo from './assets/orbit logo.png'
 import satellitesIcon from './assets/satellites.png'
 import spaceTravelIcon from './assets/space-travel.png'
@@ -39,6 +60,31 @@ const DEPARTMENT_LOGOS = {
   PH: philhealthLogo,
   HDMF: hdmfLogo,
   BIR: birLogo,
+  COURT: courtLogo,
+  PNP: pnpLogo,
+  BI: biLogo,
+  PRC: prcLogo,
+  MARINA: marinaLogo,
+  COMELEC: comelecLogo,
+  AFP: afpLogo,
+  DSWD: dswdLogo,
+  RD: rdLogo,
+  NCIP: ncipLogo,
+  GSIS: gsisLogo,
+  OWWA: owwaLogo,
+  BJMP: bjmpLogo,
+  BUCOR: bucorLogo,
+  PRA: praLogo,
+  IBP: ibpLogo,
+  CSC: cscLogo,
+  POST: postLogo,
+  PCG: pcgLogo,
+  PVAO: pvaoLogo,
+  NCMF: ncmfLogo,
+  // FEO (PNP Firearms and Explosives Office) is a PNP unit, not a
+  // separately-seal'd agency — reuses the PNP mark rather than leaving
+  // firearms documents without a photo at all.
+  FEO: pnpLogo,
 }
 
 export { DOC_TYPE_LABELS, AGENCY_BADGE, CARD_THEME, CARD_FIELD_SCHEMAS }

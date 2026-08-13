@@ -10,6 +10,8 @@ import dfaLogo from '../assets/DFA logo.webp'
 import nbiLogo from '../assets/NBI logo.webp'
 import ltoLogo from '../assets/LTO LOGO.webp'
 import philhealthLogo from '../assets/PHILHEALTH logo.webp'
+import biLogo from '../assets/bi logo.webp'
+import praLogo from '../assets/pra logo.webp'
 import orbitLogo from '../assets/orbit logo.png'
 
 const NAV_ITEMS = [
@@ -21,7 +23,7 @@ const NAV_ITEMS = [
   { id: 'history', label: 'History', iconSrc: spaceIcon },
 ]
 
-const DEPARTMENT_LOGOS = { DFA: dfaLogo, NBI: nbiLogo, LTO: ltoLogo, PH: philhealthLogo }
+const DEPARTMENT_LOGOS = { DFA: dfaLogo, NBI: nbiLogo, LTO: ltoLogo, PH: philhealthLogo, BI: biLogo, PRA: praLogo }
 
 const TRAVEL_CATEGORY = DOC_CATEGORIES.find((c) => c.id === 'travel')
 const TRAVEL_TYPES = TRAVEL_CATEGORY.docTypeIds.slice(0, 6)
