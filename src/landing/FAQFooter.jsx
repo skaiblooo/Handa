@@ -3,7 +3,7 @@ import { useState } from 'react'
 const FAQS = [
   {
     q: 'Is Orbit free to use?',
-    a: 'Yes. Tracking your documents, getting reminders, and viewing requirement checklists is free. We may introduce optional paid features later, but the core tracking experience stays free.',
+    a: 'Yup! Tracking your documents, getting reminders, and viewing requirement checklists is absolutely free.',
   },
   {
     q: 'How accurate are the requirement checklists?',
@@ -11,11 +11,11 @@ const FAQS = [
   },
   {
     q: 'What documents can I track right now?',
-    a: "Driver's license, passport, and NBI clearance to start, with more document types coming as we expand.",
+    a: "Driver's License, passport, health insurance, and way more.",
   },
   {
     q: 'Will I get spammed with reminders?',
-    a: 'No — you get one email per document at each milestone (30 days, 7 days, and 1 day before expiry), not repeated daily nudges.',
+    a: 'Nope! You get one email per document at each milestone (30 days, 7 days, and 1 day before expiry), not repeated daily nudges.',
   },
 ]
 

@@ -84,6 +84,7 @@ function liftStyle(hovered, pressed) {
 // document" a visible beat rather than a jump from blank to saved.
 const TYPED_NAME = 'Capacio, Marc Santos'
 const TYPED_DOB = '04/12/1998'
+const TYPED_EXPIRY = '08/15/2035'
 
 // FillModal only ever mounts while the 'fill' step is active and unmounts
 // the moment it isn't (the parent conditionally renders it), so the typing
@@ -123,8 +124,8 @@ function CursorGlyph({ x, y, clicking }) {
         transform: clicking ? 'scale(0.82) rotate(-6deg)' : 'scale(1) rotate(0deg)',
         transformOrigin: '4px 2px',
         transition: clicking
-          ? 'left 0.65s cubic-bezier(0.65,0,0.35,1), top 0.65s cubic-bezier(0.65,0,0.35,1), transform 0.09s ease-out'
-          : 'left 0.65s cubic-bezier(0.65,0,0.35,1), top 0.65s cubic-bezier(0.65,0,0.35,1), transform 0.15s cubic-bezier(0.34,1.56,0.64,1)',
+          ? 'left 0.5s cubic-bezier(0.65,0,0.35,1), top 0.5s cubic-bezier(0.65,0,0.35,1), transform 0.09s ease-out'
+          : 'left 0.5s cubic-bezier(0.65,0,0.35,1), top 0.5s cubic-bezier(0.65,0,0.35,1), transform 0.15s cubic-bezier(0.34,1.56,0.64,1)',
       }}
     >
       <svg width="22" height="22" viewBox="0 0 24 24" style={{ filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.55))' }}>
@@ -145,30 +146,33 @@ function CursorGlyph({ x, y, clicking }) {
 // where the fake cursor should travel to (a registered ref id), how long to
 // rest there, and whether a click fires before advancing.
 const STEPS = [
-  { page: 'dashboard', modal: null, target: null, hold: 3000 },
-  { page: 'dashboard', modal: null, target: 'nav-my-orbits', hold: 500, click: true },
-  { page: 'my_orbits', modal: null, target: null, hold: 1200 },
-  { page: 'my_orbits', modal: null, target: 'add-orbit-tile', hold: 500, click: true },
-  { page: 'my_orbits', modal: 'intent', target: null, hold: 750 },
-  { page: 'my_orbits', modal: 'intent', target: 'intent-renewal', hold: 500, click: true },
-  { page: 'my_orbits', modal: 'category', target: null, hold: 750 },
-  { page: 'my_orbits', modal: 'category', target: 'category-travel', hold: 500, click: true },
-  { page: 'my_orbits', modal: 'doctype', target: null, hold: 750 },
-  { page: 'my_orbits', modal: 'doctype', target: 'doctype-passport', hold: 500, click: true },
-  { page: 'my_orbits', modal: 'fill', target: null, hold: 3200 },
-  { page: 'my_orbits', modal: 'fill', target: 'save-check', hold: 500, click: true },
-  { page: 'my_orbits_saved', modal: null, target: null, hold: 1300 },
-  { page: 'my_orbits_saved', modal: null, target: 'saved-orbit-card', hold: 500, click: true },
-  { page: 'my_orbits_saved', modal: 'steps', target: null, hold: 3000 },
+  { page: 'dashboard', modal: null, target: null, hold: 2200 },
+  { page: 'dashboard', modal: null, target: 'nav-my-orbits', hold: 400, click: true },
+  { page: 'my_orbits', modal: null, target: null, hold: 800 },
+  { page: 'my_orbits', modal: null, target: 'add-orbit-tile', hold: 400, click: true },
+  { page: 'my_orbits', modal: 'intent', target: null, hold: 550 },
+  { page: 'my_orbits', modal: 'intent', target: 'intent-renewal', hold: 400, click: true },
+  { page: 'my_orbits', modal: 'category', target: null, hold: 550 },
+  { page: 'my_orbits', modal: 'category', target: 'category-travel', hold: 400, click: true },
+  { page: 'my_orbits', modal: 'doctype', target: null, hold: 550 },
+  { page: 'my_orbits', modal: 'doctype', target: 'doctype-passport', hold: 400, click: true },
+  { page: 'my_orbits', modal: 'fill', target: null, hold: 2900 },
+  { page: 'my_orbits', modal: 'fill', target: 'save-check', hold: 400, click: true },
+  { page: 'my_orbits_saved', modal: null, target: null, hold: 900 },
+  { page: 'my_orbits_saved', modal: null, target: 'saved-orbit-card', hold: 400, click: true },
+  { page: 'my_orbits_saved', modal: 'steps', target: null, hold: 4400 },
 ]
 
+// Collapses to icon-only once on My Orbits, matching the real dashboard's
+// collapsed sidebar (small label under the icon, not hidden entirely).
 function Sidebar({ page, hoveredId, pressedId, register }) {
   const activeId = page === 'dashboard' ? 'dashboard' : 'my_orbits'
+  const collapsed = page === 'my_orbits' || page === 'my_orbits_saved'
   return (
-    <aside className="w-48 shrink-0 flex flex-col gap-6 py-5 px-3">
-      <div className="flex items-center gap-2 px-2">
-        <img src={orbitLogo} alt="" className="w-6 h-6 object-contain" />
-        <span className="font-dancing text-lg text-slate-100">Orbit</span>
+    <aside className={`shrink-0 flex flex-col gap-6 py-5 transition-all duration-300 ${collapsed ? 'w-20 px-3' : 'w-48 px-3'}`}>
+      <div className={`flex items-center gap-2 ${collapsed ? 'justify-center' : 'px-2'}`}>
+        <img src={orbitLogo} alt="" className="w-6 h-6 object-contain shrink-0" />
+        {!collapsed && <span className="font-dancing text-lg text-slate-100 whitespace-nowrap">Orbit</span>}
       </div>
       <nav className="flex flex-col gap-1.5 flex-1">
         {NAV_ITEMS.map((item) => {
@@ -180,7 +184,9 @@ function Sidebar({ page, hoveredId, pressedId, register }) {
             <div
               key={item.id}
               ref={isTarget ? (el) => register('nav-my-orbits', el) : undefined}
-              className={`flex items-center gap-3 px-2 py-2 rounded-xl text-sm transition-colors duration-150 ${
+              className={`flex items-center rounded-xl text-sm transition-colors duration-150 ${
+                collapsed ? 'flex-col gap-0.5 py-2 px-1 justify-center text-center' : 'gap-3 px-2 py-2'
+              } ${
                 active ? 'glass-chip-dark text-slate-100' : hovered ? 'bg-white/5 text-slate-100' : 'text-slate-400'
               }`}
               style={liftStyle(hovered, pressed)}
@@ -188,26 +194,26 @@ function Sidebar({ page, hoveredId, pressedId, register }) {
               <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0">
                 <img src={item.iconSrc} alt="" className="w-[16px] h-[16px] object-contain" style={{ filter: 'invert(1) brightness(1.3)' }} />
               </span>
-              {item.label}
+              {collapsed ? <span className="text-[9px] leading-tight font-medium">{item.label}</span> : item.label}
             </div>
           )
         })}
       </nav>
       <div className="flex flex-col gap-1 pt-4">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-xl text-sm text-slate-400">
+        <div className={`flex items-center rounded-xl text-sm text-slate-400 ${collapsed ? 'flex-col gap-0.5 py-2 px-1 justify-center text-center' : 'gap-3 px-2 py-2'}`}>
           <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
             <Icon size={15}>
               <circle cx="12" cy="12" r="3" />
               <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
             </Icon>
           </span>
-          Settings
+          {collapsed ? <span className="text-[9px] leading-tight font-medium">Settings</span> : 'Settings'}
         </div>
-        <div className="flex items-center gap-3 px-2 py-2 rounded-xl text-sm text-slate-400">
+        <div className={`flex items-center rounded-xl text-sm text-slate-400 ${collapsed ? 'flex-col gap-0.5 py-2 px-1 justify-center text-center' : 'gap-3 px-2 py-2'}`}>
           <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
             <Icon size={15}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /></Icon>
           </span>
-          Log out
+          {collapsed ? <span className="text-[9px] leading-tight font-medium">Log out</span> : 'Log out'}
         </div>
       </div>
     </aside>
@@ -440,7 +446,7 @@ function ModalShell({ children, wide }) {
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl p-4">
       <div
-        className={`overflow-y-auto no-scrollbar rounded-2xl p-5 md:p-6 ${wide ? 'w-full h-full bg-[#0a0a0f] border border-white/10' : 'w-[380px] glass-dark'}`}
+        className={`overflow-y-auto no-scrollbar rounded-2xl ${wide ? 'w-full h-full p-4 bg-[#0a0a0f] border border-white/10' : 'w-[380px] p-5 md:p-6 glass-dark'}`}
         style={{ animation: 'rise-in 0.35s cubic-bezier(0.16,1,0.3,1) both' }}
       >
         {children}
@@ -539,10 +545,12 @@ function DocTypeModal({ hoveredId, pressedId, register }) {
 function FillModal({ hoveredId, pressedId, register }) {
   const theme = CARD_THEME.passport
   const schema = CARD_FIELD_SCHEMAS.passport
-  const name = useTypewriter(TYPED_NAME, { startDelay: 400, speed: 38 })
-  const dob = useTypewriter(TYPED_DOB, { startDelay: 1500, speed: 65 })
+  const name = useTypewriter(TYPED_NAME, { startDelay: 300, speed: 32 })
+  const dob = useTypewriter(TYPED_DOB, { startDelay: 1200, speed: 55 })
+  const expiry = useTypewriter(TYPED_EXPIRY, { startDelay: 2000, speed: 55 })
   const typingName = name.length > 0 && name.length < TYPED_NAME.length
   const typingDob = dob.length > 0 && dob.length < TYPED_DOB.length
+  const typingExpiry = expiry.length > 0 && expiry.length < TYPED_EXPIRY.length
   const fieldValue = { fullName: name, dob, nationality: 'FILIPINO' }
   const hovered = hoveredId === 'save-check'
   const pressed = pressedId === 'save-check'
@@ -587,6 +595,15 @@ function FillModal({ hoveredId, pressedId, register }) {
             )
           })}
         </div>
+        <div className="flex justify-end mt-2.5 pt-2 border-t border-white/15">
+          <div className="text-right">
+            <p className="text-[7px] uppercase tracking-wide opacity-70">Expiry Date</p>
+            <p className="text-[11px] font-medium min-h-[13px]">
+              {expiry || '—'}
+              {typingExpiry && <span className="animate-pulse">|</span>}
+            </p>
+          </div>
+        </div>
       </div>
     </ModalShell>
   )
@@ -604,106 +621,102 @@ const PASSPORT_RENEWAL_STEPS = [
 
 // Full recreation of PlaybookModal's "How to Apply" step view — header,
 // progress bar, step counter + dots, the illustration/number step card
-// with tags and a "mark as done" row, Previous/Next, the all-steps chip
-// grid, and the cost/time footer — using the real passport-renewal step
-// data. Parked on step 1 (static, not paginated) since this is a demo
-// beat, not an interactive session.
+// with tags, the all-steps chip grid, and the cost/time footer — using
+// the real passport-renewal step data. Compact sizing (vs. the real
+// modal's own max-w-6xl max-h-[90vh] scroll) so all five steps actually
+// fit inside the demo frame's fixed height instead of overflowing it, and
+// cycles currentStep on its own timer so every step gets shown, not just
+// the first.
 function StepsModal() {
   const totalSteps = PASSPORT_RENEWAL_STEPS.length
-  const step = PASSPORT_RENEWAL_STEPS[0]
+  const [currentStep, setCurrentStep] = useState(0)
+
+  useEffect(() => {
+    if (currentStep >= totalSteps - 1) return
+    const timer = setTimeout(() => setCurrentStep((i) => i + 1), 850)
+    return () => clearTimeout(timer)
+  }, [currentStep, totalSteps])
+
+  const step = PASSPORT_RENEWAL_STEPS[currentStep]
+
   return (
     <ModalShell wide>
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2.5">
-          <span className="w-9 h-9 rounded-xl bg-blue-500/15 text-blue-300 flex items-center justify-center shrink-0">
-            <Icon size={17}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6" /></Icon>
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="w-7 h-7 rounded-lg bg-blue-500/15 text-blue-300 flex items-center justify-center shrink-0">
+            <Icon size={14}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6" /></Icon>
           </span>
           <div>
-            <p className="text-xs font-semibold tracking-widest text-slate-400">PASSPORT</p>
-            <p className="text-[11px] text-slate-600">Last verified 2026-08-01</p>
+            <p className="text-[11px] font-semibold tracking-widest text-slate-400">PASSPORT</p>
+            <p className="text-[10px] text-slate-600">Last verified 2026-08-01</p>
           </div>
         </div>
-        <span className="text-slate-500 text-xl leading-none">&times;</span>
+        <span className="text-slate-500 text-lg leading-none">&times;</span>
       </div>
 
-      <h2 className="text-2xl font-semibold text-slate-100 mb-4">How to Apply</h2>
+      <h2 className="text-lg font-semibold text-slate-100 mb-2">How to Apply</h2>
 
-      <div className="flex gap-1.5 mb-2">
+      <div className="flex gap-1.5 mb-1.5">
         {PASSPORT_RENEWAL_STEPS.map((_, i) => (
-          <div key={i} className={`h-1.5 flex-1 rounded-full ${i === 0 ? 'bg-[var(--accent-400,#60a5fa)]' : 'bg-white/10'}`} />
+          <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${i <= currentStep ? 'bg-[var(--accent-400,#60a5fa)]' : 'bg-white/10'}`} />
         ))}
       </div>
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs text-slate-500">Step 1 of {totalSteps}</span>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[11px] text-slate-500">Step {currentStep + 1} of {totalSteps}</span>
         <div className="flex items-center gap-1.5">
           {PASSPORT_RENEWAL_STEPS.map((_, i) => (
-            <span key={i} className={`rounded-full ${i === 0 ? 'w-2.5 h-2.5 bg-[var(--accent-400,#60a5fa)]' : 'w-1.5 h-1.5 bg-white/15'}`} />
+            <span key={i} className={`rounded-full transition-all duration-300 ${i === currentStep ? 'w-2.5 h-2.5 bg-[var(--accent-400,#60a5fa)]' : 'w-1.5 h-1.5 bg-white/15'}`} />
           ))}
         </div>
       </div>
 
-      <div className="rounded-2xl border p-4 md:p-5 mb-4 overflow-hidden" style={{ borderColor: 'rgba(96,165,250,0.2)', backgroundColor: 'rgba(96,165,250,0.04)' }}>
-        <div className="w-8 h-8 rounded-full bg-[var(--accent-400,#60a5fa)] text-slate-950 flex items-center justify-center text-sm font-bold mb-3">1</div>
-        <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] gap-5 items-center">
+      <div className="rounded-xl border p-3 mb-3 overflow-hidden" style={{ borderColor: 'rgba(96,165,250,0.2)', backgroundColor: 'rgba(96,165,250,0.04)' }}>
+        <div className="grid md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.3fr)] gap-3 items-center">
           <div
-            className="rounded-xl flex items-center justify-center h-32 md:h-36"
+            className="rounded-lg flex items-center justify-center h-16 md:h-20"
             style={{
               backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)',
-              backgroundSize: '18px 18px',
+              backgroundSize: '16px 16px',
               backgroundColor: 'color-mix(in srgb, #60a5fa 6%, transparent)',
             }}
           >
-            <div className="w-16 h-16 rounded-full flex items-center justify-center font-semibold bg-white/10 text-slate-400">
-              <span className="text-2xl">1</span>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold bg-[var(--accent-400,#60a5fa)] text-slate-950">
+              <span className="text-base">{currentStep + 1}</span>
             </div>
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-slate-100 mb-1">{step.title}</h3>
-            <p className="text-sm text-slate-400 mb-3">{step.description}</p>
-            <p className="text-xs font-semibold tracking-widest text-slate-500 mb-2">WHAT YOU'LL NEED</p>
-            <div className="flex flex-wrap gap-2 mb-3">
+            <h3 className="text-sm font-semibold text-slate-100 mb-0.5">{step.title}</h3>
+            <p className="text-xs text-slate-400 mb-1.5 leading-snug">{step.description}</p>
+            <div className="flex flex-wrap gap-1">
               {step.tags.map((tag) => (
-                <span key={tag} className="text-xs px-3 py-1.5 rounded-full border" style={{ borderColor: 'rgba(96,165,250,0.2)', color: '#93c5fd', backgroundColor: 'rgba(96,165,250,0.05)' }}>
+                <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full border" style={{ borderColor: 'rgba(96,165,250,0.2)', color: '#93c5fd', backgroundColor: 'rgba(96,165,250,0.05)' }}>
                   {tag}
                 </span>
               ))}
             </div>
-            <div className="flex items-center gap-2.5 text-sm text-slate-300">
-              <span className="w-5 h-5 rounded-md border border-white/20 shrink-0" />
-              Mark this step as done
-            </div>
           </div>
-        </div>
-
-        <div className="flex items-center justify-between mt-4">
-          <span className="flex items-center gap-1 text-sm font-medium text-slate-500 px-4 py-2">
-            <Icon size={15}><path d="M15 18l-6-6 6-6" /></Icon>
-            Previous
-          </span>
-          <span className="flex items-center gap-1 text-sm font-semibold text-white px-4 py-2 rounded-xl bg-[var(--accent-600,#2563eb)]">
-            Next Step
-            <Icon size={15}><path d="M9 18l6-6-6-6" /></Icon>
-          </span>
         </div>
       </div>
 
-      <p className="text-xs font-semibold tracking-widest text-slate-500 mb-2">ALL STEPS</p>
-      <div className="grid grid-cols-5 gap-2 mb-4">
+      <p className="text-[11px] font-semibold tracking-widest text-slate-500 mb-1.5">ALL STEPS</p>
+      <div className="grid grid-cols-5 gap-1.5 mb-3">
         {PASSPORT_RENEWAL_STEPS.map((s, i) => (
-          <div key={i} className={`rounded-xl border p-2.5 text-left ${i === 0 ? 'border-blue-400/50 bg-blue-400/5' : 'border-white/10'}`}>
-            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold mb-1.5 ${i === 0 ? 'bg-[var(--accent-400,#60a5fa)] text-slate-950' : 'bg-white/10 text-slate-400'}`}>{i + 1}</span>
-            <p className="text-xs text-slate-300 leading-tight">{s.title}</p>
+          <div key={i} className={`rounded-lg border p-2 text-left transition-colors duration-300 ${i === currentStep ? 'border-blue-400/50 bg-blue-400/5' : i < currentStep ? 'border-white/10' : 'border-white/10'}`}>
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold mb-1 transition-colors duration-300 ${i <= currentStep ? 'bg-[var(--accent-400,#60a5fa)] text-slate-950' : 'bg-white/10 text-slate-400'}`}>
+              {i < currentStep ? <Icon size={10}><path d="M20 6L9 17l-5-5" /></Icon> : i + 1}
+            </span>
+            <p className="text-[10px] text-slate-300 leading-tight">{s.title}</p>
           </div>
         ))}
       </div>
 
-      <div className="flex flex-col gap-1.5 text-sm text-slate-300">
+      <div className="flex flex-col gap-1 text-xs text-slate-300">
         <p className="flex items-center gap-2">
-          <span className="text-slate-500 shrink-0"><Icon size={15}><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2" /><path d="M6 12h.01M18 12h.01" /></Icon></span>
+          <span className="text-slate-500 shrink-0"><Icon size={13}><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2" /><path d="M6 12h.01M18 12h.01" /></Icon></span>
           ₱950 (regular processing) to ₱1,200 (expedited)
         </p>
         <p className="flex items-center gap-2">
-          <span className="text-slate-500 shrink-0"><Icon size={15}><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></Icon></span>
+          <span className="text-slate-500 shrink-0"><Icon size={13}><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></Icon></span>
           6-15 business days depending on processing type
         </p>
       </div>
@@ -761,18 +774,18 @@ export default function DashboardDemo() {
               releaseTimer = setTimeout(() => {
                 setPressedId(null)
                 setClicking(false)
-              }, 180)
-            }, 200)
+              }, 150)
+            }, 150)
           }
           advanceTimer = setTimeout(() => {
             setHoveredId(null)
             setStepIndex((i) => (i + 1) % STEPS.length)
           }, step.hold)
-        }, 650)
+        }, 500)
       } else {
         advanceTimer = setTimeout(() => setStepIndex((i) => (i + 1) % STEPS.length), step.hold)
       }
-    }, 80)
+    }, 60)
 
     return () => {
       clearTimeout(mountTimer)
@@ -787,35 +800,16 @@ export default function DashboardDemo() {
 
   return (
     <div className="w-full">
-      {/* Aligned to the page's own left margin (matching Navbar's px-6
-          md:px-12), not the mockup's centered max-w-6xl column below it. */}
-      <div className="w-full px-6 md:px-12 mb-8 text-left">
+      <div className="text-center mb-8 px-6">
         <h2 className="font-instrument text-white text-3xl md:text-4xl">See Orbit in action</h2>
         <p className="text-white/50 text-sm mt-3">A quick look at tracking a document from start to finish.</p>
       </div>
-      <div className="w-full max-w-6xl mx-auto px-6">
+      <div className="w-full max-w-7xl mx-auto px-6">
       <div
         ref={containerRef}
         className="relative w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
         style={{ aspectRatio: '16 / 9.2', backgroundColor: '#050505' }}
       >
-        {/* Same Earth photo + drift + dark gradient as the real dashboard's
-            dark-mode background (Dashboard.jsx) — the glass panels are
-            deliberately translucent, so without this they read as flat
-            dark cards instead of actual frosted glass over a scene. */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: 'url(https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2400&auto=format&fit=crop)',
-            backgroundSize: '115% auto',
-            backgroundRepeat: 'no-repeat',
-            animation: 'earth-drift 90s ease-in-out infinite alternate',
-          }}
-        />
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: 'linear-gradient(180deg, rgba(3,6,10,0.32) 0%, rgba(3,6,10,0.52) 100%)' }}
-        />
         <div className="relative flex h-full">
           <Sidebar page={step.page} hoveredId={hoveredId} pressedId={pressedId} register={register} />
           <div className="flex-1 min-w-0 p-6 pt-5 relative overflow-hidden">

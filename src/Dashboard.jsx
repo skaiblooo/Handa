@@ -23,6 +23,7 @@ import dangerIcon from './assets/danger.png'
 import fileIcon from './assets/file.png'
 import calendarIcon from './assets/calendar.png'
 import spaceIcon from './assets/space.png'
+import dashboardBg from './assets/dashboard-bg.webp'
 
 // Full department names for the orbit-grouping view — AGENCY_BADGE only has
 // short codes (LTO, PSA, ...), which read as cryptic on their own outside a
@@ -2536,7 +2537,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              backgroundImage: 'url(https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2400&auto=format&fit=crop)',
+              backgroundImage: `url(${dashboardBg})`,
               backgroundSize: '115% auto',
               backgroundRepeat: 'no-repeat',
               animation: 'earth-drift 90s ease-in-out infinite alternate',
