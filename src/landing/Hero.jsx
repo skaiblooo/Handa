@@ -7,7 +7,7 @@ const VIDEO_URL =
 
 export default function Hero({ onGetStarted }) {
   return (
-    <section className="relative h-screen w-full overflow-hidden">
+    <section id="about" className="relative h-screen w-full overflow-hidden">
       <SeamlessVideo src={VIDEO_URL} className="w-full h-full object-cover" />
       <div className="absolute inset-0 bg-black/20" />
       {/* Fades the video down to the exact color the next section opens with,

@@ -2630,7 +2630,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                       <Icon size={15}>{item.icon}</Icon>
                     </span>
                     {sidebarOpen ? (
-                      translate(item.labelKey)
+                      <span className="flex-1 min-w-0 truncate">{translate(item.labelKey)}</span>
                     ) : (
                       <span className="text-[9px] leading-tight font-medium">{translate(item.labelKey)}</span>
                     )}

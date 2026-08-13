@@ -1,11 +1,23 @@
 import { useState } from 'react'
 import Button from './Button'
 
-const NAV_LINKS = ['About', 'Services', 'Journal', 'Contact']
+// Each label maps to the id of the landing-page section it should scroll
+// to (see Hero/DashboardShowcase/FAQFooter). No "Journal" entry — there's
+// no blog/journal content anywhere in the app, so a link for it would just
+// be another dead button.
+const NAV_LINKS = [
+  { label: 'About', targetId: 'about' },
+  { label: 'Services', targetId: 'services' },
+  { label: 'Contact', targetId: 'contact' },
+]
 const EASE = 'cubic-bezier(0.22,1,0.36,1)'
 
 export default function Navbar({ onGetStarted }) {
   const [isOpen, setIsOpen] = useState(false)
+
+  function scrollToSection(targetId) {
+    document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   return (
     <>
@@ -21,11 +33,12 @@ export default function Navbar({ onGetStarted }) {
         <div className="hidden md:flex items-center justify-center gap-12">
           {NAV_LINKS.map((link) => (
             <button
-              key={link}
+              key={link.label}
               type="button"
+              onClick={() => scrollToSection(link.targetId)}
               className="text-white/80 hover:text-white text-sm tracking-wide transition-colors duration-300"
             >
-              {link}
+              {link.label}
             </button>
           ))}
         </div>
@@ -86,9 +99,9 @@ export default function Navbar({ onGetStarted }) {
       >
         {NAV_LINKS.map((link, i) => (
           <button
-            key={link}
+            key={link.label}
             type="button"
-            onClick={() => setIsOpen(false)}
+            onClick={() => { setIsOpen(false); scrollToSection(link.targetId) }}
             className="font-instrument text-white text-3xl py-3 border-b border-white/10 text-left"
             style={{
               transition: `opacity 400ms ${EASE}, transform 400ms ${EASE}`,
@@ -97,7 +110,7 @@ export default function Navbar({ onGetStarted }) {
               transform: isOpen ? 'translateX(0)' : 'translateX(24px)',
             }}
           >
-            {link}
+            {link.label}
           </button>
         ))}
         <div

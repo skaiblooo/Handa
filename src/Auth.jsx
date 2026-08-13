@@ -485,7 +485,7 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
                     <>
                       <button
                         type="button"
-                        onClick={onGuestStart}
+                        onClick={() => onGuestStart()}
                         className="w-full text-sm text-slate-500 hover:text-slate-300 mt-4 text-center"
                       >
                         {translate('auth_continue_guest')}

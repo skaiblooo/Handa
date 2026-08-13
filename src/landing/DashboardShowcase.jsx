@@ -1,5 +1,5 @@
 import DashboardDemo from './DashboardDemo'
-import showcaseBg from '../assets/landing-showcase-bg.webp'
+import showcaseBg from '../assets/live-dash-bg.webp'
 
 // Carries the background from Hero's video down to FAQFooter's dark tone
 // (so the page doesn't jump straight from video to FAQ), and hosts a
@@ -9,7 +9,7 @@ import showcaseBg from '../assets/landing-showcase-bg.webp'
 // own separate Earth image, so the two don't compete.
 export default function DashboardShowcase() {
   return (
-    <section className="relative w-full py-20 md:py-28 overflow-hidden bg-[#010A17]">
+    <section id="services" className="relative w-full py-20 md:py-28 overflow-hidden bg-[#010A17]">
       <img src={showcaseBg} alt="" className="absolute inset-0 w-full h-full object-cover object-bottom pointer-events-none" />
       <div
         className="absolute inset-0 pointer-events-none"

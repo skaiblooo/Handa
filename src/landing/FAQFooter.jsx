@@ -63,6 +63,7 @@ export default function FAQFooter() {
 
   return (
     <section
+      id="contact"
       className="relative w-full"
       style={{ background: 'linear-gradient(180deg, #060c16 0%, #030609 100%)' }}
     >

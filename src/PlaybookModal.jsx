@@ -57,7 +57,17 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
       const firstIncomplete = playbook.steps.findIndex((_, i) => !completed.includes(i))
       setCurrentStep(firstIncomplete === -1 ? playbook.steps.length - 1 : firstIncomplete)
     }
-  }, [isOpen, playbook, doc, docType])
+    // Keyed on doc?.id alone, not on the doc/playbook/docType objects: both
+    // `doc` (refetched after every toggleStep) and `playbook` (rebuilt as a
+    // new object by getPlaybook() on every Dashboard render) get a fresh
+    // reference far more often than the open document actually changes.
+    // Depending on either meant every checkbox click yanked the user away
+    // from whatever step they were looking at back to the first incomplete
+    // one, and reset the accuracy feedback UI (risking a duplicate
+    // submission) — this should only run when a genuinely different
+    // document is opened.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, doc?.id])
 
   if (!shouldRender) return null
 
