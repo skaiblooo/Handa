@@ -7,8 +7,8 @@ import Button from './Button'
 // be another dead button.
 const NAV_LINKS = [
   { label: 'About', targetId: 'about' },
-  { label: 'Services', targetId: 'services' },
-  { label: 'Contact', targetId: 'contact' },
+  { label: 'Demo', targetId: 'demo' },
+  { label: 'FAQ', targetId: 'faq' },
 ]
 const EASE = 'cubic-bezier(0.22,1,0.36,1)'
 
