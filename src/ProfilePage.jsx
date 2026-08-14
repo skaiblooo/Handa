@@ -879,7 +879,7 @@ export default function ProfilePage({ isDark, session, photoUrl, onPhotoChange, 
 
   // Persisted locally (per-account) since there's no profiles table yet to
   // sync this to a backend — survives refresh, but only on this browser.
-  const storageKey = `handa_profile_details_${session.user.id}`
+  const storageKey = `orbit_profile_details_${session.user.id}`
   const saved = (() => {
     try {
       return JSON.parse(localStorage.getItem(storageKey) || 'null') || {}

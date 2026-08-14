@@ -639,7 +639,7 @@ const LanguageContext = createContext(null)
 export function LanguageProvider({ children }) {
   const [lang, setLangState] = useState(() => {
     try {
-      return localStorage.getItem('handa_language') === 'fil' ? 'fil' : 'en'
+      return localStorage.getItem('orbit_language') === 'fil' ? 'fil' : 'en'
     } catch {
       return 'en'
     }
@@ -648,7 +648,7 @@ export function LanguageProvider({ children }) {
   function setLang(next) {
     setLangState(next)
     try {
-      localStorage.setItem('handa_language', next)
+      localStorage.setItem('orbit_language', next)
     } catch {
       // best-effort persistence
     }

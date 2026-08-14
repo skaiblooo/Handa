@@ -19,7 +19,7 @@ const FAQS = [
   },
 ]
 
-const GITHUB_URL = 'https://github.com/skaiblooo/Handa'
+const GITHUB_URL = 'https://github.com/skaiblooo/Orbit'
 
 // Product/Support links scroll to the matching landing-page section (same
 // ids Navbar targets); Legal links open a standalone page via onOpenLegal

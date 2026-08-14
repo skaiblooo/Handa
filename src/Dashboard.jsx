@@ -1838,7 +1838,7 @@ function DataPrivacyPanel({ isDark, documents }) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'handa-documents.json'
+    a.download = 'orbit-documents.json'
     a.click()
     URL.revokeObjectURL(url)
     setExported(true)
@@ -1953,7 +1953,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
   // sync this to a backend — survives refresh, but only on this browser.
   const [profilePhoto, setProfilePhoto] = useState(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem(`handa_profile_meta_${session.user.id}`) || 'null')
+      const saved = JSON.parse(localStorage.getItem(`orbit_profile_meta_${session.user.id}`) || 'null')
       return saved?.photo || null
     } catch {
       return null
@@ -1961,7 +1961,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
   })
   const [profileUsername, setProfileUsername] = useState(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem(`handa_profile_meta_${session.user.id}`) || 'null')
+      const saved = JSON.parse(localStorage.getItem(`orbit_profile_meta_${session.user.id}`) || 'null')
       return saved?.username || ''
     } catch {
       return ''
@@ -1971,7 +1971,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
   // the original hardcoded blue for accounts created before this existed.
   const [profileColor, setProfileColor] = useState(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem(`handa_profile_meta_${session.user.id}`) || 'null')
+      const saved = JSON.parse(localStorage.getItem(`orbit_profile_meta_${session.user.id}`) || 'null')
       return typeof saved?.color === 'number' ? saved.color : 0
     } catch {
       return 0
@@ -1979,7 +1979,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
   })
   useEffect(() => {
     try {
-      localStorage.setItem(`handa_profile_meta_${session.user.id}`, JSON.stringify({ photo: profilePhoto, username: profileUsername, color: profileColor }))
+      localStorage.setItem(`orbit_profile_meta_${session.user.id}`, JSON.stringify({ photo: profilePhoto, username: profileUsername, color: profileColor }))
     } catch {
       // localStorage can throw (quota exceeded, private browsing) — persistence is best-effort.
     }
@@ -1999,7 +1999,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
 
   const [notifPrefs, setNotifPrefs] = useState(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem(`handa_notification_prefs_${session.user.id}`) || 'null')
+      const saved = JSON.parse(localStorage.getItem(`orbit_notification_prefs_${session.user.id}`) || 'null')
       return { emailAlerts: true, pushAlerts: true, smsAlerts: false, weeklyDigest: true, ...saved }
     } catch {
       return { emailAlerts: true, pushAlerts: true, smsAlerts: false, weeklyDigest: true }
@@ -2007,7 +2007,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
   })
   useEffect(() => {
     try {
-      localStorage.setItem(`handa_notification_prefs_${session.user.id}`, JSON.stringify(notifPrefs))
+      localStorage.setItem(`orbit_notification_prefs_${session.user.id}`, JSON.stringify(notifPrefs))
     } catch {
       // localStorage can throw (quota exceeded, private browsing) — persistence is best-effort.
     }
@@ -2018,9 +2018,9 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
   // 'system' follows the OS preference live rather than being captured once.
   const [themeMode, setThemeModeState] = useState(() => {
     try {
-      const saved = localStorage.getItem('handa_theme_mode')
+      const saved = localStorage.getItem('orbit_theme_mode')
       if (saved === 'light' || saved === 'dark' || saved === 'system') return saved
-      const legacy = localStorage.getItem('handa_theme')
+      const legacy = localStorage.getItem('orbit_theme')
       return legacy === 'light' ? 'light' : 'dark'
     } catch {
       return 'dark'
@@ -2042,14 +2042,14 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
   const isDark = themeMode === 'system' ? systemPrefersDark : themeMode === 'dark'
   function setThemeMode(mode) {
     setThemeModeState(mode)
-    try { localStorage.setItem('handa_theme_mode', mode) } catch {}
+    try { localStorage.setItem('orbit_theme_mode', mode) } catch {}
   }
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const [recentSearches, setRecentSearches] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('handa_recent_searches') || '[]')
+      return JSON.parse(localStorage.getItem('orbit_recent_searches') || '[]')
     } catch {
       return []
     }
@@ -2235,13 +2235,13 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
     if (!query.trim()) return
     const updated = [query, ...recentSearches.filter((s) => s !== query)].slice(0, 5)
     setRecentSearches(updated)
-    localStorage.setItem('handa_recent_searches', JSON.stringify(updated))
+    localStorage.setItem('orbit_recent_searches', JSON.stringify(updated))
   }
 
   function removeSearch(query) {
     const updated = recentSearches.filter((s) => s !== query)
     setRecentSearches(updated)
-    localStorage.setItem('handa_recent_searches', JSON.stringify(updated))
+    localStorage.setItem('orbit_recent_searches', JSON.stringify(updated))
   }
 
   function handleSearchKeyDown(e) {

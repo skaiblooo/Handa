@@ -39,10 +39,10 @@ function withCursiveOrbit(text) {
 function LogoMark({ size = 32 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="32" height="32" rx="9" fill="url(#handa-grad-auth)" />
+      <rect width="32" height="32" rx="9" fill="url(#orbit-grad-auth)" />
       <path d="M11 9v14M21 9v14M11 16h10" stroke="#0f172a" strokeWidth="2.4" strokeLinecap="round" />
       <defs>
-        <linearGradient id="handa-grad-auth" x1="0" y1="0" x2="32" y2="32">
+        <linearGradient id="orbit-grad-auth" x1="0" y1="0" x2="32" y2="32">
           <stop stopColor="#818cf8" />
           <stop offset="1" stopColor="#4f46e5" />
         </linearGradient>
@@ -196,10 +196,10 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
         // straight through instead of resetting to defaults.
         try {
           localStorage.setItem(
-            `handa_profile_meta_${data.user.id}`,
+            `orbit_profile_meta_${data.user.id}`,
             JSON.stringify({ photo: null, username: chosenUsername.trim(), color: chosenColor })
           )
-          localStorage.setItem('handa_last_email', email)
+          localStorage.setItem('orbit_last_email', email)
         } catch {
           // best-effort persistence
         }
@@ -221,7 +221,7 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
       setErrorMsg(error.message)
     } else {
       try {
-        localStorage.setItem('handa_last_email', email)
+        localStorage.setItem('orbit_last_email', email)
       } catch {
         // best-effort persistence
       }

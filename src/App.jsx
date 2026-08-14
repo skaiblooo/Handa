@@ -46,7 +46,7 @@ function App() {
     let cancelled = false
     supabase.functions.invoke('check-visit').then(({ data }) => {
       if (cancelled || !data?.returning) return
-      setAuthRouting({ mode: 'login', email: localStorage.getItem('handa_last_email') || '' })
+      setAuthRouting({ mode: 'login', email: localStorage.getItem('orbit_last_email') || '' })
     }).catch(() => {
       // if the check fails, default to the first-time signup experience
     })
@@ -69,7 +69,7 @@ function App() {
     if (profile && data?.user?.id) {
       try {
         localStorage.setItem(
-          `handa_profile_meta_${data.user.id}`,
+          `orbit_profile_meta_${data.user.id}`,
           JSON.stringify({ photo: null, username: profile.username, color: profile.color })
         )
       } catch {
