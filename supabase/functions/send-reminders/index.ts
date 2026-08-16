@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import webpush from 'npm:web-push@3'
 
 const THRESHOLDS = [30, 7, 1]
 
@@ -29,6 +30,49 @@ Deno.serve(async (req) => {
   )
 
   const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
+
+  // VAPID_PRIVATE_KEY pairs with VITE_VAPID_PUBLIC_KEY on the client — only
+  // this function's copy can actually sign push messages. Missing keys
+  // means push just doesn't fire; email delivery below is unaffected.
+  const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')
+  const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')
+  const pushEnabled = !!vapidPublicKey && !!vapidPrivateKey
+  if (pushEnabled) {
+    webpush.setVapidDetails(
+      Deno.env.get('VAPID_SUBJECT') || 'mailto:support@orbit.app',
+      vapidPublicKey!,
+      vapidPrivateKey!
+    )
+  }
+
+  async function sendPushToUser(userId: string, title: string, body: string) {
+    if (!pushEnabled) return
+    const { data: subs } = await supabaseAdmin
+      .from('push_subscriptions')
+      .select('endpoint, p256dh, auth_key')
+      .eq('user_id', userId)
+    if (!subs || subs.length === 0) return
+
+    for (const sub of subs) {
+      try {
+        await webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth_key } },
+          JSON.stringify({ title, body, url: '/' })
+        )
+      } catch (err) {
+        // 404/410 means the browser dropped this subscription (uninstalled,
+        // permission revoked, storage cleared) — the endpoint is dead for
+        // good, so clean it up rather than retrying it forever.
+        const statusCode = (err as { statusCode?: number })?.statusCode
+        if (statusCode === 404 || statusCode === 410) {
+          await supabaseAdmin.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
+        } else {
+          console.error('send-reminders: push failed', statusCode, err)
+        }
+      }
+    }
+  }
+
   function toDateOnly(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
 }
@@ -84,29 +128,39 @@ const daysUntil = Math.round((expiry.getTime() - today.getTime()) / (1000 * 60 *
   let emailsSent = 0
 
   for (const userId of Object.keys(toSend)) {
+    // Guests (anonymous sign-in) have no email at all, but can still have
+    // a push subscription — send that independently rather than skipping
+    // a guest entirely just because the email half doesn't apply to them.
     const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId)
     const email = userData?.user?.email
-    if (!email) continue
 
-    const docsList = toSend[userId]
-      .map((d) => `<li>${escapeHtml(d.title)}, expires ${escapeHtml(d.expiry_date)} (${d.threshold} days left)</li>`)
-      .join('')
+    if (email) {
+      const docsList = toSend[userId]
+        .map((d) => `<li>${escapeHtml(d.title)}, expires ${escapeHtml(d.expiry_date)} (${d.threshold} days left)</li>`)
+        .join('')
 
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'Orbit <onboarding@resend.dev>',
-        to: email,
-        subject: 'You have documents expiring soon',
-        html: `<p>Hi, here's what's coming up:</p><ul>${docsList}</ul>`,
-      }),
-    })
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'Orbit <onboarding@resend.dev>',
+          to: email,
+          subject: 'You have documents expiring soon',
+          html: `<p>Hi, here's what's coming up:</p><ul>${docsList}</ul>`,
+        }),
+      })
 
-    emailsSent++
+      emailsSent++
+    }
+
+    const pushBody =
+      toSend[userId].length === 1
+        ? `${toSend[userId][0].title} expires in ${toSend[userId][0].threshold} days`
+        : `${toSend[userId].length} documents expiring soon`
+    await sendPushToUser(userId, 'Documents expiring soon', pushBody)
   }
 
   return new Response(JSON.stringify({ emailsSent }), { status: 200 })

@@ -5,6 +5,7 @@ import PlaybookModal from './PlaybookModal'
 import ProfilePage from './ProfilePage'
 import { getDaysUntilExpiry, getUrgencyLevel, formatDaysUntil, formatExpiryDisplay, formatTimeAgo, formatCompactDaysUntil } from './utils/dateHelpers'
 import { getActivityLog, logActivity } from './utils/activityLog'
+import { getActualPushSubscription, subscribeToPush, unsubscribeFromPush, isPushSupported } from './utils/push'
 import { useLanguage } from './i18n'
 import { AVATAR_COLORS, AVATAR_ACCENT_HEX } from './avatarColors'
 import { DOC_TYPE_LABELS, AGENCY_BADGE, URGENCY_META, CARD_THEME, CARD_FIELD_SCHEMAS, DOC_CATEGORIES, AGENCY_NAMES, AGENCY_BADGE_COLOR } from './data/docTypes'
@@ -1509,14 +1510,15 @@ function DocumentProgressCard({ isDark, doc, onSelect, delay }) {
   )
 }
 
-function ToggleSwitch({ isDark, checked, onChange }) {
+function ToggleSwitch({ isDark, checked, onChange, disabled = false }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative w-10 h-6 rounded-full shrink-0 transition-colors duration-75 ${
+      className={`relative w-10 h-6 rounded-full shrink-0 transition-colors duration-75 disabled:opacity-40 disabled:cursor-not-allowed ${
         checked ? 'bg-blue-500' : t(isDark, 'bg-white/10', 'bg-slate-200')
       }`}
     >
@@ -1870,7 +1872,7 @@ function HistoryFeed({ isDark, activityLog }) {
   )
 }
 
-function NotificationsPanel({ isDark, emailAlerts, onEmailAlerts, pushAlerts, onPushAlerts, smsAlerts, onSmsAlerts, weeklyDigest, onWeeklyDigest }) {
+function NotificationsPanel({ isDark, emailAlerts, onEmailAlerts, pushAlerts, onPushAlerts, pushBusy, pushSupported, smsAlerts, onSmsAlerts, weeklyDigest, onWeeklyDigest }) {
   const { translate } = useLanguage()
   return (
     <div>
@@ -1886,9 +1888,11 @@ function NotificationsPanel({ isDark, emailAlerts, onEmailAlerts, pushAlerts, on
         <div className="flex items-center justify-between gap-4 p-4">
           <div>
             <p className={t(isDark, 'text-sm font-medium text-slate-200', 'text-sm font-medium text-slate-700')}>{translate('notifications_push_label')}</p>
-            <p className={t(isDark, 'text-xs text-slate-500', 'text-xs text-slate-400')}>{translate('notifications_push_desc')}</p>
+            <p className={t(isDark, 'text-xs text-slate-500', 'text-xs text-slate-400')}>
+              {pushSupported ? translate('notifications_push_desc') : translate('notifications_push_unsupported')}
+            </p>
           </div>
-          <ToggleSwitch isDark={isDark} checked={pushAlerts} onChange={onPushAlerts} />
+          <ToggleSwitch isDark={isDark} checked={pushAlerts} onChange={onPushAlerts} disabled={pushBusy || !pushSupported} />
         </div>
         <div className="flex items-center justify-between gap-4 p-4">
           <div>
@@ -2260,6 +2264,28 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
       // localStorage can throw (quota exceeded, private browsing) — persistence is best-effort.
     }
   }, [notifPrefs, session.user.id])
+  // The stored preference alone can't be trusted — permission can be
+  // revoked, or site data cleared, entirely outside this app's control —
+  // so on load this reconciles the toggle against whether a real browser
+  // subscription actually exists rather than just trusting localStorage.
+  useEffect(() => {
+    if (isGuest || !isPushSupported()) return
+    getActualPushSubscription().then((sub) => {
+      setNotifPrefs((p) => (p.pushAlerts === !!sub ? p : { ...p, pushAlerts: !!sub }))
+    })
+  }, [isGuest])
+  const [pushToggleBusy, setPushToggleBusy] = useState(false)
+  async function handlePushToggle(next) {
+    setPushToggleBusy(true)
+    if (next) {
+      const result = await subscribeToPush(supabase, session.user.id)
+      setNotifPrefs((p) => ({ ...p, pushAlerts: result.ok }))
+    } else {
+      await unsubscribeFromPush(supabase)
+      setNotifPrefs((p) => ({ ...p, pushAlerts: false }))
+    }
+    setPushToggleBusy(false)
+  }
   // Two separate sets, matching what the bell dropdown actually needs to
   // distinguish: "seen" just clears the numeric badge (marked the moment
   // the dropdown opens), while "read" clears an individual row's unread dot
@@ -3809,7 +3835,9 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                   emailAlerts={notifPrefs.emailAlerts}
                   onEmailAlerts={(v) => setNotifPrefs((p) => ({ ...p, emailAlerts: v }))}
                   pushAlerts={notifPrefs.pushAlerts}
-                  onPushAlerts={(v) => setNotifPrefs((p) => ({ ...p, pushAlerts: v }))}
+                  onPushAlerts={handlePushToggle}
+                  pushBusy={pushToggleBusy}
+                  pushSupported={isPushSupported()}
                   smsAlerts={notifPrefs.smsAlerts}
                   onSmsAlerts={(v) => setNotifPrefs((p) => ({ ...p, smsAlerts: v }))}
                   weeklyDigest={notifPrefs.weeklyDigest}

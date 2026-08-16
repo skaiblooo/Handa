@@ -16,3 +16,36 @@ self.addEventListener('fetch', () => {
   // Plain network passthrough — no caching. Exists purely so the browser
   // recognizes this as a real service worker for install-prompt purposes.
 })
+
+self.addEventListener('push', (event) => {
+  let data = {}
+  try {
+    data = event.data ? event.data.json() : {}
+  } catch {
+    data = { title: 'Orbit', body: event.data ? event.data.text() : '' }
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Orbit', {
+      body: data.body || '',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      data: { url: data.url || '/' },
+    })
+  )
+})
+
+// The app has no URL routing to deep-link into, so a click just brings an
+// already-open tab to the front rather than opening a fresh one wherever
+// possible — a new tab would just reload to the same place anyway.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = event.notification.data?.url || '/'
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ('focus' in client) return client.focus()
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url)
+    })
+  )
+})
