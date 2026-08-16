@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
-import Auth, { ResetPasswordScreen } from './Auth'
+import Auth, { ResetPasswordScreen, CompleteGoogleProfileScreen } from './Auth'
 import Dashboard from './Dashboard'
 import Landing from './landing/Landing'
 import { LanguageProvider } from './i18n'
@@ -55,6 +55,24 @@ function App() {
 
   const isGuest = !!session?.user?.is_anonymous
 
+  // Google sign-in skips Auth's own "pick a username" step entirely (it
+  // redirects straight to Google and back), so first-ever login for a
+  // Google account still needs to collect a username before landing in the
+  // dashboard — detected by the profile meta this step writes never having
+  // been created for that user id.
+  const [needsGoogleProfile, setNeedsGoogleProfile] = useState(false)
+  useEffect(() => {
+    if (!session?.user?.id || session.user.app_metadata?.provider !== 'google') {
+      setNeedsGoogleProfile(false)
+      return
+    }
+    try {
+      setNeedsGoogleProfile(localStorage.getItem(`orbit_profile_meta_${session.user.id}`) === null)
+    } catch {
+      setNeedsGoogleProfile(false)
+    }
+  }, [session?.user?.id])
+
   // `profile` carries the username/color a new signee just picked in Auth's
   // profile step — signing in anonymously here (rather than making them set
   // a password first) is what lets them land straight in the dashboard;
@@ -82,6 +100,8 @@ function App() {
     <LanguageProvider>
       {session && isRecovery ? (
         <ResetPasswordScreen onDone={() => setIsRecovery(false)} />
+      ) : session && needsGoogleProfile ? (
+        <CompleteGoogleProfileScreen session={session} onDone={() => setNeedsGoogleProfile(false)} />
       ) : session && !(isGuest && upgradingGuest) ? (
         <Dashboard
           session={session}

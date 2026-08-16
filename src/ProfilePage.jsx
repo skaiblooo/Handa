@@ -2,6 +2,11 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabaseClient'
 import { useLanguage } from './i18n'
 import { AVATAR_COLORS } from './avatarColors'
+import emailIconSrc from './assets/email.png'
+import lockIconSrc from './assets/lock.png'
+import phoneIconSrc from './assets/phone.png'
+import locationIconSrc from './assets/location.png'
+import shieldIconSrc from './assets/insurance.png'
 
 function t(isDark, darkClasses, lightClasses) {
   return isDark ? darkClasses : lightClasses
@@ -12,6 +17,21 @@ function Icon({ children, size = 16 }) {
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       {children}
     </svg>
+  )
+}
+
+// The uploaded icon set is solid black glyphs on transparent PNGs, not
+// theme-aware SVGs — invert makes them read as white in dark mode instead
+// of vanishing against the dark background.
+function RowIcon({ isDark, src, size = 18 }) {
+  return (
+    <img
+      src={src}
+      alt=""
+      draggable={false}
+      style={{ width: size, height: size }}
+      className={t(isDark, 'opacity-75 invert', 'opacity-60')}
+    />
   )
 }
 
@@ -117,11 +137,39 @@ function getDisplayName(email) {
     .join(' ')
 }
 
-function formatDOB(raw) {
-  const digits = raw.replace(/\D/g, '').slice(0, 6)
-  if (digits.length <= 2) return digits
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`
+// Formats digits into fixed-width separator-delimited segments (MM/DD/YY,
+// xxx-xxx-xxxx), auto-inserting the next separator once a segment fills up
+// while typing forward. Skipped while deleting — otherwise backspacing right
+// after a segment boundary would just re-insert the separator it removed,
+// trapping the cursor in front of it instead of letting it step back through.
+function formatSegments(raw, prevValue, segmentLengths, separator) {
+  const isDeleting = raw.length < prevValue.length
+  const maxDigits = segmentLengths.reduce((a, b) => a + b, 0)
+  const digits = raw.replace(/\D/g, '').slice(0, maxDigits)
+
+  let out = ''
+  let pos = 0
+  for (const len of segmentLengths) {
+    const seg = digits.slice(pos, pos + len)
+    if (!seg) break
+    out += (pos > 0 ? separator : '') + seg
+    pos += seg.length
+  }
+
+  const boundaries = []
+  let acc = 0
+  segmentLengths.slice(0, -1).forEach((len) => { acc += len; boundaries.push(acc) })
+  if (boundaries.includes(digits.length) && !isDeleting) out += separator
+
+  return out
+}
+
+function formatDOB(raw, prevValue = '') {
+  return formatSegments(raw, prevValue, [2, 2, 2], '/')
+}
+
+function formatMobile(raw, prevValue = '') {
+  return formatSegments(raw, prevValue, [3, 3, 4], '-')
 }
 
 function SectionCard({ isDark, title, children }) {
@@ -151,8 +199,8 @@ function FieldInput({ isDark, label, value, onChange, placeholder, editing, inpu
         placeholder={placeholder}
         disabled={!editing}
         className={t(isDark,
-          `w-full bg-[#16171c] border rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none transition-colors ${editing ? 'border-blue-400/50' : 'border-white/10'}`,
-          `w-full bg-slate-50 border rounded-lg px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none transition-colors ${editing ? 'border-blue-400' : 'border-slate-200'}`
+          'w-full glass-dark-sm rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-400/50 transition-colors disabled:opacity-60',
+          'w-full glass-light-sm rounded-lg px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400 transition-colors disabled:opacity-60'
         )}
       />
     </div>
@@ -178,12 +226,12 @@ function DOBField({ isDark, value, onChange, editing }) {
           inputMode="numeric"
           maxLength={8}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onChange(formatDOB(e.target.value, value))}
           placeholder={DOB_MASK}
           disabled={!editing}
           className={t(isDark,
-            `w-full bg-[#16171c] border rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none transition-colors ${editing ? 'border-blue-400/50' : 'border-white/10'}`,
-            `w-full bg-slate-50 border rounded-lg px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none transition-colors ${editing ? 'border-blue-400' : 'border-slate-200'}`
+            'w-full glass-dark-sm rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-400/50 transition-colors disabled:opacity-60',
+            'w-full glass-light-sm rounded-lg px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400 transition-colors disabled:opacity-60'
           )}
         />
       </div>
@@ -241,10 +289,10 @@ function CountryCodeDropdown({ isDark, value, onChange, editing }) {
               key={c.code + c.name}
               type="button"
               onClick={() => { onChange(c.code); setOpen(false) }}
-              className={t(isDark,
+              className={`glass-interactive glass-interactive-flat ${t(isDark,
                 `w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm text-left hover:bg-white/5 ${c.code === value ? 'text-blue-300' : 'text-slate-300'}`,
                 `w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm text-left hover:bg-slate-50 ${c.code === value ? 'text-blue-600' : 'text-slate-600'}`
-              )}
+              )}`}
             >
               <FlagIcon country={c.id} size={18} />
               <span>{c.code}</span>
@@ -263,18 +311,15 @@ function RowShell({ isDark, icon, children }) {
       'flex items-center gap-3 px-3 py-3 rounded-xl border border-white/10',
       'flex items-center gap-3 px-3 py-3 rounded-xl border border-slate-200'
     )}>
-      <span className={t(isDark, 'w-9 h-9 rounded-full bg-[#16171c] flex items-center justify-center text-slate-400 shrink-0', 'w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0')}>
-        <Icon size={15}>{icon}</Icon>
-      </span>
+      <span className="shrink-0 w-[18px] h-[18px] flex items-center justify-center">{icon}</span>
       {children}
     </div>
   )
 }
 
-function ContactRow({ isDark, icon, label, value, editing, onChange, placeholder, verified }) {
-  const { translate } = useLanguage()
+function ContactRow({ isDark, iconSrc, label, value, editing, onChange, placeholder }) {
   return (
-    <RowShell isDark={isDark} icon={icon}>
+    <RowShell isDark={isDark} icon={<RowIcon isDark={isDark} src={iconSrc} />}>
       <div className="flex-1 min-w-0">
         <p className={t(isDark, 'text-xs text-slate-400', 'text-xs text-slate-500')}>{label}</p>
         {onChange ? (
@@ -284,6 +329,10 @@ function ContactRow({ isDark, icon, label, value, editing, onChange, placeholder
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             disabled={!editing}
+            // Chrome's own address-suggestion dropdown ignores our dark theme
+            // entirely (renders as a plain black box) — autoComplete="off"
+            // keeps it from popping up at all.
+            autoComplete="off"
             className={t(isDark,
               'w-full bg-transparent text-sm font-medium text-slate-100 placeholder-slate-500 focus:outline-none',
               'w-full bg-transparent text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none'
@@ -293,26 +342,14 @@ function ContactRow({ isDark, icon, label, value, editing, onChange, placeholder
           <p className={t(isDark, 'text-sm font-medium text-slate-100 truncate', 'text-sm font-medium text-slate-900 truncate')}>{value}</p>
         )}
       </div>
-      {verified !== undefined && (
-        verified ? (
-          <span className={t(isDark, 'shrink-0 text-xs font-medium px-2 py-1 rounded-full bg-emerald-400/10 text-emerald-300', 'shrink-0 text-xs font-medium px-2 py-1 rounded-full bg-emerald-100 text-emerald-700')}>
-            {translate('profile_verified')}
-          </span>
-        ) : (
-          <span className={t(isDark, 'shrink-0 text-xs font-medium px-2 py-1 rounded-full bg-white/5 text-slate-400', 'shrink-0 text-xs font-medium px-2 py-1 rounded-full bg-slate-100 text-slate-500')}>
-            {translate('profile_unverified')}
-          </span>
-        )
-      )}
     </RowShell>
   )
 }
 
 function MobileRow({ isDark, editing, countryCode, onCountryChange, value, onChange }) {
   const { translate } = useLanguage()
-  const icon = <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z" />
   return (
-    <RowShell isDark={isDark} icon={icon}>
+    <RowShell isDark={isDark} icon={<RowIcon isDark={isDark} src={phoneIconSrc} />}>
       <div className="flex-1 min-w-0">
         <p className={t(isDark, 'text-xs text-slate-400', 'text-xs text-slate-500')}>{translate('profile_mobile')}</p>
         <div className="flex items-center gap-2">
@@ -321,8 +358,9 @@ function MobileRow({ isDark, editing, countryCode, onCountryChange, value, onCha
           <input
             type="tel"
             inputMode="numeric"
+            maxLength={12}
             value={value}
-            onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 10))}
+            onChange={(e) => onChange(formatMobile(e.target.value, value))}
             placeholder={translate('profile_not_set')}
             disabled={!editing}
             className={t(isDark,
@@ -356,7 +394,24 @@ function ToggleSwitch({ isDark, checked, onChange }) {
   )
 }
 
-function ExpandableRow({ isDark, icon, title, subtitle, open, onToggle, children }) {
+// Keeps content mounted a beat past collapse so it fades out instead of
+// vanishing the instant the row closes — same trick used for the "My
+// Orbits" accordion in Dashboard.jsx.
+function useDelayedUnmount(isOpen, duration = 300) {
+  const [shouldRender, setShouldRender] = useState(isOpen)
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true)
+    } else if (shouldRender) {
+      const timer = setTimeout(() => setShouldRender(false), duration)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen])
+  return shouldRender
+}
+
+function ExpandableRow({ isDark, iconSrc, title, subtitle, open, onToggle, children }) {
+  const shouldRenderContent = useDelayedUnmount(open, 300)
   return (
     <div className={t(isDark,
       'rounded-xl border border-white/10 overflow-hidden',
@@ -365,27 +420,41 @@ function ExpandableRow({ isDark, icon, title, subtitle, open, onToggle, children
       <button
         type="button"
         onClick={onToggle}
-        className={t(isDark,
-          'w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-white/5 transition-colors',
-          'w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-slate-50 transition-colors'
-        )}
+        className={`glass-interactive glass-interactive-quick ${t(isDark,
+          'w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-white/5',
+          'w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-slate-50'
+        )}`}
       >
-        <span className={t(isDark, 'w-9 h-9 rounded-full bg-[#16171c] flex items-center justify-center text-slate-400 shrink-0', 'w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0')}>
-          <Icon size={15}>{icon}</Icon>
+        <span className="shrink-0 w-[18px] h-[18px] flex items-center justify-center">
+          <RowIcon isDark={isDark} src={iconSrc} />
         </span>
         <div className="flex-1 min-w-0">
           <p className={t(isDark, 'text-sm font-medium text-slate-100', 'text-sm font-medium text-slate-900')}>{title}</p>
           <p className={t(isDark, 'text-xs text-slate-400', 'text-xs text-slate-500')}>{subtitle}</p>
         </div>
-        <span className={t(isDark, 'text-slate-500', 'text-slate-400')}>
-          <Icon size={16}><path d={open ? 'M18 15l-6-6-6 6' : 'M9 18l6-6-6-6'} /></Icon>
+        <span
+          className={t(isDark, 'text-slate-500 shrink-0', 'text-slate-400 shrink-0')}
+          style={{ transition: 'transform 250ms cubic-bezier(0.4,0,0.2,1)', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        >
+          <Icon size={16}><path d="M6 9l6 6 6-6" /></Icon>
         </span>
       </button>
-      {open && (
-        <div className={t(isDark, 'px-3 pb-4 pt-1 border-t border-white/10', 'px-3 pb-4 pt-1 border-t border-slate-200')}>
-          {children}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateRows: open ? '1fr' : '0fr',
+          transition: 'grid-template-rows 350ms cubic-bezier(0.22,1,0.36,1)',
+        }}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div
+            className={t(isDark, 'px-3 pb-4 pt-1 border-t border-white/10', 'px-3 pb-4 pt-1 border-t border-slate-200')}
+            style={{ opacity: open ? 1 : 0, transition: 'opacity 300ms cubic-bezier(0.22,1,0.36,1)' }}
+          >
+            {shouldRenderContent && children}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -399,13 +468,14 @@ function InlineMessage({ type, text }) {
 
 function panelInputClass(isDark) {
   return t(isDark,
-    'w-full bg-[#16171c] border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-400/50 transition-colors',
-    'w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400 transition-colors'
+    'w-full glass-dark-sm rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-400/50 transition-colors',
+    'w-full glass-light-sm rounded-lg px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-400 transition-colors'
   )
 }
 
+// eslint-disable-next-line no-unused-vars -- isDark kept in the signature so callers don't need to change if this ever needs a theme branch again
 function panelButtonClass(isDark) {
-  return 'bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50'
+  return 'glass-accent glass-interactive text-white text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-50'
 }
 
 function PasswordVisibilityToggle({ isDark, visible, onToggle }) {
@@ -504,7 +574,13 @@ function PasswordPanel({ isDark, email, onActivity }) {
             onChange={(e) => setCurrentPassword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
             placeholder={translate('profile_current_password')}
-            autoComplete="new-password"
+            autoComplete="off"
+            // Chrome decides whether to offer its saved-password chooser at
+            // render time, before autoComplete is even consulted — starting
+            // the field readOnly hides it from that scan, then dropping
+            // readOnly on focus makes it typeable with no visible hiccup.
+            readOnly
+            onFocus={(e) => e.target.removeAttribute('readonly')}
             className={panelInputClass(isDark) + ' pr-10'}
           />
           <PasswordVisibilityToggle isDark={isDark} visible={showCurrent} onToggle={() => setShowCurrent((v) => !v)} />
@@ -564,33 +640,32 @@ function PasswordPanel({ isDark, email, onActivity }) {
   )
 }
 
-function TwoFactorPanel({ isDark, onActivity }) {
+// The enrollment flow (QR + secret + code entry) is enough surface area
+// that squeezing it into the same inline row as everything else in Security
+// felt cramped — it now opens as its own focused modal instead, same as
+// photo cropping does.
+function TwoFactorSetupModal({ isDark, open, onClose, onEnabled }) {
   const { translate } = useLanguage()
-  const [factors, setFactors] = useState(null)
   const [enrollData, setEnrollData] = useState(null)
   const [verifyCode, setVerifyCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState(null)
+  const [showManual, setShowManual] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const startedRef = useRef(false)
 
   useEffect(() => {
-    refreshFactors()
+    if (startedRef.current) return
+    startedRef.current = true
+    supabase.auth.mfa.enroll({ factorType: 'totp' }).then(({ data, error }) => {
+      if (error) setMessage({ type: 'error', text: error.message })
+      else setEnrollData(data)
+    })
   }, [])
 
-  async function refreshFactors() {
-    const { data, error } = await supabase.auth.mfa.listFactors()
-    if (!error) setFactors(data.totp || [])
-  }
-
-  async function startEnroll() {
-    setMessage(null)
-    setBusy(true)
-    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' })
-    setBusy(false)
-    if (error) {
-      setMessage({ type: 'error', text: error.message })
-      return
-    }
-    setEnrollData(data)
+  async function handleClose() {
+    if (enrollData) await supabase.auth.mfa.unenroll({ factorId: enrollData.id })
+    onClose()
   }
 
   async function verifyEnroll() {
@@ -609,18 +684,140 @@ function TwoFactorPanel({ isDark, onActivity }) {
       setMessage({ type: 'error', text: verifyError.message })
       return
     }
-    setMessage({ type: 'success', text: translate('profile_2fa_enabled_msg') })
-    setEnrollData(null)
-    setVerifyCode('')
-    refreshFactors()
-    onActivity?.('Enabled two-factor authentication')
+    onEnabled()
   }
 
-  async function cancelEnroll() {
-    if (enrollData) await supabase.auth.mfa.unenroll({ factorId: enrollData.id })
-    setEnrollData(null)
-    setVerifyCode('')
-    setMessage(null)
+  async function handleCopySecret() {
+    if (!enrollData) return
+    try {
+      await navigator.clipboard.writeText(enrollData.totp.secret)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // clipboard access can be denied — the code is still visible to copy by hand
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-[60]"
+      style={{ animation: open ? 'backdrop-in 150ms ease-out' : 'backdrop-out 180ms ease-in forwards' }}
+      onClick={handleClose}
+    >
+      <div
+        className={t(isDark,
+          'bg-[#0a0a0f] border border-white/10 rounded-2xl p-6 w-full max-w-sm',
+          'bg-white border border-slate-200 rounded-2xl p-6 w-full max-w-sm shadow-sm'
+        )}
+        style={{ animation: open ? 'modal-in 180ms ease-out' : 'modal-out 180ms ease-in forwards' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 mb-1">
+          <p className={t(isDark, 'text-slate-100 font-semibold', 'text-slate-900 font-semibold')}>
+            {translate('profile_2fa_modal_title')}
+          </p>
+          <button
+            type="button"
+            onClick={handleClose}
+            className={t(isDark, 'text-slate-500 hover:text-slate-200 transition-colors', 'text-slate-400 hover:text-slate-700 transition-colors')}
+          >
+            <Icon size={18}><path d="M18 6L6 18M6 6l12 12" /></Icon>
+          </button>
+        </div>
+
+        {!enrollData ? (
+          <p className={t(isDark, 'text-sm text-slate-400 py-6 text-center', 'text-sm text-slate-500 py-6 text-center')}>
+            {translate('profile_2fa_loading')}
+          </p>
+        ) : (
+          <div className="flex flex-col gap-4 mt-3">
+            <p className={t(isDark, 'text-xs text-slate-400', 'text-xs text-slate-500')}>
+              {translate('profile_2fa_scan_qr')}
+            </p>
+            <div className="bg-white p-3 rounded-lg self-center" dangerouslySetInnerHTML={{ __html: enrollData.totp.qr_code }} />
+
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowManual((v) => !v)}
+                className={t(isDark, 'text-xs font-medium text-blue-400 hover:text-blue-300', 'text-xs font-medium text-blue-600 hover:text-blue-500')}
+              >
+                {showManual ? translate('profile_2fa_manual_hide') : translate('profile_2fa_manual_toggle')}
+              </button>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateRows: showManual ? '1fr' : '0fr',
+                  transition: 'grid-template-rows 250ms cubic-bezier(0.22,1,0.36,1)',
+                }}
+              >
+                <div className="min-h-0 overflow-hidden">
+                  <div className={t(isDark,
+                    'mt-2 flex items-center gap-2 bg-[#16171c] border border-white/10 rounded-lg px-3 py-2',
+                    'mt-2 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2'
+                  )}>
+                    <span className={t(isDark, 'text-xs text-slate-300 font-mono break-all flex-1', 'text-xs text-slate-600 font-mono break-all flex-1')}>
+                      {enrollData.totp.secret}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCopySecret}
+                      className={t(isDark, 'shrink-0 text-xs font-medium text-slate-400 hover:text-slate-100', 'shrink-0 text-xs font-medium text-slate-500 hover:text-slate-900')}
+                    >
+                      {copied ? translate('profile_2fa_copied') : translate('profile_2fa_copy')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <input
+              type="text"
+              inputMode="numeric"
+              autoFocus
+              value={verifyCode}
+              onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onKeyDown={(e) => e.key === 'Enter' && verifyCode.length === 6 && verifyEnroll()}
+              placeholder={translate('profile_2fa_code_placeholder')}
+              className={panelInputClass(isDark) + ' text-center text-lg tracking-[0.3em] font-mono'}
+            />
+
+            <InlineMessage type={message?.type} text={message?.text} />
+
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={verifyEnroll} disabled={busy || verifyCode.length !== 6} className={`flex-1 ${panelButtonClass(isDark)}`}>
+                {busy ? translate('profile_2fa_verifying') : translate('profile_2fa_verify_enable')}
+              </button>
+              <button
+                type="button"
+                onClick={handleClose}
+                className={t(isDark, 'text-sm text-slate-400 hover:text-slate-100 px-3 py-2', 'text-sm text-slate-500 hover:text-slate-900 px-3 py-2')}
+              >
+                {translate('profile_2fa_cancel')}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function TwoFactorPanel({ isDark, onActivity }) {
+  const { translate } = useLanguage()
+  const [factors, setFactors] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState(null)
+  const [wantsSetup, setWantsSetup] = useState(false)
+  const setupModalShouldRender = useDelayedUnmount(wantsSetup, 180)
+
+  useEffect(() => {
+    refreshFactors()
+  }, [])
+
+  async function refreshFactors() {
+    const { data, error } = await supabase.auth.mfa.listFactors()
+    if (!error) setFactors(data.totp || [])
   }
 
   async function handleUnenroll(factorId) {
@@ -642,70 +839,45 @@ function TwoFactorPanel({ isDark, onActivity }) {
     return <p className={t(isDark, 'text-sm text-slate-500 pt-3', 'text-sm text-slate-400 pt-3')}>{translate('profile_2fa_loading')}</p>
   }
 
-  if (verifiedFactor) {
-    return (
-      <div className="flex flex-col gap-2 pt-3">
-        <p className={t(isDark, 'text-sm text-emerald-400', 'text-sm text-emerald-600')}>{translate('profile_2fa_is_enabled')}</p>
-        <button
-          type="button"
-          onClick={() => handleUnenroll(verifiedFactor.id)}
-          disabled={busy}
-          className={t(isDark,
-            'self-start text-sm font-medium bg-red-500/15 text-red-300 px-4 py-2 rounded-lg hover:bg-red-500/25 disabled:opacity-50 transition-colors',
-            'self-start text-sm font-medium bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 disabled:opacity-50 transition-colors'
-          )}
-        >
-          {busy ? translate('profile_2fa_removing') : translate('profile_2fa_disable_btn')}
-        </button>
-        <InlineMessage type={message?.type} text={message?.text} />
-      </div>
-    )
-  }
-
-  if (enrollData) {
-    return (
-      <div className="flex flex-col gap-3 pt-3">
-        <p className={t(isDark, 'text-sm text-slate-400', 'text-sm text-slate-500')}>
-          {translate('profile_2fa_scan_qr')}
-        </p>
-        <div className="bg-white p-3 rounded-lg self-start" dangerouslySetInnerHTML={{ __html: enrollData.totp.qr_code }} />
-        <p className={t(isDark, 'text-xs text-slate-500 font-mono break-all', 'text-xs text-slate-400 font-mono break-all')}>
-          {enrollData.totp.secret}
-        </p>
-        <input
-          type="text"
-          inputMode="numeric"
-          value={verifyCode}
-          onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-          placeholder={translate('profile_2fa_code_placeholder')}
-          className={panelInputClass(isDark) + ' max-w-[160px]'}
-        />
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={verifyEnroll} disabled={busy || verifyCode.length !== 6} className={panelButtonClass(isDark)}>
-            {busy ? translate('profile_2fa_verifying') : translate('profile_2fa_verify_enable')}
-          </button>
+  return (
+    <div className="flex flex-col gap-2 pt-3">
+      {verifiedFactor ? (
+        <>
+          <p className={t(isDark, 'text-sm text-emerald-400', 'text-sm text-emerald-600')}>{translate('profile_2fa_is_enabled')}</p>
           <button
             type="button"
-            onClick={cancelEnroll}
-            className={t(isDark, 'text-sm text-slate-400 hover:text-slate-100 px-3 py-2', 'text-sm text-slate-500 hover:text-slate-900 px-3 py-2')}
+            onClick={() => handleUnenroll(verifiedFactor.id)}
+            disabled={busy}
+            className="glass-danger glass-interactive self-start text-sm font-medium text-white px-4 py-2 rounded-lg disabled:opacity-50"
           >
-            {translate('profile_2fa_cancel')}
+            {busy ? translate('profile_2fa_removing') : translate('profile_2fa_disable_btn')}
           </button>
-        </div>
-        <InlineMessage type={message?.type} text={message?.text} />
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex flex-col gap-3 pt-3">
-      <p className={t(isDark, 'text-sm text-slate-400', 'text-sm text-slate-500')}>
-        {translate('profile_2fa_add_layer')}
-      </p>
-      <button type="button" onClick={startEnroll} disabled={busy} className={`self-start ${panelButtonClass(isDark)}`}>
-        {busy ? translate('profile_2fa_starting') : translate('profile_2fa_setup_btn')}
-      </button>
+        </>
+      ) : (
+        <>
+          <p className={t(isDark, 'text-sm text-slate-400', 'text-sm text-slate-500')}>
+            {translate('profile_2fa_add_layer')}
+          </p>
+          <button type="button" onClick={() => setWantsSetup(true)} className={`self-start ${panelButtonClass(isDark)}`}>
+            {translate('profile_2fa_setup_btn')}
+          </button>
+        </>
+      )}
       <InlineMessage type={message?.type} text={message?.text} />
+
+      {setupModalShouldRender && (
+        <TwoFactorSetupModal
+          isDark={isDark}
+          open={wantsSetup}
+          onClose={() => setWantsSetup(false)}
+          onEnabled={() => {
+            setWantsSetup(false)
+            setMessage({ type: 'success', text: translate('profile_2fa_enabled_msg') })
+            refreshFactors()
+            onActivity?.('Enabled two-factor authentication')
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -947,7 +1119,6 @@ export default function ProfilePage({ isDark, session, photoUrl, onPhotoChange, 
     onPhotoChange(croppedDataUrl)
   }
 
-  const emailVerified = !!session.user.email_confirmed_at
   const displayName = `${firstName} ${lastName}`.trim() || getDisplayName(session.user.email)
 
   return (
@@ -956,8 +1127,8 @@ export default function ProfilePage({ isDark, session, photoUrl, onPhotoChange, 
         'relative overflow-hidden rounded-2xl border border-white/10 p-6 md:p-8 mb-6',
         'relative overflow-hidden rounded-2xl border border-slate-200 p-6 md:p-8 mb-6'
       )}>
-        <div className="relative flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-5">
+        <div className="relative flex items-start gap-4 flex-wrap">
+          <div className="flex items-center gap-5 min-w-0">
             <div className="relative shrink-0">
               {photoUrl ? (
                 <img src={photoUrl} alt="Profile" className="w-20 h-20 rounded-2xl object-cover" />
@@ -971,10 +1142,10 @@ export default function ProfilePage({ isDark, session, photoUrl, onPhotoChange, 
                 type="button"
                 title="Change photo"
                 onClick={() => fileInputRef.current?.click()}
-                className={t(isDark,
-                  'absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-[#16171c] border border-white/10 flex items-center justify-center text-slate-300 hover:text-slate-100 transition-colors',
-                  'absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors'
-                )}
+                className={`glass-interactive ${t(isDark,
+                  'absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-[#16171c] border border-white/10 flex items-center justify-center text-slate-300 hover:text-slate-100',
+                  'absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900'
+                )}`}
               >
                 <Icon size={13}>
                   <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
@@ -982,22 +1153,24 @@ export default function ProfilePage({ isDark, session, photoUrl, onPhotoChange, 
                 </Icon>
               </button>
             </div>
-            <div>
-              <h1 className={t(isDark, 'text-2xl font-bold text-slate-100', 'text-2xl font-bold text-slate-900')}>{displayName}</h1>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className={t(isDark, 'text-2xl font-bold text-slate-100', 'text-2xl font-bold text-slate-900')}>{displayName}</h1>
+                <button
+                  type="button"
+                  onClick={() => setIsEditing((e) => { if (e) onActivity?.('Updated profile details'); return !e })}
+                  className={t(isDark,
+                    'glass-dark-sm glass-interactive flex items-center gap-1.5 text-xs font-medium text-slate-200 px-3 py-1.5 rounded-full',
+                    'glass-light-sm glass-interactive flex items-center gap-1.5 text-xs font-medium text-slate-700 px-3 py-1.5 rounded-full'
+                  )}
+                >
+                  <Icon size={12}><path d="M12 20h9M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" /></Icon>
+                  {isEditing ? translate('profile_done_editing') : translate('profile_edit')}
+                </button>
+              </div>
               <p className={t(isDark, 'text-sm text-slate-400', 'text-sm text-slate-500')}>{session.user.email || translate('guest_account_label')}</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsEditing((e) => { if (e) onActivity?.('Updated profile details'); return !e })}
-            className={t(isDark,
-              'flex items-center gap-1.5 text-sm font-medium bg-[#16171c] border border-white/10 text-slate-200 px-4 py-2 rounded-xl hover:bg-[#25262e] transition-colors',
-              'flex items-center gap-1.5 text-sm font-medium bg-slate-50 border border-slate-200 text-slate-700 px-4 py-2 rounded-xl hover:bg-slate-100 transition-colors'
-            )}
-          >
-            <Icon size={14}><path d="M12 20h9M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" /></Icon>
-            {isEditing ? translate('profile_done_editing') : translate('profile_edit')}
-          </button>
         </div>
         {photoError && <p className="text-red-400 text-xs mt-3">{photoError}</p>}
       </div>
@@ -1008,7 +1181,7 @@ export default function ProfilePage({ isDark, session, photoUrl, onPhotoChange, 
               <FieldInput isDark={isDark} label={translate('profile_first_name')} value={firstName} onChange={setFirstName} editing={isEditing} placeholder={translate('profile_first_name')} />
               <FieldInput isDark={isDark} label={translate('profile_last_name')} value={lastName} onChange={setLastName} editing={isEditing} placeholder={translate('profile_last_name')} />
               <FieldInput isDark={isDark} label={translate('profile_username')} value={username} onChange={onUsernameChange} editing={isEditing} placeholder={translate('profile_not_set')} />
-              <DOBField isDark={isDark} value={dob} onChange={(v) => setDob(formatDOB(v))} editing={isEditing} />
+              <DOBField isDark={isDark} value={dob} onChange={setDob} editing={isEditing} />
             </div>
           </SectionCard>
 
@@ -1016,13 +1189,12 @@ export default function ProfilePage({ isDark, session, photoUrl, onPhotoChange, 
             <div className="flex flex-col gap-2.5">
               <ContactRow
                 isDark={isDark}
-                icon={<><rect x="2" y="4" width="20" height="16" rx="2" /><path d="M22 6l-10 7L2 6" /></>}
+                iconSrc={emailIconSrc}
                 label={translate('profile_email')}
                 value={session.user.email || translate('guest_no_email')}
-                verified={session.user.email ? emailVerified : undefined}
               />
               <MobileRow isDark={isDark} editing={isEditing} countryCode={countryCode} onCountryChange={setCountryCode} value={mobile} onChange={setMobile} />
-              <ContactRow isDark={isDark} icon={<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></>} label={translate('profile_address')} value={address} editing={isEditing} onChange={setAddress} placeholder={translate('profile_not_set')} />
+              <ContactRow isDark={isDark} iconSrc={locationIconSrc} label={translate('profile_address')} value={address} editing={isEditing} onChange={setAddress} placeholder={translate('profile_not_set')} />
             </div>
           </SectionCard>
 
@@ -1030,7 +1202,7 @@ export default function ProfilePage({ isDark, session, photoUrl, onPhotoChange, 
             <div className="flex flex-col gap-2.5">
               <ExpandableRow
                 isDark={isDark}
-                icon={<><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></>}
+                iconSrc={lockIconSrc}
                 title={translate('profile_password_title')}
                 subtitle={translate('profile_password_subtitle')}
                 open={openSecurityPanel === 'password'}
@@ -1046,7 +1218,7 @@ export default function ProfilePage({ isDark, session, photoUrl, onPhotoChange, 
               </ExpandableRow>
               <ExpandableRow
                 isDark={isDark}
-                icon={<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />}
+                iconSrc={shieldIconSrc}
                 title={translate('profile_2fa_title')}
                 subtitle={translate('profile_2fa_subtitle')}
                 open={openSecurityPanel === '2fa'}

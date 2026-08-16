@@ -504,6 +504,137 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
   )
 }
 
+// Google's own metadata already carries a real first/last name — parsing
+// the account's email prefix instead (the old fallback for every user,
+// Google-signed-in or not) produced garbage like "Jeremycedrictan" for both
+// the display name and username on first login.
+function splitGoogleName(user) {
+  const meta = user?.user_metadata || {}
+  let first = meta.given_name || ''
+  let last = meta.family_name || ''
+  if (!first && !last) {
+    const parts = (meta.full_name || meta.name || '').trim().split(/\s+/).filter(Boolean)
+    first = parts[0] || ''
+    last = parts.slice(1).join(' ')
+  }
+  return { first, last }
+}
+
+// Shown once, right after a first-ever Google sign-in — Google never hands
+// over a username, so this is what stands in for the profile step a normal
+// email/password signup goes through in Auth above.
+export function CompleteGoogleProfileScreen({ session, onDone }) {
+  const { translate } = useLanguage()
+  const detected = splitGoogleName(session.user)
+  const [firstName, setFirstName] = useState(detected.first)
+  const [lastName, setLastName] = useState(detected.last)
+  const [username, setUsername] = useState('')
+  const [color, setColor] = useState(0)
+
+  function handleContinue() {
+    try {
+      localStorage.setItem(
+        `orbit_profile_meta_${session.user.id}`,
+        JSON.stringify({ photo: null, username: username.trim(), color })
+      )
+      localStorage.setItem(
+        `orbit_profile_details_${session.user.id}`,
+        JSON.stringify({ firstName: firstName.trim(), lastName: lastName.trim(), dob: '', countryCode: '+63', mobile: '', address: '' })
+      )
+    } catch {
+      // best-effort persistence
+    }
+    onDone()
+  }
+
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center px-6 bg-[#0a0a0f]">
+      <div className="w-full max-w-sm">
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <LogoMark size={32} />
+          <span className="font-dancing text-white text-2xl">Orbit</span>
+        </div>
+
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-semibold text-white mb-2">{translate('auth_google_complete_title')}</h2>
+          <p className="text-slate-400">{translate('auth_google_complete_subtitle')}</p>
+        </div>
+
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm text-blue-400 font-medium mb-1.5 block">{translate('profile_first_name')}</label>
+              <input
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="w-full glass-dark-sm rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-400/50 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-blue-400 font-medium mb-1.5 block">{translate('profile_last_name')}</label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="w-full glass-dark-sm rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-400/50 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              className="text-sm font-medium mb-1.5 block transition-colors duration-300"
+              style={{ color: AVATAR_ACCENT_HEX[color][400] }}
+            >
+              {translate('auth_username_label')}
+            </label>
+            <input
+              type="text"
+              maxLength={40}
+              placeholder={translate('auth_username_placeholder')}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full glass-dark-sm rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-white/30 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label
+              className="text-sm font-medium mb-2.5 block transition-colors duration-300"
+              style={{ color: AVATAR_ACCENT_HEX[color][400] }}
+            >
+              {translate('auth_color_label')}
+            </label>
+            <div className="flex items-center gap-3">
+              {AVATAR_COLORS.map((gradient, i) => (
+                <button
+                  key={gradient}
+                  type="button"
+                  onClick={() => setColor(i)}
+                  aria-label={`Color ${i + 1}`}
+                  className={`glass-interactive w-9 h-9 rounded-full bg-gradient-to-br ${gradient} ${
+                    color === i ? 'ring-2 ring-offset-2 ring-offset-[#0a0a0f] ring-white' : ''
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          <FillButton
+            onClick={handleContinue}
+            disabled={!username.trim()}
+            className="py-3 mt-1"
+            accentHex={AVATAR_ACCENT_HEX[color]}
+          >
+            {translate('auth_continue')}
+          </FillButton>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // Shown instead of the dashboard when the session came from a password
 // reset email link. Without this, App.jsx would see a valid session and
 // jump straight into the dashboard, skipping the actual "set a new

@@ -277,10 +277,10 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
               type="button"
               onClick={() => goToStep(Math.max(0, currentStep - 1))}
               disabled={currentStep === 0}
-              className={t(isDark,
-                'flex items-center gap-1 text-sm font-medium text-slate-300 px-4 py-2 rounded-xl hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent transition-colors',
-                'flex items-center gap-1 text-sm font-medium text-slate-600 px-4 py-2 rounded-xl hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors'
-              )}
+              className={`glass-interactive glass-interactive-flat ${t(isDark,
+                'flex items-center gap-1 text-sm font-medium text-slate-300 px-4 py-2 rounded-xl hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent',
+                'flex items-center gap-1 text-sm font-medium text-slate-600 px-4 py-2 rounded-xl hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent'
+              )}`}
             >
               <Icon size={15}><path d="M15 18l-6-6 6-6" /></Icon>
               {translate('playbook_previous')}
@@ -290,10 +290,10 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
               <button
                 type="button"
                 onClick={() => toggleStep(currentStep)}
-                className={t(isDark,
-                  'flex items-center gap-1.5 text-sm font-semibold text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 px-4 py-2 rounded-xl transition-colors',
-                  'flex items-center gap-1.5 text-sm font-semibold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-4 py-2 rounded-xl transition-colors'
-                )}
+                className={`glass-interactive glass-interactive-flat ${t(isDark,
+                  'flex items-center gap-1.5 text-sm font-semibold text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 px-4 py-2 rounded-xl',
+                  'flex items-center gap-1.5 text-sm font-semibold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-4 py-2 rounded-xl'
+                )}`}
               >
                 <Icon size={14}><path d="M20 6L9 17l-5-5" /></Icon>
                 {isStepDone ? translate('playbook_all_steps_done') : translate('playbook_final_step')}
@@ -302,7 +302,7 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
               <button
                 type="button"
                 onClick={() => goToStep(Math.min(totalSteps - 1, currentStep + 1))}
-                className="flex items-center gap-1 text-sm font-semibold text-white px-4 py-2 rounded-xl transition-colors bg-[var(--accent-600)] hover:bg-[var(--accent-500)]"
+                className="glass-accent glass-interactive flex items-center gap-1 text-sm font-semibold text-white px-4 py-2 rounded-xl"
               >
                 {translate('playbook_next_step')}
                 <Icon size={15}><path d="M9 18l6-6-6-6" /></Icon>
@@ -322,7 +322,7 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
                 key={i}
                 type="button"
                 onClick={() => goToStep(i)}
-                className={`rounded-xl border p-2.5 text-left transition-colors ${
+                className={`glass-interactive rounded-xl border p-2.5 text-left ${
                   active
                     ? accent === 'emerald'
                       ? t(isDark, 'border-emerald-400/50 bg-emerald-400/5', 'border-emerald-400 bg-emerald-50')
@@ -377,10 +377,10 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
                   disabled={submitting}
                   title={translate('playbook_yes_accurate')}
                   aria-label={translate('playbook_yes_accurate')}
-                  className={t(isDark,
-                    'w-10 h-10 rounded-full bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/20 flex items-center justify-center transition-colors disabled:opacity-50',
-                    'w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center transition-colors disabled:opacity-50'
-                  )}
+                  className={`glass-interactive ${t(isDark,
+                    'w-10 h-10 rounded-full bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/20 flex items-center justify-center disabled:opacity-50',
+                    'w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center disabled:opacity-50'
+                  )}`}
                 >
                   <Icon size={20}>
                     <circle cx="12" cy="12" r="10" />
@@ -394,10 +394,10 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
                   disabled={submitting}
                   title={translate('playbook_something_off')}
                   aria-label={translate('playbook_something_off')}
-                  className={t(isDark,
-                    'w-10 h-10 rounded-full bg-red-400/10 text-red-300 hover:bg-red-400/20 flex items-center justify-center transition-colors disabled:opacity-50',
-                    'w-10 h-10 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition-colors disabled:opacity-50'
-                  )}
+                  className={`glass-interactive ${t(isDark,
+                    'w-10 h-10 rounded-full bg-red-400/10 text-red-300 hover:bg-red-400/20 flex items-center justify-center disabled:opacity-50',
+                    'w-10 h-10 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center disabled:opacity-50'
+                  )}`}
                 >
                   <Icon size={20}>
                     <circle cx="12" cy="12" r="10" />
@@ -422,7 +422,7 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
                   <button
                     onClick={() => submitFeedback(false)}
                     disabled={submitting}
-                    className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors disabled:opacity-60"
+                    className="glass-accent glass-interactive text-white font-semibold px-4 py-2 rounded-xl text-sm disabled:opacity-60"
                   >
                     {submitting ? translate('playbook_submitting') : translate('playbook_submit_feedback')}
                   </button>

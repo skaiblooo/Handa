@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { DOC_TYPE_LABELS, AGENCY_BADGE, AGENCY_BADGE_COLOR, CARD_THEME, CARD_FIELD_SCHEMAS, DOC_CATEGORIES } from '../data/docTypes'
 import satellitesIcon from '../assets/satellites.png'
 import spaceTravelIcon from '../assets/space-travel.png'
-import dangerIcon from '../assets/danger.png'
-import fileIcon from '../assets/file.png'
-import calendarIcon from '../assets/calendar.png'
-import spaceIcon from '../assets/space.png'
+import notificationIcon from '../assets/notification.png'
+import documentIcon from '../assets/document.png'
+import calendarSettingsIcon from '../assets/calendar (1).png'
+import historyIcon from '../assets/history.png'
+import settingsIcon from '../assets/settings.png'
 import dfaLogo from '../assets/DFA logo.webp'
 import nbiLogo from '../assets/NBI logo.webp'
 import ltoLogo from '../assets/LTO LOGO.webp'
@@ -17,10 +18,10 @@ import orbitLogo from '../assets/orbit logo.png'
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'My Space', iconSrc: satellitesIcon },
   { id: 'my_orbits', label: 'My Orbits', iconSrc: spaceTravelIcon },
-  { id: 'notifications', label: 'Notifications', iconSrc: dangerIcon },
-  { id: 'documents', label: 'Documents', iconSrc: fileIcon },
-  { id: 'calendar', label: 'Calendar', iconSrc: calendarIcon },
-  { id: 'history', label: 'History', iconSrc: spaceIcon },
+  { id: 'notifications', label: 'Notifications', iconSrc: notificationIcon },
+  { id: 'documents', label: 'Documents', iconSrc: documentIcon },
+  { id: 'calendar', label: 'Calendar', iconSrc: calendarSettingsIcon },
+  { id: 'history', label: 'History', iconSrc: historyIcon },
 ]
 
 const DEPARTMENT_LOGOS = { DFA: dfaLogo, NBI: nbiLogo, LTO: ltoLogo, PH: philhealthLogo, BI: biLogo, PRA: praLogo }
@@ -193,8 +194,8 @@ function Sidebar({ page, hoveredId, pressedId, register }) {
               }`}
               style={liftStyle(hovered, pressed)}
             >
-              <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0">
-                <img src={item.iconSrc} alt="" className="w-[16px] h-[16px] object-contain" style={{ filter: 'invert(1) brightness(1.3)' }} />
+              <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0">
+                <img src={item.iconSrc} alt="" className="w-[18px] h-[18px] object-contain" style={{ filter: 'invert(1) brightness(1.3)' }} />
               </span>
               {collapsed ? <span className="text-[9px] leading-tight font-medium">{item.label}</span> : item.label}
             </div>
@@ -203,16 +204,13 @@ function Sidebar({ page, hoveredId, pressedId, register }) {
       </nav>
       <div className="flex flex-col gap-1 pt-4">
         <div className={`flex items-center rounded-xl text-sm text-slate-400 ${collapsed ? 'flex-col gap-0.5 py-2 px-1 justify-center text-center' : 'gap-3 px-2 py-2'}`}>
-          <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
-            <Icon size={15}>
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
-            </Icon>
+          <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0">
+            <img src={settingsIcon} alt="" className="w-[18px] h-[18px] object-contain" style={{ filter: 'invert(1) brightness(1.3)' }} />
           </span>
           {collapsed ? <span className="text-[9px] leading-tight font-medium">Settings</span> : 'Settings'}
         </div>
         <div className={`flex items-center rounded-xl text-sm text-slate-400 ${collapsed ? 'flex-col gap-0.5 py-2 px-1 justify-center text-center' : 'gap-3 px-2 py-2'}`}>
-          <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
+          <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0">
             <Icon size={15}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /></Icon>
           </span>
           {collapsed ? <span className="text-[9px] leading-tight font-medium">Log out</span> : 'Log out'}
@@ -234,7 +232,7 @@ function Topbar() {
       </div>
       <div className="flex items-center gap-3">
         <span className="w-8 h-8 rounded-full glass-dark flex items-center justify-center text-slate-400">
-          <Icon size={15}><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" /></Icon>
+          <img src={notificationIcon} alt="" className="w-[16px] h-[16px] object-contain" style={{ filter: 'invert(1) brightness(1.3)' }} />
         </span>
         <div className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-sm font-semibold text-white shrink-0">E</div>

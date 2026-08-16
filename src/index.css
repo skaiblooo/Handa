@@ -83,23 +83,27 @@ input:-webkit-autofill:active {
    layers and would unconditionally beat every Tailwind utility (including
    things like focus-within:border-*), no matter which is written last. */
 @utility glass-dark {
-  background: rgba(255, 255, 255, 0.045);
+  background-color: rgba(255, 255, 255, 0.045);
   -webkit-backdrop-filter: blur(18px) saturate(180%);
   backdrop-filter: blur(18px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
     inset 0 0 22px 0 rgba(255, 255, 255, 0.03),
+    /* Bottom-edge falloff — light bending through the lower curve of a
+       liquid-glass pane rather than a flat frosted rectangle. */
+    inset 0 -12px 20px -16px rgba(0, 0, 0, 0.35),
     0 10px 30px -12px rgba(0, 0, 0, 0.55);
 }
 
 @utility glass-light {
-  background: rgba(255, 255, 255, 0.55);
+  background-color: rgba(255, 255, 255, 0.55);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
   backdrop-filter: blur(28px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.75);
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
+    inset 0 -10px 18px -16px rgba(15, 23, 42, 0.08),
     0 10px 30px -14px rgba(15, 23, 42, 0.18);
 }
 
@@ -107,7 +111,7 @@ input:-webkit-autofill:active {
    than a flat fill, so CTAs still read as "glass" instead of breaking the
    material. Reads var(--accent-*) from whichever element sets it. */
 @utility glass-accent {
-  background: color-mix(in srgb, var(--accent-500) 60%, transparent);
+  background-color: color-mix(in srgb, var(--accent-500) 60%, transparent);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid color-mix(in srgb, var(--accent-400) 55%, transparent);
@@ -116,14 +120,14 @@ input:-webkit-autofill:active {
     0 10px 24px -10px color-mix(in srgb, var(--accent-500) 70%, transparent);
 
   &:hover {
-    background: color-mix(in srgb, var(--accent-500) 72%, transparent);
+    background-color: color-mix(in srgb, var(--accent-500) 72%, transparent);
   }
 }
 
 /* Same tinted-glass idea for destructive actions — a red glass instead of
    a flat red fill. */
 @utility glass-danger {
-  background: color-mix(in srgb, #ef4444 62%, transparent);
+  background-color: color-mix(in srgb, #ef4444 62%, transparent);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid color-mix(in srgb, #f87171 55%, transparent);
@@ -132,14 +136,14 @@ input:-webkit-autofill:active {
     0 10px 24px -10px color-mix(in srgb, #ef4444 65%, transparent);
 
   &:hover {
-    background: color-mix(in srgb, #ef4444 74%, transparent);
+    background-color: color-mix(in srgb, #ef4444 74%, transparent);
   }
 }
 
 /* Same material, lighter blur radius — full-strength 28px blur on a small
    icon badge or pill oversamples and just looks muddy at that scale. */
 @utility glass-dark-sm {
-  background: rgba(255, 255, 255, 0.07);
+  background-color: rgba(255, 255, 255, 0.07);
   -webkit-backdrop-filter: blur(9px) saturate(180%);
   backdrop-filter: blur(9px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -151,7 +155,7 @@ input:-webkit-autofill:active {
    little contrast between the two), so this needs real presence rather than
    matching glass-light's own restraint. */
 @utility glass-light-sm {
-  background: rgba(255, 255, 255, 0.92);
+  background-color: rgba(255, 255, 255, 0.92);
   -webkit-backdrop-filter: blur(12px) saturate(180%);
   backdrop-filter: blur(12px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 1);
@@ -165,13 +169,13 @@ input:-webkit-autofill:active {
    reported when a nearby glass layer repaints (e.g. the search bar
    gaining focus) — this reads as "raised" without sampling anything itself. */
 @utility glass-chip-dark {
-  background: rgba(255, 255, 255, 0.07);
+  background-color: rgba(255, 255, 255, 0.07);
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.26);
 }
 
 @utility glass-chip-light {
-  background: rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.85);
   border: 1px solid rgba(255, 255, 255, 1);
   box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 1), 0 2px 6px -3px rgba(15, 23, 42, 0.15);
 }
@@ -180,7 +184,7 @@ input:-webkit-autofill:active {
    background — distinct from glass-dark/glass-light since those are tuned
    for the app shell, not a bright pill sitting directly on hero footage. */
 @utility glass-btn {
-  background: rgba(255, 255, 255, 0.82);
+  background-color: rgba(255, 255, 255, 0.82);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.9);
@@ -190,7 +194,7 @@ input:-webkit-autofill:active {
     0 0 20px 2px rgba(255, 255, 255, 0.12);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.94);
+    background-color: rgba(255, 255, 255, 0.94);
   }
 }
 
@@ -198,7 +202,7 @@ input:-webkit-autofill:active {
    to glass-btn's bright fill made for buttons), with a soft blue ambient
    glow tying it into the space theme. */
 @utility glass-panel {
-  background: rgba(255, 255, 255, 0.04);
+  background-color: rgba(255, 255, 255, 0.04);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
   backdrop-filter: blur(20px) saturate(140%);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -208,12 +212,55 @@ input:-webkit-autofill:active {
     0 0 90px -10px rgba(90, 140, 255, 0.25);
 }
 
-/* Bouncy press/hover feedback — a slight overshoot rather than a linear
-   resize, the same springy feel Apple's Liquid Glass controls animate with.
+/* Bouncy press/hover feedback: a slight overshoot rather than a linear
+   resize, the same springy feel Apple Liquid Glass controls animate with.
    The hover state also lifts the shadow, not just the transform, since the
-   transform alone reads as too subtle to notice on a light background. */
+   transform alone reads as too subtle to notice on a light background.
+
+   The background-image is a specular sheen: a soft diagonal highlight band
+   that sweeps across the surface on hover, like light catching a curved
+   pane of glass. It is set as the background-image longhand, and every
+   glass-dark/glass-light/glass-accent/glass-danger/glass-dark-sm/glass-light-sm/
+   glass-chip-dark/glass-chip-light/glass-btn/glass-panel utility sets its own fill via background-color
+   instead of the background shorthand, specifically so pairing them never
+   clobbers this: a shorthand resets every background sub-property it does
+   not mention, including background-image, and cross-file cascade order
+   between two custom utilities is not something to depend on. Two
+   different longhands on two different classes just compose instead.
+
+   This utility also carries its own `color` transition, so it never needs a
+   sibling `transition-colors` class. Never pair one: `transition-colors` (or
+   any other rule that sets transition-property/transition-duration/the
+   `transition` shorthand) on the SAME element competes for transition-
+   property with the declaration below, and whichever rule is later in the
+   compiled stylesheet wins outright for that property — it does not merge.
+   Losing means transform/box-shadow/background-position silently stop
+   animating (they snap instantly), which is exactly the "sweep just doesn't
+   happen on this button" bug this utility used to have wherever something
+   added transition-colors alongside it.
+
+   Sweep-in is 0.5s ease-out. Percentage-based background-position means the
+   actual pixel distance the highlight travels scales with each element's
+   own width, so a fixed duration alone does not give every element the
+   same pace — a 36px icon button (bell, favorite/trash) covers far fewer
+   pixels than a 240px sidebar row in the same 0.5s, and reads as an
+   instant blink rather than a sweep unless the duration leaves enough
+   wall-clock time for it to register regardless of size. This still is not
+   exact physics-matched consistency across every element width, just a
+   duration tuned so the sidebar (the widest, most visible case) and the
+   small icon-only buttons both read as a deliberate sweep rather than a
+   flash-fast or sluggish one. background-position is only ever transitioned
+   inside the :hover block (not the base rule), so leaving hover snaps the
+   sweep back to its start position instantly instead of animating it
+   backwards across the surface a second time — a slow, wide reverse sweep
+   restarting mid-flight on every item is what read as flicker when
+   scanning down a list (My Orbits, notifications) quickly. */
 @utility glass-interactive {
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease;
+  background-repeat: no-repeat;
+  background-image: linear-gradient(115deg, transparent 25%, rgba(255, 255, 255, 0.7) 50%, transparent 75%);
+  background-size: 220% 100%;
+  background-position: 160% 0;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   /* Browsers draw a rectangular focus ring on <button> even for a plain
      mouse click, which shows as straight leftover edges poking out past a
      rounded card's clipped corners. Mouse clicks don't trigger
@@ -227,8 +274,10 @@ input:-webkit-autofill:active {
   }
 
   &:hover {
+    background-position: -60% 0;
     transform: translateY(-1px) scale(1.012);
     box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.4), 0 10px 24px -10px rgba(15, 23, 42, 0.35);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, background-position 0.5s ease-out;
   }
 
   &:active {
@@ -238,10 +287,72 @@ input:-webkit-autofill:active {
 
   @media (prefers-reduced-motion: reduce) {
     transition: none;
+    &:hover {
+      background-position: 160% 0;
+    }
     &:hover, &:active {
       transform: none;
     }
   }
+}
+
+/* Pair alongside glass-interactive (never instead of it) on rows in a
+   scannable list — My Orbits accordion headers, notification rows — where
+   the cursor grazes several rows a second while scanning. glass-
+   interactive's own 0.5s sweep is tuned for standalone buttons/sidebar
+   items where hover is a deliberate, held action; on a fast-scrolled list
+   that same duration doesn't finish before the next row's hover starts,
+   so it never catches up and reads as laggy/trailing rather than
+   responsive. This only overrides the :hover transition's timing, nothing
+   else about the material. */
+@utility glass-interactive-quick {
+  &:hover {
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, background-position 0.26s ease-out;
+  }
+}
+
+/* Pair alongside glass-interactive on a plain menu row (search suggestions,
+   dropdown items) that sits inside a surface that is already glass —
+   glass-interactive's hover box-shadow includes a bright inset top edge
+   meant to read as the lifted rim of a standalone card, which looks like a
+   stray floating line above a borderless list row instead. Kills just that
+   box-shadow; the sweep and lift transform are untouched. */
+@utility glass-interactive-flat {
+  &:hover {
+    box-shadow: none;
+  }
+}
+
+/* Pair alongside glass-interactive on a tab/pill that already shows its
+   active state via a separately-positioned sliding indicator (the filter
+   bar on My Space, the Notifications tab's own All/Archive/Favorite pills,
+   the bell dropdown's All/Unread) — glass-interactive's hover transform
+   lifts and scales the button itself by ~1%, but the indicator underneath
+   stays put at its measured position, so the two rounded-full edges drift
+   out of alignment on hover and read as a doubled/ghosted outline. Keeps
+   the sweep and color transitions, drops just the transform and shadow. */
+@utility glass-interactive-tab {
+  &:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Drives the exact same look as glass-interactive's :hover state, but from
+   a plain class instead of the browser's native :hover pseudo-class — for
+   a row highlighted by keyboard (arrow-key navigation) rather than an
+   actual mouse hover, which :hover can never reflect since the cursor
+   isn't physically over the row. Toggle this class on whatever
+   "highlighted index" state already drives the row's selected look. Not
+   scoped to :hover, so it declares its own transition (glass-interactive's
+   base rule deliberately excludes background-position from its own
+   transition list, so the sweep snaps back instantly on real mouse-leave —
+   this needs the same easing glass-interactive-quick gives real hover). */
+@utility glass-interactive-kbd {
+  background-position: -60% 0;
+  transform: translateY(-1px) scale(1.012);
+  box-shadow: none;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, background-position 0.5s ease-out;
 }
 
 @keyframes dropdown-in {
@@ -353,6 +464,15 @@ input:-webkit-autofill:active {
   to { background-position: 85% 60%; }
 }
 
+/* Dashboard's deep-space background (My Space and beyond): a very slow pan
+   on the tiled star layers, looping via alternate/alternate-reverse so
+   there's no jump cut. Shared by both themes (dark: white dots, light:
+   slate dots — see Dashboard.jsx). */
+@keyframes starfield-drift {
+  from { background-position: 0px 0px; }
+  to { background-position: -180px -140px; }
+}
+
 /* Gentle idle float for the urgency arrow icon. */
 @keyframes icon-bob {
   0%, 100% { translate: 0 0; }
@@ -386,6 +506,11 @@ input:-webkit-autofill:active {
 @keyframes chart-fill-wipe {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
+}
+
+@keyframes chart-bar-grow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
 }
 
 @keyframes sheen-sweep {
@@ -424,4 +549,3 @@ input:-webkit-autofill:active {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
-

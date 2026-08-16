@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient'
 import { getPlaybook } from './data/playbooks'
 import PlaybookModal from './PlaybookModal'
 import ProfilePage from './ProfilePage'
-import { getDaysUntilExpiry, getUrgencyLevel, formatDaysUntil } from './utils/dateHelpers'
+import { getDaysUntilExpiry, getUrgencyLevel, formatDaysUntil, formatExpiryDisplay, formatTimeAgo, formatCompactDaysUntil } from './utils/dateHelpers'
 import { getActivityLog, logActivity } from './utils/activityLog'
 import { useLanguage } from './i18n'
 import { AVATAR_COLORS, AVATAR_ACCENT_HEX } from './avatarColors'
@@ -40,11 +40,13 @@ import ncmfLogo from './assets/ncmf logo.webp'
 import orbitLogo from './assets/orbit logo.png'
 import satellitesIcon from './assets/satellites.png'
 import spaceTravelIcon from './assets/space-travel.png'
-import dangerIcon from './assets/danger.png'
-import fileIcon from './assets/file.png'
-import calendarIcon from './assets/calendar.png'
-import spaceIcon from './assets/space.png'
-import dashboardBg from './assets/dashboard-bg.webp'
+import notificationIcon from './assets/notification.png'
+import documentIcon from './assets/document.png'
+import calendarSettingsIcon from './assets/calendar (1).png'
+import historyIcon from './assets/history.png'
+import settingsIcon from './assets/settings.png'
+import bookmarkIcon from './assets/bookmark.png'
+import trashIcon from './assets/trash.png'
 
 // Full department names for the orbit-grouping view — AGENCY_BADGE only has
 // short codes (LTO, PSA, ...), which read as cryptic on their own outside a
@@ -264,7 +266,7 @@ export function FlippableIDCard({ front, back, flipped, onFlip }) {
         type="button"
         title="Flip card"
         onClick={(e) => { e.stopPropagation(); onFlip() }}
-        className="absolute bottom-2.5 right-2.5 z-10 w-6 h-6 rounded-full bg-black/25 hover:bg-black/40 text-white flex items-center justify-center transition-colors"
+        className="glass-interactive absolute bottom-2.5 right-2.5 z-10 w-6 h-6 rounded-full bg-black/25 hover:bg-black/40 text-white flex items-center justify-center"
       >
         <FlipIcon size={12} />
       </button>
@@ -277,6 +279,12 @@ const FILTERS = [
   { id: 'active', labelKey: 'filter_active' },
   { id: 'expiring_soon', labelKey: 'filter_expiring_soon' },
   { id: 'expired', labelKey: 'filter_expired' },
+]
+
+const SORT_OPTIONS = [
+  { id: 'expiry', labelKey: 'sort_expiry' },
+  { id: 'name', labelKey: 'sort_name' },
+  { id: 'department', labelKey: 'sort_department' },
 ]
 
 function Icon({ children, size = 18 }) {
@@ -356,10 +364,10 @@ function ThemedCheckbox({ isDark, checked, onClick, size = 18 }) {
 export const NAV_ITEMS = [
   { id: 'dashboard', labelKey: 'nav_dashboard', iconSrc: satellitesIcon },
   { id: 'my_documents', labelKey: 'nav_my_documents', iconSrc: spaceTravelIcon },
-  { id: 'reminders', labelKey: 'nav_reminders', iconSrc: dangerIcon },
-  { id: 'requirements', labelKey: 'nav_requirements', iconSrc: fileIcon },
-  { id: 'appointments', labelKey: 'nav_appointments', iconSrc: calendarIcon },
-  { id: 'history', labelKey: 'nav_history', iconSrc: spaceIcon },
+  { id: 'reminders', labelKey: 'nav_reminders', iconSrc: notificationIcon },
+  { id: 'requirements', labelKey: 'nav_requirements', iconSrc: documentIcon },
+  { id: 'appointments', labelKey: 'nav_appointments', iconSrc: calendarSettingsIcon },
+  { id: 'history', labelKey: 'nav_history', iconSrc: historyIcon },
 ]
 
 const PROFILE_ICON = <><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></>
@@ -368,6 +376,7 @@ const SETTINGS_NAV = [
   {
     sectionKey: 'settings_section_general',
     items: [
+      { id: 'general', labelKey: 'settings_tab_general', iconSrc: settingsIcon },
       { id: 'account', labelKey: 'settings_tab_account', icon: PROFILE_ICON },
     ],
   },
@@ -382,12 +391,12 @@ const SETTINGS_NAV = [
       {
         id: 'notifications',
         labelKey: 'settings_tab_notifications',
-        icon: <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />,
+        iconSrc: notificationIcon,
       },
       {
         id: 'linked_documents',
         labelKey: 'settings_tab_linked_documents',
-        icon: <><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" /></>,
+        iconSrc: documentIcon,
       },
       {
         id: 'language',
@@ -397,7 +406,7 @@ const SETTINGS_NAV = [
       {
         id: 'calendar',
         labelKey: 'settings_tab_calendar',
-        icon: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></>,
+        iconSrc: calendarSettingsIcon,
       },
       {
         id: 'data',
@@ -456,7 +465,7 @@ function ThreeDotMenu({ isDark, options, id, openId, setOpenId }) {
     <Dropdown open={open} onClose={() => setOpenId(null)}>
       <button
         onClick={(e) => { e.stopPropagation(); setOpenId(open ? null : id) }}
-        className={`glass-interactive p-1.5 rounded-full transition-colors ${t(isDark,
+        className={`glass-interactive p-1.5 rounded-full ${t(isDark,
           'text-slate-500 hover:text-slate-100 hover:bg-white/10',
           'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
         )}`}
@@ -468,9 +477,20 @@ function ThreeDotMenu({ isDark, options, id, openId, setOpenId }) {
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
           style={{ animation: open ? 'dropdown-in 140ms ease-out' : 'dropdown-out 140ms ease-in forwards' }}
+          // Neither glass-dark/light (backdrop-filter nested inside another
+          // already-glass panel — both current callers, a document card and
+          // the notif panel, are glass themselves — double-samples the same
+          // pixels and reads as glitchy) nor glass-chip (no blur, but its
+          // ~7% tint alone isn't remotely opaque enough to keep text sitting
+          // directly behind it from bleeding through). A solid flat fill
+          // side-steps both: fully opaque so nothing behind it is legible
+          // through it, and no backdrop-filter at all so there's nothing to
+          // double-sample. Matches the same opaque dropdown-menu pattern
+          // ProfilePage.jsx already uses (bg-[#0a0a0f] border-white/10
+          // shadow-xl) rather than inventing a new one.
           className={t(isDark,
-            'absolute right-0 mt-2 w-40 glass-dark rounded-xl p-1.5 origin-top-right',
-            'absolute right-0 mt-2 w-40 glass-light rounded-xl p-1.5 origin-top-right'
+            'absolute right-0 mt-2 w-40 z-30 bg-[#0a0a0f] border border-white/10 shadow-xl rounded-xl p-1.5 origin-top-right',
+            'absolute right-0 mt-2 w-40 z-30 bg-white border border-slate-200 shadow-xl rounded-xl p-1.5 origin-top-right'
           )}
         >
           {options.map((opt) => (
@@ -478,10 +498,11 @@ function ThreeDotMenu({ isDark, options, id, openId, setOpenId }) {
               key={opt.label}
               onClick={() => { opt.onClick(); setOpenId(null) }}
               className={t(isDark,
-                `w-full text-left px-3 py-1.5 rounded-lg text-sm hover:bg-white/5 ${opt.danger ? 'text-red-300' : 'text-slate-300'}`,
-                `w-full text-left px-3 py-1.5 rounded-lg text-sm hover:bg-slate-50 ${opt.danger ? 'text-red-500' : 'text-slate-600'}`
+                `glass-interactive glass-interactive-flat w-full flex items-center gap-2 text-left px-3 py-1.5 rounded-lg text-sm hover:bg-white/5 ${opt.danger ? 'text-red-300' : 'text-slate-300'}`,
+                `glass-interactive glass-interactive-flat w-full flex items-center gap-2 text-left px-3 py-1.5 rounded-lg text-sm hover:bg-slate-50 ${opt.danger ? 'text-red-500' : 'text-slate-600'}`
               )}
             >
+              {opt.icon && <span className="shrink-0">{opt.icon}</span>}
               {opt.label}
             </button>
           ))}
@@ -503,7 +524,7 @@ function AddDocumentTile({ isDark, onClick, tileRef, label, fullWidth }) {
       type="button"
       onClick={onClick}
       onMouseDown={(e) => e.stopPropagation()}
-      className={`flex items-center justify-center gap-3 rounded-2xl border-2 border-dashed transition-colors ${
+      className={`glass-interactive flex items-center justify-center gap-3 rounded-2xl border-2 border-dashed ${
         fullWidth ? 'flex-row py-5' : 'flex-col min-h-[220px]'
       } ${t(isDark,
         'border-white/15 hover:border-white/30 text-slate-500 hover:text-slate-300',
@@ -540,10 +561,10 @@ function IntentPicker({ isDark, onSelect, onCancel }) {
           type="button"
           title={translate('add_doc_cancel')}
           onClick={onCancel}
-          className={t(isDark,
-            'p-1.5 rounded-full text-slate-500 hover:text-slate-100 hover:bg-white/10 transition-colors shrink-0',
-            'p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0'
-          )}
+          className={`glass-interactive glass-interactive-flat ${t(isDark,
+            'p-1.5 rounded-full text-slate-500 hover:text-slate-100 hover:bg-white/10 shrink-0',
+            'p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 shrink-0'
+          )}`}
         >
           <Icon size={16}><path d="M18 6L6 18M6 6l12 12" /></Icon>
         </button>
@@ -552,10 +573,10 @@ function IntentPicker({ isDark, onSelect, onCancel }) {
         <button
           type="button"
           onClick={() => onSelect('application')}
-          className={t(isDark,
-            'flex flex-col items-center text-center gap-2 p-4 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20 transition-colors',
-            'flex flex-col items-center text-center gap-2 p-4 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-colors'
-          )}
+          className={`glass-interactive ${t(isDark,
+            'flex flex-col items-center text-center gap-2 p-4 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20',
+            'flex flex-col items-center text-center gap-2 p-4 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+          )}`}
         >
           <span className={t(isDark, 'w-9 h-9 rounded-full bg-blue-500/15 text-blue-300 flex items-center justify-center', 'w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center')}>
             <Icon size={17}><path d="M12 5v14M5 12h14" /></Icon>
@@ -566,10 +587,10 @@ function IntentPicker({ isDark, onSelect, onCancel }) {
         <button
           type="button"
           onClick={() => onSelect('renewal')}
-          className={t(isDark,
-            'flex flex-col items-center text-center gap-2 p-4 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20 transition-colors',
-            'flex flex-col items-center text-center gap-2 p-4 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-colors'
-          )}
+          className={`glass-interactive ${t(isDark,
+            'flex flex-col items-center text-center gap-2 p-4 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20',
+            'flex flex-col items-center text-center gap-2 p-4 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+          )}`}
         >
           <span className={t(isDark, 'w-9 h-9 rounded-full bg-emerald-500/15 text-emerald-300 flex items-center justify-center', 'w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center')}>
             <Icon size={17}><path d="M3 12a9 9 0 0115.3-6.4M21 12a9 9 0 01-15.3 6.4" /><path d="M21 3v6h-6M3 21v-6h6" /></Icon>
@@ -621,10 +642,10 @@ function CategoryPicker({ isDark, onSelect, onCancel }) {
           type="button"
           title={translate('add_doc_cancel')}
           onClick={onCancel}
-          className={t(isDark,
-            'p-1.5 rounded-full text-slate-500 hover:text-slate-100 hover:bg-white/10 transition-colors shrink-0',
-            'p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0'
-          )}
+          className={`glass-interactive glass-interactive-flat ${t(isDark,
+            'p-1.5 rounded-full text-slate-500 hover:text-slate-100 hover:bg-white/10 shrink-0',
+            'p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 shrink-0'
+          )}`}
         >
           <Icon size={16}><path d="M18 6L6 18M6 6l12 12" /></Icon>
         </button>
@@ -635,10 +656,10 @@ function CategoryPicker({ isDark, onSelect, onCancel }) {
             key={cat.id}
             type="button"
             onClick={() => onSelect(cat)}
-            className={t(isDark,
-              'flex flex-col items-center gap-2 p-3 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20 transition-colors',
-              'flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-colors'
-            )}
+            className={`glass-interactive ${t(isDark,
+              'flex flex-col items-center gap-2 p-3 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20',
+              'flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+            )}`}
           >
             <span className={t(isDark, 'w-11 h-11 rounded-xl bg-white/10 text-slate-200 flex items-center justify-center shrink-0', 'w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0')}>
               <Icon size={20}>{CATEGORY_ICONS[cat.id]}</Icon>
@@ -682,10 +703,10 @@ function DocTypePicker({ isDark, docTypeIds, onSelect, onBack, onCancel }) {
             type="button"
             title={translate('add_doc_back')}
             onClick={onBack}
-            className={t(isDark,
-              'p-1.5 -ml-1.5 mt-0.5 rounded-full text-slate-500 hover:text-slate-100 hover:bg-white/10 transition-colors shrink-0',
-              'p-1.5 -ml-1.5 mt-0.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0'
-            )}
+            className={`glass-interactive glass-interactive-flat ${t(isDark,
+              'p-1.5 -ml-1.5 mt-0.5 rounded-full text-slate-500 hover:text-slate-100 hover:bg-white/10 shrink-0',
+              'p-1.5 -ml-1.5 mt-0.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 shrink-0'
+            )}`}
           >
             <Icon size={16}><path d="M15 18l-6-6 6-6" /></Icon>
           </button>
@@ -698,10 +719,10 @@ function DocTypePicker({ isDark, docTypeIds, onSelect, onBack, onCancel }) {
           type="button"
           title={translate('add_doc_cancel')}
           onClick={onCancel}
-          className={t(isDark,
-            'p-1.5 rounded-full text-slate-500 hover:text-slate-100 hover:bg-white/10 transition-colors shrink-0',
-            'p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0'
-          )}
+          className={`glass-interactive glass-interactive-flat ${t(isDark,
+            'p-1.5 rounded-full text-slate-500 hover:text-slate-100 hover:bg-white/10 shrink-0',
+            'p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 shrink-0'
+          )}`}
         >
           <Icon size={16}><path d="M18 6L6 18M6 6l12 12" /></Icon>
         </button>
@@ -712,10 +733,10 @@ function DocTypePicker({ isDark, docTypeIds, onSelect, onBack, onCancel }) {
             key={opt.value}
             type="button"
             onClick={() => onSelect(opt.value)}
-            className={t(isDark,
-              'flex flex-col items-center gap-1.5 p-3 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20 transition-colors',
-              'flex flex-col items-center gap-1.5 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-colors'
-            )}
+            className={`glass-interactive ${t(isDark,
+              'flex flex-col items-center gap-1.5 p-3 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20',
+              'flex flex-col items-center gap-1.5 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+            )}`}
           >
             <AgencyBadge docType={opt.value} />
             <span className={t(isDark, 'text-[10px] text-center text-slate-300 leading-tight', 'text-[10px] text-center text-slate-600 leading-tight')}>{opt.label}</span>
@@ -767,7 +788,7 @@ function ApplicationConfirmCard({ isDark, docType, title, onTitleChange, onBack,
             type="button"
             title={translate('add_doc_back')}
             onClick={onBack}
-            className={`glass-interactive p-1.5 rounded-full transition-all duration-200 ${t(isDark,
+            className={`glass-interactive p-1.5 rounded-full ${t(isDark,
               'text-slate-500 hover:text-slate-100 hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.55)]',
               'text-slate-400 hover:text-slate-700 hover:drop-shadow-[0_0_6px_rgba(15,23,42,0.35)]'
             )}`}
@@ -779,7 +800,7 @@ function ApplicationConfirmCard({ isDark, docType, title, onTitleChange, onBack,
             title={translate('add_doc_save')}
             onClick={onSave}
             disabled={saving}
-            className={`glass-interactive p-1.5 rounded-full transition-all duration-200 disabled:opacity-40 ${t(isDark,
+            className={`glass-interactive p-1.5 rounded-full disabled:opacity-40 ${t(isDark,
               'text-emerald-400 hover:drop-shadow-[0_0_6px_rgba(52,211,153,0.9)]',
               'text-emerald-600 hover:drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]'
             )}`}
@@ -790,7 +811,7 @@ function ApplicationConfirmCard({ isDark, docType, title, onTitleChange, onBack,
             type="button"
             title={translate('add_doc_cancel')}
             onClick={onCancel}
-            className={`glass-interactive p-1.5 rounded-full transition-all duration-200 ${t(isDark,
+            className={`glass-interactive p-1.5 rounded-full ${t(isDark,
               'text-slate-500 hover:text-slate-100 hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.55)]',
               'text-slate-400 hover:text-slate-700 hover:drop-shadow-[0_0_6px_rgba(15,23,42,0.35)]'
             )}`}
@@ -1020,7 +1041,7 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, initialAge
             type="button"
             title={translate('add_doc_back')}
             onClick={() => setStep(initialType ? 'intent' : 'type')}
-            className={`glass-interactive p-1.5 rounded-full transition-all duration-200 ${t(isDark,
+            className={`glass-interactive p-1.5 rounded-full ${t(isDark,
               'text-slate-500 hover:text-slate-100 hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.55)]',
               'text-slate-400 hover:text-slate-700 hover:drop-shadow-[0_0_6px_rgba(15,23,42,0.35)]'
             )}`}
@@ -1032,7 +1053,7 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, initialAge
             title={translate('add_doc_save')}
             onClick={handleSave}
             disabled={saving}
-            className={`glass-interactive p-1.5 rounded-full transition-all duration-200 disabled:opacity-40 ${t(isDark,
+            className={`glass-interactive p-1.5 rounded-full disabled:opacity-40 ${t(isDark,
               'text-emerald-400 hover:drop-shadow-[0_0_6px_rgba(52,211,153,0.9)]',
               'text-emerald-600 hover:drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]'
             )}`}
@@ -1043,7 +1064,7 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, initialAge
             type="button"
             title={translate('add_doc_cancel')}
             onClick={onCancel}
-            className={`glass-interactive p-1.5 rounded-full transition-all duration-200 ${t(isDark,
+            className={`glass-interactive p-1.5 rounded-full ${t(isDark,
               'text-slate-500 hover:text-slate-100 hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.55)]',
               'text-slate-400 hover:text-slate-700 hover:drop-shadow-[0_0_6px_rgba(15,23,42,0.35)]'
             )}`}
@@ -1101,31 +1122,9 @@ function pickGreetingKey() {
 // a mask, then the status line, then the chart below it fades/draws in.
 // Timings are adapted from the liquid-glass weather-dashboard reference
 // build's headline + blurb choreography.
-function DashboardHero({ isDark, displayName, mostUrgentDoc, extraUrgentCount = 0 }) {
+function DashboardHero({ isDark, displayName }) {
   const { translate } = useLanguage()
   const [greetingKey] = useState(pickGreetingKey)
-
-  // Loss aversion lands harder when the stakes are concrete: naming the
-  // actual document and what happens if they don't act, not just a count.
-  let statusNode
-  if (mostUrgentDoc) {
-    const docLabel = mostUrgentDoc.title || DOC_TYPE_LABELS[mostUrgentDoc.doc_type]
-    let base
-    if (mostUrgentDoc.urgency === 'expired') {
-      base = translate('greeting_status_named_expired', { title: docLabel })
-    } else if (mostUrgentDoc.daysUntil === 0) {
-      base = translate('greeting_status_named_due_today', { title: docLabel })
-    } else if (mostUrgentDoc.daysUntil === 1) {
-      base = translate('greeting_status_named_due_one', { title: docLabel })
-    } else {
-      base = translate('greeting_status_named_due_many', { title: docLabel, days: mostUrgentDoc.daysUntil })
-    }
-    statusNode = extraUrgentCount > 0
-      ? `${base} ${translate('greeting_status_plus_more', { count: extraUrgentCount })}`
-      : base
-  } else {
-    statusNode = translate('greeting_status_ok')
-  }
 
   return (
     <div>
@@ -1141,172 +1140,371 @@ function DashboardHero({ isDark, displayName, mostUrgentDoc, extraUrgentCount = 
           </span>
         </span>
       </h1>
-      <p
-        className={`mt-4 max-w-lg text-base ${t(isDark, 'text-slate-400', 'text-slate-500')}`}
-        style={{ animation: 'rise-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.5s both' }}
-      >
-        {statusNode}
-      </p>
     </div>
   )
 }
 
-// Smooth cubic-bezier interpolation between arbitrary points — a midpoint
-// control-point trick, not a real spline, but reads as a fluid wave with
-// only a handful of data points.
-function buildSmoothPath(points) {
-  if (points.length < 2) return ''
-  let d = `M ${points[0].x},${points[0].y}`
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[i]
-    const p1 = points[i + 1]
-    const midX = (p0.x + p1.x) / 2
-    d += ` C ${midX},${p0.y} ${midX},${p1.y} ${p1.x},${p1.y}`
-  }
-  return d
+// Rounds a max value up to a "nice" round number for axis ticks (4, 5, then
+// 1/2/5 × a power of ten) instead of whatever the raw max happens to be —
+// otherwise a max of, say, 7 gives ugly ticks like 0/1.75/3.5/5.25/7.
+function niceAxisMax(n) {
+  if (n <= 4) return 4
+  if (n <= 5) return 5
+  const pow = 10 ** Math.floor(Math.log10(n))
+  const norm = n / pow
+  const niceNorm = norm <= 2 ? 2 : norm <= 5 ? 5 : 10
+  return niceNorm * pow
 }
 
-// Same draw-then-fill SVG technique as the weather reference's chart, but
-// plotting how many tracked documents expire per month (application-intent
-// documents excluded — they have no real expiry to plot) instead of temps.
-function DocumentStatsChart({ isDark, documents }) {
-  const { lang } = useLanguage()
-  const width = 835
-  const height = 200
-  const topPad = 24
-  const bottomPad = 30
+// A forward-looking count of documents expiring in each of the next several
+// months — "when's my next crunch time" instead of the old version's
+// backward-looking "how many times did I click something," which didn't
+// actually connect to what this app is for. Flat opacity levels (not a
+// gradient) distinguish the current month from the rest, since a smooth
+// blend was explicitly the thing asked to go.
+const EXPIRY_CHART_MONTHS = 6
 
-  const months = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date()
-    d.setDate(1)
-    d.setMonth(d.getMonth() + i)
-    const count = documents.filter((doc) => {
-      if (doc.urgency === 'ongoing') return false
+function ExpirationChart({ isDark, documents }) {
+  const { lang, translate } = useLanguage()
+  const [hoverIndex, setHoverIndex] = useState(null)
+  const locale = lang === 'fil' ? 'fil-PH' : 'en-US'
+
+  const now = new Date()
+  // An "application" doc has no real expiry (see notificationMessage/
+  // getUrgencyLevel elsewhere) — a placeholder date there would just
+  // fabricate a fake deadline.
+  const trackedDocs = documents.filter((d) => d.intent !== 'application' && d.expiry_date)
+
+  const months = Array.from({ length: EXPIRY_CHART_MONTHS }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1)
+    const docsThisMonth = trackedDocs.filter((doc) => {
       const exp = new Date(doc.expiry_date)
       return exp.getFullYear() === d.getFullYear() && exp.getMonth() === d.getMonth()
-    }).length
-    return { label: d.toLocaleDateString(lang === 'fil' ? 'fil-PH' : 'en-US', { month: 'short' }), count }
+    })
+    return {
+      date: d,
+      label: d.toLocaleDateString(locale, { month: 'short' }),
+      count: docsThisMonth.length,
+      docs: docsThisMonth,
+    }
   })
 
-  const maxCount = Math.max(1, ...months.map((m) => m.count))
-  const points = months.map((m, i) => ({
-    x: (i / (months.length - 1)) * width,
-    y: height - bottomPad - (m.count / maxCount) * (height - topPad - bottomPad),
-  }))
-  const linePath = buildSmoothPath(points)
-  const fillPath = `${linePath} L ${width},${height} L 0,${height} Z`
-  const lineColor = isDark ? '#ffffff' : '#0f172a'
-  const fillColor = isDark ? '#60a5fa' : '#3b82f6'
+  const axisMax = niceAxisMax(Math.max(1, ...months.map((m) => m.count)))
+  const tickCount = 4
+  const ticks = Array.from({ length: tickCount + 1 }, (_, i) => Math.round((axisMax / tickCount) * i)).reverse()
+
+  const totalUpcoming = months.reduce((sum, m) => sum + m.count, 0)
+  const hovered = hoverIndex !== null ? months[hoverIndex] : null
 
   return (
-    <div className="mt-10" style={{ animation: 'rise-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.75s both' }}>
-      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="w-full" style={{ height: 180, display: 'block' }}>
-        <defs>
-          <linearGradient id="doc-chart-line" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor={lineColor} stopOpacity="0" />
-            <stop offset="12%" stopColor={lineColor} stopOpacity="0.9" />
-            <stop offset="88%" stopColor={lineColor} stopOpacity="0.9" />
-            <stop offset="100%" stopColor={lineColor} stopOpacity="0" />
-          </linearGradient>
-          <linearGradient id="doc-chart-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={fillColor} stopOpacity="0.28" />
-            <stop offset="100%" stopColor={fillColor} stopOpacity="0" />
-          </linearGradient>
-          <clipPath id="doc-chart-clip"><rect width={width} height={height} /></clipPath>
-        </defs>
-        <g clipPath="url(#doc-chart-clip)">
-          <g style={{ transformOrigin: '0px 0px', animation: 'chart-fill-wipe 1.1s cubic-bezier(0.37,0.01,0.2,1) 1.1s both' }}>
-            <path d={fillPath} fill="url(#doc-chart-fill)" />
-          </g>
-          <path
-            d={linePath}
-            fill="none"
-            stroke="url(#doc-chart-line)"
-            strokeWidth="3"
-            strokeLinecap="round"
-            pathLength="1"
-            style={{ strokeDasharray: 1, strokeDashoffset: 1, animation: 'chart-draw 1.3s cubic-bezier(0.37,0.01,0.2,1) 0.85s both' }}
-          />
-        </g>
-      </svg>
-      <div className="flex justify-between mt-1">
-        {months.map((m, i) => (
-          <span
-            key={`${m.label}-${i}`}
-            className={`text-sm ${i === 0 ? t(isDark, 'text-slate-100 font-semibold', 'text-slate-900 font-semibold') : t(isDark, 'text-slate-500', 'text-slate-400')}`}
-          >
-            {m.label}
-          </span>
-        ))}
+    <div
+      className={`relative mt-10 rounded-2xl p-5 md:p-6 ${t(isDark, 'glass-dark', 'glass-light')}`}
+      style={{ animation: 'rise-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.75s both' }}
+    >
+      <div className="mb-5">
+        <p className={`text-xs font-semibold tracking-widest uppercase ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>
+          {translate('expiry_chart_title')}
+        </p>
+        <p className={`font-instrument text-4xl mt-1.5 ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>{totalUpcoming}</p>
+        <p className={`text-xs mt-0.5 ${t(isDark, 'text-slate-500', 'text-slate-400')}`}>
+          {translate('expiry_chart_subtitle', { count: EXPIRY_CHART_MONTHS })}
+        </p>
       </div>
+
+      <div className="flex">
+        <div className="flex flex-col justify-between text-[11px] pr-2 shrink-0" style={{ height: 180 }}>
+          {ticks.map((v) => (
+            <span key={v} className={t(isDark, 'text-slate-500', 'text-slate-400')}>{v}</span>
+          ))}
+        </div>
+        <div
+          className="flex-1 flex items-end justify-between gap-2 md:gap-4 border-b"
+          style={{ height: 180, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)' }}
+        >
+          {months.map((m, i) => {
+            const isCurrent = i === 0
+            const barHeightPct = m.count > 0 ? Math.max(4, (m.count / axisMax) * 100) : 0
+            return (
+              <div
+                key={i}
+                className="flex-1 h-full flex flex-col items-center justify-end cursor-pointer"
+                onMouseEnter={() => setHoverIndex(i)}
+                onMouseLeave={() => setHoverIndex(null)}
+              >
+                <span
+                  className={`text-xs font-semibold mb-1.5 transition-opacity duration-150 ${
+                    hoverIndex === i ? 'opacity-100' : 'opacity-0'
+                  } ${t(isDark, 'text-slate-200', 'text-slate-700')}`}
+                >
+                  {m.count}
+                </span>
+                <div
+                  className="w-full rounded-t-lg"
+                  style={{
+                    height: `${barHeightPct}%`,
+                    minHeight: m.count > 0 ? 6 : 2,
+                    backgroundColor: isCurrent
+                      ? 'var(--accent-400)'
+                      : 'color-mix(in srgb, var(--accent-400) 28%, transparent)',
+                    outline: hoverIndex === i ? `2px solid ${isDark ? 'rgba(255,255,255,0.35)' : 'rgba(15,23,42,0.25)'}` : 'none',
+                    outlineOffset: '-2px',
+                    transformOrigin: 'bottom',
+                    animation: `chart-bar-grow 0.6s cubic-bezier(0.16,1,0.3,1) ${0.1 + i * 0.06}s both`,
+                  }}
+                />
+              </div>
+            )
+          })}
+        </div>
+      </div>
+      <div className="flex mt-1.5">
+        <div className="shrink-0" style={{ width: 22 }} />
+        <div className="flex-1 flex items-center justify-between gap-2 md:gap-4">
+          {months.map((m, i) => (
+            <span
+              key={i}
+              className={`flex-1 text-center text-xs ${
+                i === 0 ? t(isDark, 'text-slate-100 font-semibold', 'text-slate-900 font-semibold') : t(isDark, 'text-slate-500', 'text-slate-400')
+              }`}
+            >
+              {m.label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {hovered && (
+        <div
+          className={`absolute top-5 right-5 md:top-6 md:right-6 z-10 rounded-xl p-3 text-xs w-[200px] max-h-[160px] overflow-y-auto pointer-events-none shadow-xl ${t(isDark, 'bg-[#0a0a0f] border border-white/10', 'bg-white border border-slate-200')}`}
+          style={{ animation: 'fade-slide-in 0.15s ease-out both' }}
+        >
+          <p className={`font-semibold mb-1 ${t(isDark, 'text-slate-200', 'text-slate-700')}`}>
+            {hovered.date.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}
+          </p>
+          {hovered.docs.length > 0 ? (
+            <ul className="space-y-0.5">
+              {hovered.docs.slice(0, 3).map((doc) => (
+                <li key={doc.id} className={t(isDark, 'text-slate-400', 'text-slate-500')}>
+                  {doc.title || DOC_TYPE_LABELS[doc.doc_type]}
+                </li>
+              ))}
+              {hovered.docs.length > 3 && (
+                <li className={t(isDark, 'text-slate-500', 'text-slate-400')}>
+                  {translate('chart_tooltip_more', { count: hovered.docs.length - 3 })}
+                </li>
+              )}
+            </ul>
+          ) : (
+            <p className={t(isDark, 'text-slate-500', 'text-slate-400')}>{translate('expiry_chart_none')}</p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
 
-function urgencyStatusKey(urgency) {
-  if (urgency === 'expired') return 'card_status_expired'
-  if (urgency === 'critical') return 'card_status_due_soon'
-  return 'card_status_active'
+// Right-rail panel showing news relevant to the agencies/documents people
+// track here. The actual fetch is proxied through the get-agency-news edge
+// function (GNews requires its key kept server-side, and a shared cache
+// there is what keeps every user's panel from burning through the free
+// tier's daily quota independently) — this just polls it and renders
+// whatever comes back.
+function NewsThumb({ src, isDark }) {
+  const [broken, setBroken] = useState(false)
+  return (
+    <div className={`flex-1 min-h-0 overflow-hidden flex items-center justify-center ${t(isDark, 'bg-white/5', 'bg-slate-100')}`}>
+      {src && !broken ? (
+        <img
+          src={src}
+          alt=""
+          className="w-full h-full object-cover"
+          loading="lazy"
+          onError={() => setBroken(true)}
+        />
+      ) : (
+        <span className={t(isDark, 'text-slate-600', 'text-slate-300')}>
+          <Icon size={28}><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></Icon>
+        </span>
+      )}
+    </div>
+  )
 }
 
-// Right-rail replacement for the weather reference's "Central Jakarta +
-// 3 cities" cards — the single most urgent document gets the big card,
-// the next three (soonest to least soon) get the row cards. Only ever 4.
-function UrgentDocsRail({ isDark, documents, onSelectDoc }) {
+function NewsPanel({ isDark }) {
   const { translate } = useLanguage()
-  const urgent = [...documents]
-    .filter((doc) => doc.urgency !== 'ongoing')
-    .sort((a, b) => a.daysUntil - b.daysUntil)
-    .slice(0, 4)
+  const [articles, setArticles] = useState(null) // null = still loading
+  const [activeIndex, setActiveIndex] = useState(0)
+  const trackRef = useRef(null)
+  const articleCount = articles?.length || 0
 
-  if (urgent.length === 0) {
-    return (
-      <div className={`glass-dark rounded-2xl p-6 text-sm ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>
-        {translate('dashboard_no_urgent')}
-      </div>
-    )
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      const { data, error } = await supabase.functions.invoke('get-agency-news')
+      if (cancelled) return
+      setArticles(error ? [] : (data?.articles || []))
+    }
+    load()
+    // Matches the edge function's own cache window — polling faster than
+    // that would just re-request the same cached response.
+    const interval = setInterval(load, 30 * 60 * 1000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [])
+
+  function goTo(index) {
+    const track = trackRef.current
+    if (!track) return
+    track.scrollTo({ left: index * track.clientWidth, behavior: 'smooth' })
+    setActiveIndex(index)
   }
 
-  const [primary, ...rest] = urgent
+  function handleScroll() {
+    const track = trackRef.current
+    if (!track || track.clientWidth === 0) return
+    setActiveIndex(Math.round(track.scrollLeft / track.clientWidth))
+  }
+
+  // Advances one article every 5s, looping back to the first after the
+  // last. Depending on activeIndex means any manual navigation (arrows,
+  // dots, or a raw swipe) re-runs this effect and restarts the 5s window
+  // instead of the autoplay yanking the card away moments after someone
+  // just picked one themselves.
+  useEffect(() => {
+    if (articleCount <= 1) return
+    const timer = setInterval(() => goTo((activeIndex + 1) % articleCount), 5000)
+    return () => clearInterval(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeIndex, articleCount])
 
   return (
-    <div className="flex flex-col gap-4">
-      <UrgentDocCard isDark={isDark} doc={primary} big onSelect={() => onSelectDoc(primary)} delay={0.55} />
-      {rest.map((doc, i) => (
-        <UrgentDocCard key={doc.id} isDark={isDark} doc={doc} onSelect={() => onSelectDoc(doc)} delay={0.68 + i * 0.11} />
-      ))}
+    // h-full so this fills whatever height the hero+chart column ends up
+    // at (the flex row they're both in stretches its children to match by
+    // default) instead of growing past it — extra articles page through
+    // the fixed-height carousel below rather than pushing the panel taller.
+    <div className={`h-full flex flex-col rounded-2xl p-5 ${t(isDark, 'glass-dark', 'glass-light')}`} style={{ animation: 'rise-in 0.6s cubic-bezier(0.16,1,0.3,1) 0.8s both' }}>
+      <p className={`text-xs font-semibold tracking-widest uppercase mb-4 shrink-0 ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>
+        {translate('news_panel_heading')}
+      </p>
+      {articles === null ? (
+        <p className={`text-sm ${t(isDark, 'text-slate-500', 'text-slate-400')}`}>{translate('news_panel_loading')}</p>
+      ) : articles.length === 0 ? (
+        <p className={`text-sm ${t(isDark, 'text-slate-500', 'text-slate-400')}`}>{translate('news_panel_empty')}</p>
+      ) : (
+        <>
+          <div className="relative flex-1 min-h-0">
+            <div
+              ref={trackRef}
+              onScroll={handleScroll}
+              className="no-scrollbar h-full flex overflow-x-auto"
+              style={{ scrollSnapType: 'x mandatory' }}
+            >
+              {articles.map((a, i) => (
+                <a
+                  key={a.url || i}
+                  href={a.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="glass-interactive w-full h-full shrink-0 flex flex-col rounded-xl overflow-hidden"
+                  style={{ scrollSnapAlign: 'start' }}
+                >
+                  <NewsThumb src={a.image} isDark={isDark} />
+                  <div className="p-3 shrink-0">
+                    <p className={`text-sm font-medium leading-snug line-clamp-2 ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>{a.title}</p>
+                    <p className={`text-xs mt-1.5 ${t(isDark, 'text-slate-500', 'text-slate-400')}`}>
+                      {a.source}{a.source ? ' · ' : ''}{formatTimeAgo(a.publishedAt)}
+                    </p>
+                  </div>
+                </a>
+              ))}
+            </div>
+            {articleCount > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => goTo((activeIndex - 1 + articleCount) % articleCount)}
+                  aria-label={translate('news_panel_prev')}
+                  className="glass-interactive absolute left-1.5 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center text-white/80 hover:text-white"
+                  style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.6))' }}
+                >
+                  <Icon size={22}><path d="M15 18l-6-6 6-6" /></Icon>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goTo((activeIndex + 1) % articleCount)}
+                  aria-label={translate('news_panel_next')}
+                  className="glass-interactive absolute right-1.5 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center text-white/80 hover:text-white"
+                  style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.6))' }}
+                >
+                  <Icon size={22}><path d="M9 18l6-6-6-6" /></Icon>
+                </button>
+              </>
+            )}
+          </div>
+          {articleCount > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-3 shrink-0">
+              {articles.map((a, i) => (
+                <button
+                  key={a.url || i}
+                  type="button"
+                  onClick={() => goTo(i)}
+                  aria-label={`Article ${i + 1}`}
+                  className={`rounded-full transition-all ${i === activeIndex ? 'w-4 h-1.5' : 'w-1.5 h-1.5'} ${
+                    i === activeIndex ? 'bg-[var(--accent-400)]' : t(isDark, 'bg-white/20', 'bg-slate-300')
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
 
-function UrgentDocCard({ isDark, doc, big, onSelect, delay }) {
+// Same completedCount/totalSteps/nextStepText derivation as the "My
+// Orbits" ID card back (see the filtered.map block below) — reused here
+// rather than re-invented, just surfaced as a compact stat card instead of
+// something you only see after flipping a card over.
+function DocumentProgressCard({ isDark, doc, onSelect, delay }) {
   const { translate } = useLanguage()
   const agency = AGENCY_BADGE[doc.doc_type]
   const label = doc.title || DOC_TYPE_LABELS[doc.doc_type]
-  const dayText = doc.urgency === 'expired' ? translate('card_status_expired') : formatDaysUntil(doc.daysUntil)
+  const playbook = getPlaybook(doc.doc_type, doc.intent)
+  const totalSteps = playbook?.steps.length || 0
+  const completedCount = (doc.completed_steps || []).length
+  const progressPct = totalSteps ? Math.max(8, Math.round((completedCount / totalSteps) * 100)) : 0
+  const nextStepIndex = playbook ? playbook.steps.findIndex((_, i) => !(doc.completed_steps || []).includes(i)) : -1
+  const nextStepText = nextStepIndex !== -1 ? playbook.steps[nextStepIndex].title : translate('stat_all_steps_done')
 
   return (
     <button
       type="button"
       onClick={onSelect}
-      className={`glass-interactive sheen-once relative text-left rounded-2xl w-full ${big ? 'p-6' : 'p-4 flex items-center justify-between gap-3'}`}
-      style={{ animation: `slide-in-right 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}s both` }}
+      className={`glass-interactive text-left rounded-2xl p-4 ${t(isDark, 'glass-dark', 'glass-light')}`}
+      style={{ animation: `rise-in 0.5s cubic-bezier(0.16,1,0.3,1) ${delay}s both` }}
     >
-      {big ? (
-        <>
-          <p className={`flex items-center gap-1.5 text-xs ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>
-            <AgencyBubble isDark={isDark} code={agency.label} size={16} ring={false} letterOnly />
-            <span className="truncate">{label}</span>
-          </p>
-          <p className={`text-4xl font-medium tracking-tight mt-3 ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>{dayText}</p>
-          <p className={`text-xs mt-2 ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>{translate(urgencyStatusKey(doc.urgency))}</p>
-        </>
-      ) : (
-        <div className="min-w-0">
-          <p className={`text-xs truncate ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>{label}</p>
-          <p className={`text-sm font-semibold mt-0.5 ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>{dayText}</p>
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <AgencyBubble isDark={isDark} code={agency?.label} size={28} ring={false} />
+          <div className="min-w-0">
+            <p className={`text-sm font-medium truncate ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>{label}</p>
+            <p className={t(isDark, 'text-xs text-slate-400', 'text-xs text-slate-500')}>
+              {translate('stat_steps_count', { done: completedCount, total: totalSteps })}
+            </p>
+          </div>
         </div>
-      )}
+        {doc.urgency !== 'ongoing' && (
+          <span className={`shrink-0 text-[11px] whitespace-nowrap mt-0.5 ${t(isDark, 'text-slate-500', 'text-slate-400')}`}>
+            {doc.urgency === 'expired' ? translate('card_status_expired') : formatExpiryDisplay(doc.daysUntil, doc.expiry_date)}
+          </span>
+        )}
+      </div>
+      <div className={`w-full h-1.5 rounded-full overflow-hidden mb-2.5 ${t(isDark, 'bg-white/10', 'bg-slate-200')}`}>
+        <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${progressPct}%`, backgroundColor: 'var(--accent-400)' }} />
+      </div>
+      <p className={`text-xs truncate ${t(isDark, 'text-slate-300', 'text-slate-600')}`}>
+        <span className={t(isDark, 'text-slate-500', 'text-slate-400')}>{translate('stat_next_label')}: </span>{nextStepText}
+      </p>
     </button>
   )
 }
@@ -1434,7 +1632,7 @@ function ThemePanel({ isDark, themeMode, onSetMode, accentColor, onSetAccentColo
 function notificationMessage(doc) {
   const sub = formatDaysUntil(doc.daysUntil)
   if (doc.urgency === 'ongoing') return { title: `Your ${doc.title} application is in progress.`, sub: '' }
-  if (doc.urgency === 'expired') return { title: `${doc.title} has expired. Renew it soon.`, sub }
+  if (doc.urgency === 'expired') return { title: `${doc.title} has expired.`, sub }
   if (doc.urgency === 'critical') return { title: `${doc.title} is about to expire.`, sub }
   if (doc.urgency === 'urgent') return { title: `${doc.title} is expiring soon.`, sub }
   if (doc.urgency === 'upcoming') return { title: `${doc.title} will expire soon.`, sub }
@@ -1492,8 +1690,13 @@ function NotificationsFeed({ isDark, documents, onSelectDoc }) {
   return (
     <div>
       <div className="flex items-center gap-2.5 mb-1">
-        <span className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${t(isDark, 'text-slate-300', 'text-slate-600')}`}>
-          <Icon size={18}><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" /></Icon>
+        <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0">
+          <img
+            src={notificationIcon}
+            alt=""
+            className="w-[18px] h-[18px] object-contain"
+            style={{ filter: isDark ? 'invert(1) brightness(1.3)' : 'brightness(0) opacity(0.6)' }}
+          />
         </span>
         <p className={`font-instrument text-3xl ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>Notifications</p>
       </div>
@@ -1538,7 +1741,7 @@ function NotificationsFeed({ isDark, documents, onSelectDoc }) {
                 }
               }}
               onClick={() => setTab(tb.id)}
-              className={`relative z-10 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors duration-75 ${
+              className={`glass-interactive glass-interactive-tab relative z-10 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium ${
                 tab === tb.id
                   ? t(isDark, 'text-slate-100', 'text-slate-900')
                   : t(isDark, 'text-slate-400 hover:text-slate-200', 'text-slate-500 hover:text-slate-700')
@@ -1567,9 +1770,21 @@ function NotificationsFeed({ isDark, documents, onSelectDoc }) {
               <div
                 key={n.id}
                 onClick={() => onSelectDoc?.(n.doc)}
-                className={`glass-interactive cursor-pointer flex items-center gap-3 rounded-2xl p-3.5 border transition-colors duration-75 ${t(isDark, 'border-white/10 hover:bg-white/5', 'border-slate-200 hover:bg-slate-50')}`}
+                className={`glass-interactive glass-interactive-quick cursor-pointer flex items-center gap-3 rounded-2xl p-3.5 border ${t(isDark, 'border-white/10 hover:bg-white/5', 'border-slate-200 hover:bg-slate-50')}`}
                 style={{ animation: 'rise-in 0.4s cubic-bezier(0.16,1,0.3,1) both', animationDelay: `${Math.min(i * 0.04, 0.3)}s` }}
               >
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleFavorite(n.id) }}
+                  title={isFav ? 'Unfavorite' : 'Favorite'}
+                  className={`glass-interactive glass-interactive-quick p-1.5 rounded-full shrink-0 ${isFav ? t(isDark, 'bg-amber-400/20', 'bg-amber-100') : t(isDark, 'hover:bg-white/5', 'hover:bg-slate-100')}`}
+                >
+                  <img
+                    src={bookmarkIcon}
+                    alt=""
+                    className="w-[15px] h-[15px] object-contain"
+                    style={{ filter: isDark ? 'invert(1) brightness(1.3)' : 'brightness(0) opacity(0.6)' }}
+                  />
+                </button>
                 <span className={`w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0 ${t(isDark, meta?.badgeDark, meta?.badgeLight)}`}>
                   {logo ? (
                     <img src={logo} alt="" className="w-full h-full object-contain p-1 rounded-full bg-white" />
@@ -1582,20 +1797,16 @@ function NotificationsFeed({ isDark, documents, onSelectDoc }) {
                   {n.sub && <p className="text-xs text-slate-500 mt-0.5">{n.sub}</p>}
                 </div>
                 <button
-                  onClick={(e) => { e.stopPropagation(); toggleFavorite(n.id) }}
-                  title={isFav ? 'Unfavorite' : 'Favorite'}
-                  className={`glass-interactive p-1.5 rounded-full shrink-0 transition-colors duration-75 ${isFav ? 'text-amber-400' : t(isDark, 'text-slate-500 hover:bg-white/5 hover:text-slate-200', 'text-slate-400 hover:bg-slate-100 hover:text-slate-700')}`}
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                </button>
-                <button
                   onClick={(e) => { e.stopPropagation(); toggleArchived(n.id) }}
                   title={isArchived ? 'Restore' : 'Archive'}
-                  className={`glass-interactive p-1.5 rounded-full shrink-0 text-red-400/70 hover:text-red-400 transition-colors duration-75 ${t(isDark, 'hover:bg-white/5', 'hover:bg-slate-100')}`}
+                  className={`glass-interactive glass-interactive-quick p-1.5 rounded-full shrink-0 ${t(isDark, 'hover:bg-red-500/15', 'hover:bg-red-100')}`}
                 >
-                  <Icon size={15}><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" /></Icon>
+                  <img
+                    src={trashIcon}
+                    alt=""
+                    className="w-[15px] h-[15px] object-contain"
+                    style={{ filter: isDark ? 'invert(1) brightness(1.3)' : 'brightness(0) opacity(0.6)' }}
+                  />
                 </button>
               </div>
             )
@@ -1606,22 +1817,8 @@ function NotificationsFeed({ isDark, documents, onSelectDoc }) {
   )
 }
 
-function activityTimeAgo(dateStr) {
-  if (!dateStr) return ''
-  const diffMs = Date.now() - new Date(dateStr).getTime()
-  const diffMin = Math.floor(diffMs / 60000)
-  if (diffMin < 1) return 'Just now'
-  if (diffMin < 60) return `${diffMin} min ago`
-  const diffHr = Math.floor(diffMin / 60)
-  if (diffHr < 24) return `${diffHr}h ago`
-  const diffDay = Math.floor(diffHr / 24)
-  if (diffDay < 7) return `${diffDay}d ago`
-  return new Date(dateStr).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
-}
-
 const ACTIVITY_ICON_PATH = {
   add: <path d="M12 5v14M5 12h14" />,
-  delete: <path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" />,
   security: <><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></>,
   update: <path d="M12 20h9M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />,
 }
@@ -1650,11 +1847,20 @@ function HistoryFeed({ isDark, activityLog }) {
                 'w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-white/10 text-slate-300',
                 'w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-slate-100 text-slate-600'
               )}>
-                <Icon size={15}>{ACTIVITY_ICON_PATH[entry.type] || ACTIVITY_ICON_PATH.update}</Icon>
+                {entry.type === 'delete' ? (
+                  <img
+                    src={trashIcon}
+                    alt=""
+                    className="w-[15px] h-[15px] object-contain"
+                    style={{ filter: isDark ? 'invert(1) brightness(1.3)' : 'brightness(0) opacity(0.6)' }}
+                  />
+                ) : (
+                  <Icon size={15}>{ACTIVITY_ICON_PATH[entry.type] || ACTIVITY_ICON_PATH.update}</Icon>
+                )}
               </span>
               <div className="flex-1 min-w-0">
                 <p className={`text-sm truncate ${t(isDark, 'text-slate-200', 'text-slate-700')}`}>{entry.text}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{activityTimeAgo(entry.timestamp)}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{formatTimeAgo(entry.timestamp)}</p>
               </div>
             </div>
           ))
@@ -1797,6 +2003,43 @@ function LanguagePanel({ isDark, lang, onSetLang }) {
   )
 }
 
+// The landing tab for the header's "Settings" entry points (gear button,
+// dropdown item) — previously both that and "Account" opened the exact
+// same edit-profile form, which felt like two buttons doing one thing.
+// This is a lighter, read-only overview instead, with a link into the real
+// edit form rather than duplicating it.
+function GeneralSettingsPanel({ isDark, session, profilePhoto, profileUsername, profileColor, onGoToAccount }) {
+  const { translate } = useLanguage()
+  return (
+    <div>
+      <SettingsPanelHeader isDark={isDark} title={translate('settings_general_title')} description={translate('settings_general_desc')} />
+      <div className={`rounded-2xl p-5 max-w-md flex items-center gap-4 ${t(isDark, 'glass-dark', 'glass-light')}`}>
+        {profilePhoto ? (
+          <img src={profilePhoto} alt="" className="w-16 h-16 rounded-full object-cover shrink-0" />
+        ) : (
+          <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${AVATAR_COLORS[profileColor] || AVATAR_COLORS[0]} flex items-center justify-center text-xl font-semibold text-white shrink-0`}>
+            {(profileUsername || session.user.email || 'G')[0].toUpperCase()}
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <p className={`text-base font-semibold truncate ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>
+            {profileUsername || getDisplayName(session.user.email)}
+          </p>
+          <p className={t(isDark, 'text-sm text-slate-400 truncate', 'text-sm text-slate-500 truncate')}>
+            {session.user.email || translate('guest_account_label')}
+          </p>
+        </div>
+        <button
+          onClick={onGoToAccount}
+          className="glass-accent glass-interactive shrink-0 text-xs font-semibold text-white px-3 py-2 rounded-lg"
+        >
+          {translate('settings_general_edit_account')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function CalendarPanel({ isDark }) {
   const { translate } = useLanguage()
   return (
@@ -1847,22 +2090,22 @@ function DataPrivacyPanel({ isDark, documents }) {
 
   return (
     <div>
-      <SettingsPanelHeader isDark={isDark} title="Data & Privacy" description="Your documents, on your terms." />
+      <SettingsPanelHeader isDark={isDark} title={translate('data_privacy_title')} description={translate('data_privacy_desc')} />
       <div className={`rounded-xl p-4 max-w-md flex items-center justify-between gap-4 border ${t(isDark, 'border-white/10', 'border-slate-200')}`}>
         <div>
-          <p className={t(isDark, 'text-sm font-medium text-slate-200', 'text-sm font-medium text-slate-700')}>Export my documents</p>
-          <p className={t(isDark, 'text-xs text-slate-500', 'text-xs text-slate-400')}>Download a JSON copy of everything you're tracking.</p>
+          <p className={t(isDark, 'text-sm font-medium text-slate-200', 'text-sm font-medium text-slate-700')}>{translate('data_privacy_export_title')}</p>
+          <p className={t(isDark, 'text-xs text-slate-500', 'text-xs text-slate-400')}>{translate('data_privacy_export_desc')}</p>
         </div>
         <button
           type="button"
           onClick={handleExport}
           className="glass-accent glass-interactive shrink-0 text-sm font-medium text-white px-4 py-2 rounded-lg"
         >
-          {exported ? 'Downloaded' : 'Export'}
+          {exported ? translate('data_privacy_export_done') : translate('data_privacy_export_btn')}
         </button>
       </div>
       <p className={t(isDark, 'text-xs text-slate-500 mt-4 max-w-md', 'text-xs text-slate-400 mt-4 max-w-md')}>
-        Account deletion isn't available in-app yet.
+        {translate('data_privacy_delete_note')}
       </p>
     </div>
   )
@@ -1883,7 +2126,7 @@ function OrbitAccordionItem({ isDark, orbit, isOpen, onToggle, renderContent, de
       <button
         type="button"
         onClick={onToggle}
-        className="glass-interactive w-full flex items-center justify-between gap-3 p-5 text-left"
+        className="glass-interactive glass-interactive-quick w-full flex items-center justify-between gap-3 p-5 text-left"
       >
         <div className="flex items-center gap-3 min-w-0">
           <AgencyBubble isDark={isDark} code={orbit.docType} size={40} ring={false} />
@@ -1944,6 +2187,11 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
     setAddingDocument(true)
   }
   const [activeFilter, setActiveFilter] = useState('all')
+  // The status pills (All/Active/Expiring Soon/Expired) only ever narrowed
+  // the set shown — there was no actual ordering control, so the grid
+  // rendered in whatever order Supabase happened to return rows in.
+  const [sortBy, setSortBy] = useState('expiry')
+  const [showSortMenu, setShowSortMenu] = useState(false)
   // null = browsing the "My Orbits" category grid; a doc_type = drilled
   // into that orbit's documents, where the status filter pills apply.
   const [selectedOrbit, setSelectedOrbit] = useState(null)
@@ -2012,6 +2260,44 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
       // localStorage can throw (quota exceeded, private browsing) — persistence is best-effort.
     }
   }, [notifPrefs, session.user.id])
+  // Two separate sets, matching what the bell dropdown actually needs to
+  // distinguish: "seen" just clears the numeric badge (marked the moment
+  // the dropdown opens), while "read" clears an individual row's unread dot
+  // and moves it from New into Earlier (marked by actually clicking that
+  // row, or by "Mark all as read"). Opening the dropdown does not, by
+  // itself, mark everything read — otherwise the New/Earlier split would
+  // never have anything to show once you'd looked at it once.
+  const [seenNotifIds, setSeenNotifIds] = useState(() => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(`orbit_seen_notifications_${session.user.id}`) || '[]'))
+    } catch {
+      return new Set()
+    }
+  })
+  const [readNotifIds, setReadNotifIds] = useState(() => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(`orbit_read_notifications_${session.user.id}`) || '[]'))
+    } catch {
+      return new Set()
+    }
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem(`orbit_seen_notifications_${session.user.id}`, JSON.stringify([...seenNotifIds]))
+    } catch {
+      // best-effort
+    }
+  }, [seenNotifIds, session.user.id])
+  useEffect(() => {
+    try {
+      localStorage.setItem(`orbit_read_notifications_${session.user.id}`, JSON.stringify([...readNotifIds]))
+    } catch {
+      // best-effort
+    }
+  }, [readNotifIds, session.user.id])
+  const [notifFilterTab, setNotifFilterTab] = useState('all')
+  const notifTabRefs = useRef({})
+  const [notifTabIndicator, setNotifTabIndicator] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   // Persisted so a hard reload (e.g. clicking the logo) doesn't silently
   // snap the theme back to the default instead of keeping what was chosen.
@@ -2077,6 +2363,15 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
     else if (id === 'dashboard' || id === 'my_documents') setActiveFilter('all')
   }
   const [openMenuId, setOpenMenuId] = useState(null)
+  // Closing the notif dropdown (by any path — the bell toggle, clicking
+  // outside, etc.) should take its own three-dot submenu with it. Without
+  // this, closing while that submenu was open left openMenuId pointing at
+  // it, so reopening the bell showed the submenu already sprung open.
+  useEffect(() => {
+    if (!showNotifDropdown) {
+      setOpenMenuId((prev) => (prev === 'notif-menu' ? null : prev))
+    }
+  }, [showNotifDropdown])
   const [flippedIds, setFlippedIds] = useState({})
 
   const sidebarRef = useRef(null)
@@ -2095,6 +2390,11 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
   const addModalShouldRender = useDelayedUnmount(addingDocument, 180)
   const confirmDeleteShouldRender = useDelayedUnmount(!!confirmDelete, 180)
   const confirmLogoutShouldRender = useDelayedUnmount(confirmLogout, 180)
+  // Declared here, not inside renderFilterBarAndGrid — that helper can be
+  // invoked multiple times in one render (once per expanded orbit), and
+  // calling a hook from inside something invoked a variable number of
+  // times per render breaks the rules of hooks.
+  const sortMenuShouldRender = useDelayedUnmount(showSortMenu, 140)
   const [confirmDeleteSnapshot, setConfirmDeleteSnapshot] = useState(null)
   useEffect(() => {
     if (confirmDelete) {
@@ -2151,6 +2451,34 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
   useEffect(() => {
     setHighlightedIndex(-1)
   }, [searchQuery, searchFocused])
+
+  // The actual filtering below is a synchronous in-memory array filter, so
+  // there's no real latency to wait out — this is a deliberate, brief,
+  // artificial one instead. Typing fast and having suggestions pop in
+  // instantly on every keystroke reads as flickery; a short debounce with a
+  // skeleton in between (matching the search product this is modeled on)
+  // reads as a considered result rather than a twitchy live filter.
+  const [searchLoading, setSearchLoading] = useState(false)
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchLoading(false)
+      return
+    }
+    setSearchLoading(true)
+    const timer = setTimeout(() => setSearchLoading(false), 220)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Same considered-result-over-instant-flash treatment as the search bar's
+  // own debounce — opening the bell briefly shows a skeleton before the
+  // (already computed, no real network wait involved) list appears.
+  const [notifLoading, setNotifLoading] = useState(false)
+  useEffect(() => {
+    if (!showNotifDropdown) return
+    setNotifLoading(true)
+    const timer = setTimeout(() => setNotifLoading(false), 220)
+    return () => clearTimeout(timer)
+  }, [showNotifDropdown])
 
   async function fetchDocuments(options = {}) {
     if (!options.silent) setLoading(true)
@@ -2233,15 +2561,89 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
 
   function saveSearch(query) {
     if (!query.trim()) return
-    const updated = [query, ...recentSearches.filter((s) => s !== query)].slice(0, 5)
-    setRecentSearches(updated)
-    localStorage.setItem('orbit_recent_searches', JSON.stringify(updated))
+    // Functional update, not `[query, ...recentSearches...]` off the
+    // closed-over value — two saves/removals landing in the same tick (fast
+    // repeated clicks, or this firing right after a removeSearch) would
+    // otherwise both read the same stale `recentSearches` and the second
+    // setRecentSearches call would silently clobber the first, which is
+    // what made deletes look like they needed a second click to register.
+    setRecentSearches((prev) => {
+      // No hard cap — older searches used to just get silently dropped past
+      // 5. They stick around now; the list scrolls instead (see the recent-
+      // searches panel) rather than throwing history away. Still bounded
+      // so this can't grow forever in localStorage.
+      const updated = [query, ...prev.filter((s) => s !== query)].slice(0, 100)
+      localStorage.setItem('orbit_recent_searches', JSON.stringify(updated))
+      return updated
+    })
+  }
+
+  // Typing alone already live-filters `filtered` (see below) — but that only
+  // shows up if you happen to already be on a view that renders it. Actually
+  // submitting a search needs to take you somewhere that view exists: a flat,
+  // all-orbits grid rather than My Orbits' per-department accordion.
+  function executeSearch(query) {
+    const trimmed = query.trim()
+    if (!trimmed) return
+    setSearchQuery(trimmed)
+    saveSearch(trimmed)
+    setShowSettings(false)
+    setSelectionMode(false)
+    setSelectedOrbit(null)
+    setActiveFilter('all')
+    setActiveNav('search_results')
+    setSearchFocused(false)
+  }
+
+  // Opens a tracked document from search the same way clicking it in My
+  // Orbits would — drilled into its department, filtered down to just that
+  // title — rather than jumping straight into its step checklist, which is
+  // a different, heavier context than "here's the thing you searched for."
+  function openSuggestedDoc(doc) {
+    const dept = AGENCY_BADGE[doc.doc_type]?.label
+    saveSearch(doc.title)
+    setShowSettings(false)
+    setSelectionMode(false)
+    setActiveNav('my_documents')
+    setSelectedOrbit(dept || null)
+    setActiveFilter('all')
+    setSearchQuery(doc.title)
+    setSearchFocused(false)
+  }
+
+  // Same "land on just this document inside its orbit" destination as
+  // openSuggestedDoc, for the bell dropdown instead of search — no search
+  // state to touch here, closes the notif dropdown instead of the search one.
+  function openNotificationDoc(doc) {
+    const dept = AGENCY_BADGE[doc.doc_type]?.label
+    markNotifRead(doc.id)
+    setShowSettings(false)
+    setSelectionMode(false)
+    setActiveNav('my_documents')
+    setSelectedOrbit(dept || null)
+    setActiveFilter('all')
+    setSearchQuery(doc.title)
+    setShowNotifDropdown(false)
+  }
+
+  // A document TYPE the user doesn't have tracked yet has no id/expiry/
+  // orbit of its own to open — the closest equivalent destination is the
+  // Documents (Requirements) tab, which lists every known type, tracked or
+  // not, with an Add button already built in.
+  function openSuggestedType(label) {
+    saveSearch(label)
+    setShowSettings(false)
+    setSelectionMode(false)
+    setActiveNav('requirements')
+    setSearchFocused(false)
   }
 
   function removeSearch(query) {
-    const updated = recentSearches.filter((s) => s !== query)
-    setRecentSearches(updated)
-    localStorage.setItem('orbit_recent_searches', JSON.stringify(updated))
+    setRecentSearches((prev) => {
+      const updated = prev.filter((s) => s !== query)
+      localStorage.setItem('orbit_recent_searches', JSON.stringify(updated))
+      return updated
+    })
   }
 
   function handleSearchKeyDown(e) {
@@ -2256,28 +2658,25 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
       e.preventDefault()
       setHighlightedIndex((prev) => {
         if (e.key === 'ArrowDown') return prev < total - 1 ? prev + 1 : 0
-        return prev > 0 ? prev - 1 : total - 1
+        // Unlike ArrowDown, ArrowUp doesn't wrap past the top — it backs
+        // out to -1 (nothing highlighted, back to typing) and stops there,
+        // rather than looping around to the last suggestion.
+        return prev > 0 ? prev - 1 : -1
       })
       return
     }
 
     if (e.key === 'Enter') {
+      e.preventDefault()
       if (showSuggestions && highlightedIndex >= 0 && highlightedIndex < total) {
-        e.preventDefault()
         if (highlightedIndex < matchingRecent.length) {
-          const s = matchingRecent[highlightedIndex]
-          setSearchQuery(s)
-          saveSearch(s)
+          executeSearch(matchingRecent[highlightedIndex])
         } else {
-          const doc = matchingDocSuggestions[highlightedIndex - matchingRecent.length]
-          setSearchQuery(doc.title)
-          saveSearch(doc.title)
+          matchingDocSuggestions[highlightedIndex - matchingRecent.length].onSelect()
         }
-        setSearchFocused(false)
         return
       }
-      saveSearch(searchQuery)
-      setSearchFocused(false)
+      executeSearch(searchQuery)
       return
     }
 
@@ -2313,14 +2712,64 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
     const urgency = doc.intent === 'application' ? 'ongoing' : getUrgencyLevel(daysUntil)
     return { ...doc, daysUntil, urgency }
   })
-  const dueSoonDocs = enriched.filter((d) => d.urgency === 'critical')
-  const expiredDocs = enriched.filter((d) => d.urgency === 'expired')
+  // Documents with an actual step checklist (a playbook), soonest-deadline
+  // first — this is what the "In Progress" stat cards on My Space show, so
+  // the most actionable ones surface first.
+  const progressDocs = enriched
+    .filter((doc) => getPlaybook(doc.doc_type, doc.intent))
+    .sort((a, b) => a.daysUntil - b.daysUntil)
 
-  // Named, not just counted — "your Passport expires in 4 days" is concrete
-  // enough to act on; "1 document expiring soon" is easy to shrug off.
-  const urgentDocs = [...expiredDocs, ...dueSoonDocs].sort((a, b) => a.daysUntil - b.daysUntil)
-  const mostUrgentDoc = urgentDocs[0] || null
-  const extraUrgentCount = Math.max(0, urgentDocs.length - 1)
+  // Bell dropdown contents — anything within the 30-day "urgent" window
+  // (which nests the 7-day "critical" window inside it) plus anything
+  // already expired. `upcoming` (31-90 days) deliberately doesn't page you
+  // yet; `ongoing` (an in-progress application) has no real expiry to
+  // notify about at all.
+  const notifDocs = enriched
+    .filter((doc) => {
+      // Expired is otherwise unbounded on the far end — without this, a
+      // document that lapsed years ago would sit in this list forever.
+      // Two months (60 days) past expiry and it drops off; still visible
+      // in My Orbits/History, just not nagging from the bell anymore.
+      if (doc.urgency === 'expired') return doc.daysUntil >= -60
+      return doc.urgency === 'critical' || doc.urgency === 'urgent'
+    })
+    .sort((a, b) => a.daysUntil - b.daysUntil)
+  const notifUnreadCount = notifDocs.filter((doc) => !seenNotifIds.has(doc.id)).length
+  const notifVisibleDocs = notifFilterTab === 'unread'
+    ? notifDocs.filter((doc) => !readNotifIds.has(doc.id))
+    : notifDocs
+  const notifNewDocs = notifVisibleDocs.filter((doc) => !readNotifIds.has(doc.id))
+  const notifEarlierDocs = notifVisibleDocs.filter((doc) => readNotifIds.has(doc.id))
+
+  function markNotifRead(id) {
+    setReadNotifIds((prev) => (prev.has(id) ? prev : new Set(prev).add(id)))
+  }
+  function markAllNotifsRead() {
+    setReadNotifIds((prev) => {
+      const next = new Set(prev)
+      notifDocs.forEach((doc) => next.add(doc.id))
+      return next
+    })
+  }
+
+  function renderNotifRow(doc, unread) {
+    const { title } = notificationMessage(doc)
+    const code = AGENCY_BADGE[doc.doc_type]?.label || 'OTHER'
+    return (
+      <button
+        key={doc.id}
+        onClick={() => openNotificationDoc(doc)}
+        className="glass-interactive glass-interactive-flat w-full flex items-center gap-2.5 px-2 py-2 rounded-xl text-left"
+      >
+        <AgencyBubble isDark={isDark} code={code} size={28} ring={false} />
+        <span className="min-w-0 flex-1">
+          <span className={`block text-sm truncate ${t(isDark, 'text-slate-200', 'text-slate-700')}`}>{title}</span>
+          <span className="block text-xs text-slate-500 truncate">{formatCompactDaysUntil(doc.daysUntil)}</span>
+        </span>
+        {unread && <span className="w-2 h-2 rounded-full shrink-0 ml-1" style={{ backgroundColor: 'var(--accent-400)' }} />}
+      </button>
+    )
+  }
 
   const filtered = enriched.filter((doc) => {
     if (searchQuery && !doc.title.toLowerCase().includes(searchQuery.toLowerCase())) return false
@@ -2330,6 +2779,14 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
     if (activeFilter === 'expiring_soon') return doc.urgency === 'urgent' || doc.urgency === 'critical'
     if (activeFilter === 'expired') return doc.urgency === 'expired'
     return true
+  }).sort((a, b) => {
+    if (sortBy === 'name') return (a.title || '').localeCompare(b.title || '')
+    if (sortBy === 'department') {
+      const deptA = DEPARTMENT_NAMES[AGENCY_BADGE[a.doc_type]?.label] || ''
+      const deptB = DEPARTMENT_NAMES[AGENCY_BADGE[b.doc_type]?.label] || ''
+      return deptA.localeCompare(deptB) || a.daysUntil - b.daysUntil
+    }
+    return a.daysUntil - b.daysUntil // 'expiry' — soonest first, same order the urgency system already prioritizes elsewhere
   })
 
   // Only departments the user actually has something tracked with show up as
@@ -2365,9 +2822,65 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
       )
     : recentSearches
   const ghostSuggestion = hasSearchQuery ? matchingRecent[0] || null : null
-  const matchingDocSuggestions = hasSearchQuery
-    ? documents.filter((doc) => doc.title.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5)
+
+  // Recent searches are stored as plain strings, not references — this
+  // resolves one back to whatever document/type it most likely came from,
+  // purely to show the same type + department subtitle a live suggestion
+  // gets. Best-effort: a free-text query that doesn't match anything just
+  // renders without one.
+  function describeQuery(query) {
+    const q = query.toLowerCase()
+    const trackedMatch = enriched.find((d) => d.title.toLowerCase() === q)
+    if (trackedMatch) {
+      const code = AGENCY_BADGE[trackedMatch.doc_type]?.label || 'OTHER'
+      const typeLabel = DOC_TYPE_LABELS[trackedMatch.doc_type] || translate('search_docs_heading')
+      return { subtitle: `${typeLabel} • ${DEPARTMENT_NAMES[code] || code}`, code }
+    }
+    const typeMatch = DOC_TYPE_OPTIONS.find((opt) => opt.label.toLowerCase() === q)
+    if (typeMatch) {
+      const code = AGENCY_BADGE[typeMatch.value]?.label || 'OTHER'
+      return { subtitle: `${DEPARTMENT_NAMES[code] || code} • ${translate('search_not_added')}`, code }
+    }
+    return null
+  }
+
+  // Every known document type is searchable, not just ones the user
+  // already tracks — someone typing "passport" should find Passport even
+  // with zero documents saved, just visibly marked as not added yet rather
+  // than opened like a real tracked one.
+  const trackedDocTypesForSearch = new Set(enriched.map((d) => d.doc_type))
+  const matchingTrackedDocs = hasSearchQuery
+    ? enriched.filter((doc) => doc.title.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 4)
     : []
+  const matchingUntrackedTypes = hasSearchQuery
+    ? DOC_TYPE_OPTIONS.filter((opt) =>
+        opt.label.toLowerCase().includes(searchQuery.toLowerCase()) && !trackedDocTypesForSearch.has(opt.value)
+      ).slice(0, 4)
+    : []
+  const matchingDocSuggestions = [
+    ...matchingTrackedDocs.map((doc) => {
+      const code = AGENCY_BADGE[doc.doc_type]?.label || 'OTHER'
+      return {
+        key: `doc-${doc.id}`,
+        title: doc.title,
+        subtitle: `${DOC_TYPE_LABELS[doc.doc_type] || translate('search_docs_heading')} • ${DEPARTMENT_NAMES[code] || code}`,
+        code,
+        tracked: true,
+        onSelect: () => openSuggestedDoc(doc),
+      }
+    }),
+    ...matchingUntrackedTypes.map((opt) => {
+      const code = AGENCY_BADGE[opt.value]?.label || 'OTHER'
+      return {
+        key: `type-${opt.value}`,
+        title: opt.label,
+        subtitle: `${DEPARTMENT_NAMES[code] || code} • ${translate('search_not_added')}`,
+        code,
+        tracked: false,
+        onSelect: () => openSuggestedType(opt.label),
+      }
+    }),
+  ].slice(0, 6)
   const showSuggestions = searchFocused && (matchingRecent.length > 0 || matchingDocSuggestions.length > 0)
 
   // Shared by the flat Reminders/History views and by each expanded orbit
@@ -2413,7 +2926,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                   }
                 }}
                 onClick={() => setActiveFilter(f.id)}
-                className={`relative z-10 px-5 py-2 rounded-full text-sm transition-colors duration-75 ${
+                className={`glass-interactive glass-interactive-tab relative z-10 px-5 py-2 rounded-full text-sm ${
                   activeFilter === f.id
                     ? t(isDark, 'text-slate-100', 'text-slate-900')
                     : t(isDark, 'text-slate-400 hover:text-slate-100', 'text-slate-500 hover:text-slate-900')
@@ -2458,6 +2971,43 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                   {translate('confirm_cancel')}
                 </button>
               </>
+            )}
+            {!selectionMode && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowSortMenu((v) => !v)}
+                  className={`glass-interactive glass-interactive-flat flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl ${t(isDark, 'text-slate-300', 'text-slate-600')}`}
+                >
+                  <Icon size={14}><path d="M3 6h18M6 12h12M10 18h4" /></Icon>
+                  {translate(SORT_OPTIONS.find((o) => o.id === sortBy).labelKey)}
+                  <Icon size={12}><path d="M6 9l6 6 6-6" /></Icon>
+                </button>
+                {sortMenuShouldRender && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
+                    <div
+                      style={{ animation: showSortMenu ? 'dropdown-in 140ms ease-out' : 'dropdown-out 140ms ease-in forwards' }}
+                      className={t(isDark,
+                        'absolute right-0 mt-2 w-44 z-20 bg-[#0a0a0f] border border-white/10 shadow-xl rounded-xl p-1.5 origin-top-right',
+                        'absolute right-0 mt-2 w-44 z-20 bg-white border border-slate-200 shadow-xl rounded-xl p-1.5 origin-top-right'
+                      )}
+                    >
+                      {SORT_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.id}
+                          onClick={() => { setSortBy(opt.id); setShowSortMenu(false) }}
+                          className={`glass-interactive glass-interactive-flat w-full flex items-center justify-between text-left px-3 py-1.5 rounded-lg text-sm ${
+                            sortBy === opt.id ? t(isDark, 'text-slate-100', 'text-slate-900') : t(isDark, 'text-slate-300', 'text-slate-600')
+                          }`}
+                        >
+                          {translate(opt.labelKey)}
+                          {sortBy === opt.id && <Icon size={13}><path d="M20 6L9 17l-5-5" /></Icon>}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -2578,28 +3128,58 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
         '--accent-600': AVATAR_ACCENT_HEX[profileColor]?.[600] || AVATAR_ACCENT_HEX[0][600],
       }}
     >
-      {isDark ? (
-        <>
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              backgroundImage: `url(${dashboardBg})`,
-              backgroundSize: '115% auto',
-              backgroundRepeat: 'no-repeat',
-              animation: 'earth-drift 90s ease-in-out infinite alternate',
-            }}
-          />
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: 'linear-gradient(180deg, rgba(3,6,10,0.32) 0%, rgba(3,6,10,0.52) 100%)' }}
-          />
-        </>
-      ) : (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ backgroundImage: 'radial-gradient(circle at 20% 0%, rgba(59,130,246,0.06), transparent 45%)' }}
-        />
-      )}
+      {/* Deep space base + starfield, both themes. Always mounted (styled
+          via isDark ternaries, never conditionally rendered) so switching
+          themes is a plain prop/style update on existing nodes instead of
+          unmounting/remounting layers — that mount cost (new gradient
+          layers, animations restarting from t=0) was why light→dark had a
+          faint delay that dark→light never did, since the light branch
+          used to render fewer nodes than the dark one. */}
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: isDark ? '#020308' : 'transparent' }} />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: isDark
+            ? `radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,0.9), transparent),
+                radial-gradient(1px 1px at 90px 80px, rgba(255,255,255,0.7), transparent),
+                radial-gradient(1.2px 1.2px at 150px 40px, rgba(255,255,255,0.85), transparent),
+                radial-gradient(1px 1px at 60px 130px, rgba(255,255,255,0.6), transparent),
+                radial-gradient(1.4px 1.4px at 170px 150px, rgba(255,255,255,0.9), transparent),
+                radial-gradient(1px 1px at 190px 10px, rgba(255,255,255,0.6), transparent)`
+            : `radial-gradient(1px 1px at 20px 30px, rgba(71,85,105,0.35), transparent),
+                radial-gradient(1px 1px at 90px 80px, rgba(71,85,105,0.28), transparent),
+                radial-gradient(1.2px 1.2px at 150px 40px, rgba(71,85,105,0.32), transparent),
+                radial-gradient(1px 1px at 60px 130px, rgba(71,85,105,0.24), transparent),
+                radial-gradient(1.4px 1.4px at 170px 150px, rgba(71,85,105,0.35), transparent),
+                radial-gradient(1px 1px at 190px 10px, rgba(71,85,105,0.24), transparent)`,
+          backgroundRepeat: 'repeat',
+          backgroundSize: '200px 200px',
+          animation: 'starfield-drift 150s linear infinite alternate',
+        }}
+      />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: isDark
+            ? `radial-gradient(0.8px 0.8px at 40px 60px, rgba(255,255,255,0.5), transparent),
+                radial-gradient(0.8px 0.8px at 110px 20px, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1px 1px at 160px 110px, rgba(255,255,255,0.55), transparent),
+                radial-gradient(0.8px 0.8px at 20px 160px, rgba(255,255,255,0.4), transparent),
+                radial-gradient(0.8px 0.8px at 230px 90px, rgba(255,255,255,0.45), transparent)`
+            : `radial-gradient(0.8px 0.8px at 40px 60px, rgba(71,85,105,0.2), transparent),
+                radial-gradient(0.8px 0.8px at 110px 20px, rgba(71,85,105,0.16), transparent),
+                radial-gradient(1px 1px at 160px 110px, rgba(71,85,105,0.22), transparent),
+                radial-gradient(0.8px 0.8px at 20px 160px, rgba(71,85,105,0.16), transparent),
+                radial-gradient(0.8px 0.8px at 230px 90px, rgba(71,85,105,0.18), transparent)`,
+          backgroundRepeat: 'repeat',
+          backgroundSize: '260px 260px',
+          animation: 'starfield-drift 220s linear infinite alternate-reverse',
+        }}
+      />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: isDark ? 'linear-gradient(180deg, rgba(2,3,10,0.15) 0%, rgba(2,3,10,0.4) 100%)' : 'transparent' }}
+      />
 
       <div className="relative z-10 h-full w-full flex overflow-hidden p-3 gap-3">
       {/* Sidebar */}
@@ -2612,7 +3192,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
           {showSettings ? (
             <button
               onClick={(e) => { e.stopPropagation(); setShowSettings(false) }}
-              className="flex items-center gap-2"
+              className={`glass-interactive glass-interactive-flat flex items-center gap-2 rounded-full ${sidebarOpen ? 'pr-3' : ''} ${t(isDark, 'text-slate-300', 'text-slate-700')}`}
               title={translate('nav_back_to_dashboard')}
             >
               <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0">
@@ -2623,19 +3203,19 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
           ) : (
             <button
               onClick={(e) => { e.stopPropagation(); window.location.reload() }}
-              className="flex items-center gap-2"
+              className={`glass-interactive glass-interactive-flat flex items-center gap-2 rounded-full ${sidebarOpen ? 'pr-3' : ''}`}
             >
               <img src={orbitLogo} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
-              {sidebarOpen && <span className="font-dancing text-lg whitespace-nowrap">Orbit</span>}
+              {sidebarOpen && <span className={`font-dancing text-lg whitespace-nowrap ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>Orbit</span>}
             </button>
           )}
           {sidebarOpen && (
             <button
               onClick={(e) => { e.stopPropagation(); setSidebarOpen(false) }}
-              className={t(isDark,
-                'p-1.5 rounded-full text-slate-500 hover:text-slate-100 hover:bg-white/10 transition-colors duration-75',
-                'p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-75'
-              )}
+              className={`glass-interactive glass-interactive-flat p-1.5 rounded-full ${t(isDark,
+                'text-slate-500 hover:text-slate-100 hover:bg-white/10',
+                'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+              )}`}
             >
               <Icon size={16}><path d="M15 18l-6-6 6-6" /></Icon>
             </button>
@@ -2669,11 +3249,20 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                     } ${
                       item.id === settingsTab
                         ? t(isDark, 'glass-chip-dark', 'glass-chip-light')
-                        : t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-slate-100 transition-colors duration-75', 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors duration-75')
+                        : t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-slate-100', 'text-slate-500 hover:bg-slate-50 hover:text-slate-900')
                     }`}
                   >
-                    <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
-                      <Icon size={15}>{item.icon}</Icon>
+                    <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0">
+                      {item.iconSrc ? (
+                        <img
+                          src={item.iconSrc}
+                          alt=""
+                          className="w-[18px] h-[18px] object-contain"
+                          style={{ filter: isDark ? 'invert(1) brightness(1.3)' : 'brightness(0) opacity(0.6)' }}
+                        />
+                      ) : (
+                        <Icon size={15}>{item.icon}</Icon>
+                      )}
                     </span>
                     {sidebarOpen ? (
                       <span className="flex-1 min-w-0 truncate">{translate(item.labelKey)}</span>
@@ -2702,15 +3291,15 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                 } ${
                   item.id === activeNav
                     ? t(isDark, 'glass-chip-dark', 'glass-chip-light')
-                    : t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-slate-100 transition-colors duration-75', 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors duration-75')
+                    : t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-slate-100', 'text-slate-500 hover:bg-slate-50 hover:text-slate-900')
                 }`}
               >
-                <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
+                <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0">
                   <img
                     src={item.iconSrc}
                     alt=""
                     className="w-[18px] h-[18px] object-contain"
-                    style={isDark ? { filter: 'invert(1) brightness(1.3)' } : undefined}
+                    style={{ filter: isDark ? 'invert(1) brightness(1.3)' : 'brightness(0) opacity(0.6)' }}
                   />
                 </span>
                 {sidebarOpen ? (
@@ -2727,14 +3316,16 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
           {!showSettings && (
           <button
             title={translate('nav_settings')}
-            onClick={(e) => { e.stopPropagation(); setShowSettings(true) }}
-            className={`glass-interactive flex items-center rounded-xl text-sm text-left transition-colors duration-75 ${sidebarOpen ? 'gap-3 py-2 px-2 whitespace-nowrap' : 'flex-col gap-0.5 py-2 px-1 justify-center text-center'} ${t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-slate-100', 'text-slate-500 hover:bg-slate-50 hover:text-slate-900')}`}
+            onClick={(e) => { e.stopPropagation(); setShowSettings(true); setSettingsTab('general') }}
+            className={`glass-interactive flex items-center rounded-xl text-sm text-left ${sidebarOpen ? 'gap-3 py-2 px-2 whitespace-nowrap' : 'flex-col gap-0.5 py-2 px-1 justify-center text-center'} ${t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-slate-100', 'text-slate-500 hover:bg-slate-50 hover:text-slate-900')}`}
           >
-            <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
-              <Icon size={15}>
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
-              </Icon>
+            <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0">
+              <img
+                src={settingsIcon}
+                alt=""
+                className="w-[18px] h-[18px] object-contain"
+                style={{ filter: isDark ? 'invert(1) brightness(1.3)' : 'brightness(0) opacity(0.6)' }}
+              />
             </span>
             {sidebarOpen ? (
               translate('nav_settings')
@@ -2746,9 +3337,9 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
           <button
             title={translate('nav_logout')}
             onClick={(e) => { e.stopPropagation(); setConfirmLogout(true) }}
-            className={`glass-interactive flex items-center rounded-xl text-sm text-left transition-colors duration-75 ${sidebarOpen ? 'gap-3 py-2 px-2 whitespace-nowrap' : 'flex-col gap-0.5 py-2 px-1 justify-center text-center'} ${t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-red-300', 'text-slate-500 hover:bg-slate-50 hover:text-red-500')}`}
+            className={`glass-interactive flex items-center rounded-xl text-sm text-left ${sidebarOpen ? 'gap-3 py-2 px-2 whitespace-nowrap' : 'flex-col gap-0.5 py-2 px-1 justify-center text-center'} ${t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-red-300', 'text-slate-500 hover:bg-slate-50 hover:text-red-500')}`}
           >
-            <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
+            <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0">
               <Icon size={15}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /></Icon>
             </span>
             {sidebarOpen ? (
@@ -2778,138 +3369,336 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
         )}
         {/* Top bar — floats on the page background; each control is its own bubble */}
         <div className="shrink-0 flex items-center justify-between">
-          <div className="relative w-full max-w-xs">
+          {/* h-11 pins this to the collapsed pill's own height — the panel
+              below is `absolute` (out of flow) precisely so that it growing
+              taller to fit suggestions never pushes this row, or anything
+              after it in the page, downward. It overlays in front instead. */}
+          <div className="relative w-full max-w-xs h-11 group">
+            {searchFocused && (
+              <div className="fixed inset-0 z-10" onClick={() => setSearchFocused(false)} onMouseDown={(e) => e.stopPropagation()} />
+            )}
             <div
-              className="relative z-20 flex items-center rounded-full transition-colors duration-200"
+              className={`absolute inset-x-0 top-0 z-20 overflow-hidden transition-all duration-200 ${t(isDark, 'glass-dark', 'glass-light')} ${
+                // Tailwind's rounded-full compiles to an enormous fixed
+                // border-radius (not literally infinite, but functionally
+                // so at this element's height) rather than scaling with it.
+                // Animating from that down to rounded-2xl's 16px spends
+                // nearly the whole transition still looking like a full
+                // pill — visually nothing happens until the very last
+                // fraction of a percent of progress, which reads as an
+                // abrupt snap right at the end instead of a smooth morph.
+                // rounded-[22px] is a normal finite value that already
+                // reads as a full pill at this bar's ~44px height, so the
+                // eased transition actually plays out over the whole 200ms.
+                searchFocused ? 'rounded-2xl' : 'rounded-[22px]'
+              }`}
+              style={{
+                boxShadow: searchFocused ? (isDark ? '0 16px 40px -12px rgba(0,0,0,0.6)' : '0 16px 40px -16px rgba(15,23,42,0.25)') : undefined,
+              }}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
             >
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
-                <Icon><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></Icon>
-              </span>
-              {searchFocused && ghostSuggestion && (
-                <div
-                  aria-hidden="true"
-                  className="absolute inset-0 flex items-center pl-11 pr-20 py-2.5 text-sm whitespace-pre overflow-hidden pointer-events-none"
-                >
-                  <span className="invisible">{searchQuery}</span>
-                  <span className={t(isDark, 'text-slate-600', 'text-slate-400')}>{ghostSuggestion.slice(searchQuery.length)}</span>
-                </div>
-              )}
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder={translate('topbar_search_placeholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setSearchFocused(true)}
-                onKeyDown={handleSearchKeyDown}
-                onMouseDown={handleSearchMouseDown}
-                onMouseUp={handleSearchMouseUp}
-                className={t(isDark,
-                  'relative w-full bg-transparent pl-11 pr-20 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none',
-                  'relative w-full bg-transparent pl-11 pr-20 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none'
+              <div className="relative flex items-center">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
+                  <Icon><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></Icon>
+                </span>
+                {searchFocused && ghostSuggestion && (
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0 flex items-center pl-11 pr-20 py-2.5 text-sm whitespace-pre overflow-hidden pointer-events-none"
+                  >
+                    <span className="invisible">{searchQuery}</span>
+                    <span className={t(isDark, 'text-slate-600', 'text-slate-400')}>{ghostSuggestion.slice(searchQuery.length)}</span>
+                  </div>
                 )}
-              />
-              <span
-                className={t(isDark,
-                  'absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[11px] font-medium text-slate-500 bg-white/[0.08] px-2 py-1 rounded-md pointer-events-none',
-                  'absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md pointer-events-none'
-                )}
-              >
-                Ctrl K
-              </span>
-            </div>
-            {showSuggestions && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setSearchFocused(false)} onMouseDown={(e) => e.stopPropagation()} />
-                <div
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder={translate('topbar_search_placeholder')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  onKeyDown={handleSearchKeyDown}
+                  onMouseDown={handleSearchMouseDown}
+                  onMouseUp={handleSearchMouseUp}
                   className={t(isDark,
-                    'absolute top-full left-0 mt-2 w-full glass-dark rounded-xl py-2 z-20',
-                    'absolute top-full left-0 mt-2 w-full glass-light rounded-xl py-2 z-20'
+                    'relative w-full bg-transparent pl-11 pr-20 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none',
+                    'relative w-full bg-transparent pl-11 pr-20 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none'
                   )}
-                  onClick={(e) => e.stopPropagation()}
-                  onMouseDown={(e) => e.stopPropagation()}
+                />
+                <span
+                  className={t(isDark,
+                    'absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[11px] font-medium text-slate-500 bg-white/[0.08] px-2 py-1 rounded-md pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150',
+                    'absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150'
+                  )}
                 >
-                  {matchingRecent.length > 0 && (
-                    <div>
-                      <p className="text-xs text-slate-500 px-3 pb-1 uppercase tracking-widest">Recent Searches</p>
-                      {matchingRecent.map((s, i) => (
-                        <div
-                          key={i}
-                          onMouseEnter={() => setHighlightedIndex(i)}
-                          className={t(isDark,
-                            `flex items-center justify-between px-3 py-1.5 ${highlightedIndex === i ? 'bg-white/5' : 'hover:bg-white/5'}`,
-                            `flex items-center justify-between px-3 py-1.5 ${highlightedIndex === i ? 'bg-slate-50' : 'hover:bg-slate-50'}`
-                          )}
-                        >
-                          <button
-                            onClick={() => {
-                              setSearchQuery(s)
-                              saveSearch(s)
-                              setSearchFocused(false)
-                            }}
-                            className={t(isDark, 'text-sm text-slate-300 flex-1 text-left', 'text-sm text-slate-600 flex-1 text-left')}
-                          >
-                            {s}
-                          </button>
-                          <button onClick={() => removeSearch(s)} className="text-slate-500 hover:text-red-400 ml-2">
-                            <Icon size={13}><path d="M18 6L6 18M6 6l12 12" /></Icon>
-                          </button>
+                  Ctrl K
+                </span>
+              </div>
+              {searchFocused && (
+                <div
+                  className={`py-2 px-2 border-t ${t(isDark, 'border-white/10', 'border-slate-200')}`}
+                  style={{ animation: 'fade-slide-in 0.15s ease-out both' }}
+                >
+                  {searchLoading && hasSearchQuery ? (
+                    <div className="flex flex-col gap-1">
+                      {[0, 1, 2, 3].map((i) => (
+                        <div key={i} className="flex items-center gap-2.5 px-1 py-2.5">
+                          <span className={`w-9 h-9 rounded-full shrink-0 animate-pulse ${t(isDark, 'bg-white/10', 'bg-slate-200')}`} />
+                          <span className="min-w-0 flex-1 flex flex-col gap-1.5">
+                            <span className={`block h-3 rounded-full animate-pulse ${t(isDark, 'bg-white/10', 'bg-slate-200')}`} style={{ width: `${65 - i * 8}%` }} />
+                            <span className={`block h-2.5 rounded-full animate-pulse ${t(isDark, 'bg-white/5', 'bg-slate-100')}`} style={{ width: `${40 - i * 5}%` }} />
+                          </span>
                         </div>
                       ))}
                     </div>
-                  )}
+                  ) : (
+                    <>
+                      {matchingRecent.length === 0 && matchingDocSuggestions.length === 0 && (
+                        <p className={`text-sm px-2 py-2 ${t(isDark, 'text-slate-500', 'text-slate-400')}`}>
+                          {translate('search_empty_state')}
+                        </p>
+                      )}
 
-                  {matchingDocSuggestions.length > 0 && (
-                    <div className={matchingRecent.length > 0 ? t(isDark, 'border-t border-white/10 mt-1 pt-1', 'border-t border-slate-200 mt-1 pt-1') : ''}>
-                      <p className="text-xs text-slate-500 px-3 pb-1 uppercase tracking-widest">Documents</p>
-                      {matchingDocSuggestions.map((doc, i) => (
-                        <button
-                          key={doc.id}
-                          onMouseEnter={() => setHighlightedIndex(matchingRecent.length + i)}
-                          onClick={() => {
-                            setSearchQuery(doc.title)
-                            saveSearch(doc.title)
-                            setSearchFocused(false)
-                          }}
-                          className={t(isDark,
-                            `w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left text-slate-300 ${highlightedIndex === matchingRecent.length + i ? 'bg-white/5' : 'hover:bg-white/5'}`,
-                            `w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left text-slate-600 ${highlightedIndex === matchingRecent.length + i ? 'bg-slate-50' : 'hover:bg-slate-50'}`
-                          )}
-                        >
-                          <span className="text-slate-500 shrink-0">
-                            <Icon size={13}><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></Icon>
-                          </span>
-                          <span className="truncate">{doc.title}</span>
-                        </button>
-                      ))}
-                    </div>
+                      {matchingRecent.length > 0 && (
+                        <div>
+                          <p className="text-xs text-slate-500 px-2 pb-1">{translate('search_recent_heading')}</p>
+                          {/* Nothing gets dropped past 5 anymore (see saveSearch) — this
+                              scrolls to reach older entries instead of history being
+                              silently discarded. */}
+                          <div className="max-h-[300px] overflow-y-auto">
+                          {matchingRecent.map((s, i) => {
+                            const meta = describeQuery(s)
+                            return (
+                              <div
+                                key={s}
+                                onMouseEnter={() => setHighlightedIndex(i)}
+                                className={`glass-interactive glass-interactive-flat flex items-center justify-between px-2 py-2.5 rounded-xl ${
+                                  highlightedIndex === i ? `glass-interactive-kbd ${t(isDark, 'bg-white/5', 'bg-slate-50')}` : ''
+                                }`}
+                              >
+                                <button
+                                  onClick={() => executeSearch(s)}
+                                  className="flex items-center gap-2.5 min-w-0 flex-1 text-left"
+                                >
+                                  {meta ? (
+                                    <AgencyBubble isDark={isDark} code={meta.code} size={28} ring={false} />
+                                  ) : (
+                                    <span className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${t(isDark, 'text-slate-500', 'text-slate-400')}`}>
+                                      <Icon size={14}><circle cx="12" cy="12" r="8" /><path d="M12 8v4l3 2" /></Icon>
+                                    </span>
+                                  )}
+                                  <span className="min-w-0 flex-1">
+                                    <span className={`block text-sm truncate ${t(isDark, 'text-slate-200', 'text-slate-700')}`}>{s}</span>
+                                    {meta && <span className="block text-xs text-slate-500 truncate">{meta.subtitle}</span>}
+                                  </span>
+                                </button>
+                                <button
+                                  onClick={() => removeSearch(s)}
+                                  className={`ml-2 shrink-0 ${t(isDark, 'text-slate-500 hover:text-slate-200', 'text-slate-400 hover:text-slate-700')}`}
+                                >
+                                  <Icon size={13}><path d="M18 6L6 18M6 6l12 12" /></Icon>
+                                </button>
+                              </div>
+                            )
+                          })}
+                          </div>
+                        </div>
+                      )}
+
+                      {matchingDocSuggestions.length > 0 && (
+                        <div className={matchingRecent.length > 0 ? t(isDark, 'border-t border-white/10 mt-1 pt-1', 'border-t border-slate-200 mt-1 pt-1') : ''}>
+                          <p className="text-xs text-slate-500 px-2 pb-1">{translate('search_docs_heading')}</p>
+                          {matchingDocSuggestions.map((item, i) => (
+                            <button
+                              key={item.key}
+                              onMouseEnter={() => setHighlightedIndex(matchingRecent.length + i)}
+                              onClick={item.onSelect}
+                              className={`glass-interactive glass-interactive-flat w-full flex items-center gap-2.5 px-2 py-2.5 rounded-xl text-left ${
+                                item.tracked ? '' : 'opacity-60'
+                              } ${
+                                highlightedIndex === matchingRecent.length + i ? `glass-interactive-kbd ${t(isDark, 'bg-white/5', 'bg-slate-50')}` : ''
+                              }`}
+                            >
+                              <AgencyBubble isDark={isDark} code={item.code} size={28} ring={false} />
+                              <span className="min-w-0 flex-1">
+                                <span className={`block text-sm truncate ${t(isDark, 'text-slate-200', 'text-slate-700')}`}>{item.title}</span>
+                                <span className="block text-xs text-slate-500 truncate">{item.subtitle}</span>
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
-              </>
-            )}
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              title={translate(isDark ? 'theme_toggle_to_light' : 'theme_toggle_to_dark')}
+              onClick={() => setThemeMode(isDark ? 'light' : 'dark')}
+              className={`glass-interactive glass-interactive-flat w-9 h-9 rounded-full flex items-center justify-center ${t(isDark,
+                'text-slate-400 hover:text-slate-100 hover:bg-white/5',
+                'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+              )}`}
+            >
+              {isDark ? (
+                <Icon size={16}><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></Icon>
+              ) : (
+                <Icon size={16}><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></Icon>
+              )}
+            </button>
             <Dropdown open={showNotifDropdown} onClose={() => setShowNotifDropdown(false)} backdropZ="z-40" contentZ="z-50">
               <button
-                onClick={() => setShowNotifDropdown(!showNotifDropdown)}
-                className={`glass-interactive w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-75 ${t(isDark,
-                  'text-slate-400 hover:text-slate-100',
-                  'text-slate-500 hover:text-slate-900'
+                title={translate('nav_reminders')}
+                onClick={() => {
+                  const opening = !showNotifDropdown
+                  setShowNotifDropdown(opening)
+                  // Opening clears the badge (you've "seen" the current set)
+                  // without marking every row read — the New/Earlier split
+                  // and each row's dot are a separate, more deliberate
+                  // "read" state (see markNotifRead/markAllNotifsRead).
+                  if (opening && notifDocs.length > 0) {
+                    setSeenNotifIds((prev) => {
+                      const next = new Set(prev)
+                      notifDocs.forEach((doc) => next.add(doc.id))
+                      return next
+                    })
+                  }
+                }}
+                className={`glass-interactive glass-interactive-flat relative w-9 h-9 rounded-full flex items-center justify-center ${t(isDark,
+                  'text-slate-400 hover:text-slate-100 hover:bg-white/5',
+                  'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                 )}`}
               >
-                <Icon size={16}><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" /></Icon>
+                <img
+                  src={notificationIcon}
+                  alt=""
+                  className="w-[16px] h-[16px] object-contain"
+                  style={{ filter: isDark ? 'invert(1) brightness(1.3)' : 'brightness(0) opacity(0.6)' }}
+                />
+                {notifUnreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[10px] font-semibold text-white bg-red-500">
+                    {notifUnreadCount > 9 ? '9+' : notifUnreadCount}
+                  </span>
+                )}
               </button>
               {notifShouldRender && (
                 <div
                   onClick={(e) => e.stopPropagation()}
                   style={{ animation: showNotifDropdown ? 'dropdown-in 140ms ease-out' : 'dropdown-out 140ms ease-in forwards' }}
                   className={t(isDark,
-                    'absolute right-0 mt-2 w-64 glass-dark rounded-xl p-4 origin-top-right',
-                    'absolute right-0 mt-2 w-64 glass-light rounded-xl p-4 origin-top-right'
+                    'absolute right-0 mt-2 w-80 glass-dark rounded-xl p-3 origin-top-right',
+                    'absolute right-0 mt-2 w-80 glass-light rounded-xl p-3 origin-top-right'
                   )}
                 >
-                  <p className="text-sm text-slate-400">No new notifications</p>
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <p className={`text-sm font-semibold ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>
+                      {translate('nav_reminders')}
+                    </p>
+                    <ThreeDotMenu
+                      isDark={isDark}
+                      id="notif-menu"
+                      openId={openMenuId}
+                      setOpenId={setOpenMenuId}
+                      options={[
+                        {
+                          label: translate('notif_mark_all_read'),
+                          icon: <Icon size={14}><path d="M20 6L9 17l-5-5" /></Icon>,
+                          onClick: markAllNotifsRead,
+                        },
+                        {
+                          label: translate('notif_settings_option'),
+                          icon: <Icon size={14}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></Icon>,
+                          onClick: () => { setShowSettings(true); setSettingsTab('notifications'); setShowNotifDropdown(false) },
+                        },
+                        {
+                          label: translate('notif_open_option'),
+                          icon: <Icon size={14}><rect x="3" y="4" width="18" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></Icon>,
+                          onClick: () => { selectNav('reminders'); setShowNotifDropdown(false) },
+                        },
+                      ]}
+                    />
+                  </div>
+
+                  <div className="relative flex items-center gap-1 mb-2">
+                    {notifTabIndicator && (
+                      <div
+                        className={t(isDark, 'absolute top-0 bottom-0 rounded-full glass-chip-dark', 'absolute top-0 bottom-0 rounded-full glass-chip-light')}
+                        style={{ left: notifTabIndicator.left, width: notifTabIndicator.width, transition: 'left 250ms cubic-bezier(0.4, 0, 0.2, 1), width 250ms cubic-bezier(0.4, 0, 0.2, 1)' }}
+                      />
+                    )}
+                    {['all', 'unread'].map((tabId) => (
+                      <button
+                        key={tabId}
+                        ref={(el) => {
+                          notifTabRefs.current[tabId] = el
+                          if (el && tabId === notifFilterTab) {
+                            const left = el.offsetLeft
+                            const width = el.offsetWidth
+                            setNotifTabIndicator((prev) =>
+                              prev && prev.left === left && prev.width === width ? prev : { left, width }
+                            )
+                          }
+                        }}
+                        onClick={() => setNotifFilterTab(tabId)}
+                        className={`glass-interactive glass-interactive-tab relative z-10 px-3 py-1 rounded-full text-xs font-medium ${
+                          notifFilterTab === tabId
+                            ? t(isDark, 'text-slate-100', 'text-slate-900')
+                            : t(isDark, 'text-slate-400 hover:text-slate-200', 'text-slate-500 hover:text-slate-700')
+                        }`}
+                      >
+                        {translate(tabId === 'all' ? 'notif_filter_all' : 'notif_filter_unread')}
+                      </button>
+                    ))}
+                  </div>
+
+                  {notifLoading ? (
+                    <div className="flex flex-col gap-1">
+                      {[0, 1, 2].map((i) => (
+                        <div key={i} className="flex items-center gap-2.5 px-1 py-2.5">
+                          <span className={`w-7 h-7 rounded-full shrink-0 animate-pulse ${t(isDark, 'bg-white/10', 'bg-slate-200')}`} />
+                          <span className="min-w-0 flex-1 flex flex-col gap-1.5">
+                            <span className={`block h-3 rounded-full animate-pulse ${t(isDark, 'bg-white/10', 'bg-slate-200')}`} style={{ width: `${70 - i * 10}%` }} />
+                            <span className={`block h-2.5 rounded-full animate-pulse ${t(isDark, 'bg-white/5', 'bg-slate-100')}`} style={{ width: `${30 - i * 4}%` }} />
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : notifVisibleDocs.length === 0 ? (
+                    <p className="text-sm text-slate-400 px-1 py-2">{translate('notif_dropdown_empty')}</p>
+                  ) : (
+                    <>
+                      {/* ~5 rows tall before scrolling — overflow-x-hidden
+                          alongside overflow-y-auto matters here: a lone
+                          overflow-y without it computes overflow-x to auto
+                          per spec, which can put a stray horizontal scrollbar
+                          under a row that's fractionally wider than the panel. */}
+                      <div className="max-h-[280px] overflow-y-auto overflow-x-hidden flex flex-col gap-1">
+                        {notifNewDocs.length > 0 && (
+                          <>
+                            <p className="text-[11px] font-semibold text-slate-500 px-2 pt-1 pb-0.5">{translate('notif_group_new')}</p>
+                            {notifNewDocs.map((doc) => renderNotifRow(doc, true))}
+                          </>
+                        )}
+                        {notifEarlierDocs.length > 0 && (
+                          <>
+                            <p className="text-[11px] font-semibold text-slate-500 px-2 pt-1 pb-0.5">{translate('notif_group_earlier')}</p>
+                            {notifEarlierDocs.map((doc) => renderNotifRow(doc, false))}
+                          </>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => { selectNav('reminders'); setShowNotifDropdown(false) }}
+                        className={`w-full text-center text-xs font-medium px-2 py-2 mt-1 rounded-xl transition-colors duration-75 ${t(isDark, 'text-slate-300 hover:bg-white/5', 'text-slate-600 hover:bg-slate-50')}`}
+                      >
+                        {translate('notif_view_all')}
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </Dropdown>
@@ -2917,7 +3706,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
             <Dropdown open={showUserDropdown} onClose={() => setShowUserDropdown(false)} backdropZ="z-40" contentZ="z-50">
               <button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className={`glass-interactive flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full transition-colors duration-75 ${t(isDark, 'hover:bg-white/5', 'hover:bg-slate-50')}`}
+                className={`glass-interactive glass-interactive-flat flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full ${t(isDark, 'hover:bg-white/5', 'hover:bg-slate-50')}`}
               >
                 {profilePhoto ? (
                   <img src={profilePhoto} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
@@ -2941,28 +3730,34 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                   onClick={(e) => e.stopPropagation()}
                   style={{ animation: showUserDropdown ? 'dropdown-in 140ms ease-out' : 'dropdown-out 140ms ease-in forwards' }}
                   className={t(isDark,
-                    'absolute right-0 mt-2 w-48 glass-dark rounded-xl py-1 origin-top-right',
-                    'absolute right-0 mt-2 w-48 glass-light rounded-xl py-1 origin-top-right'
+                    'absolute right-0 mt-2 w-48 glass-dark rounded-xl p-1.5 origin-top-right',
+                    'absolute right-0 mt-2 w-48 glass-light rounded-xl p-1.5 origin-top-right'
                   )}
                 >
                   <button
                     onClick={() => { setShowSettings(true); setSettingsTab('account'); setShowUserDropdown(false) }}
-                    className={t(isDark, 'w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5', 'w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50')}
+                    className={`glass-interactive glass-interactive-flat w-full flex items-center gap-2.5 text-left px-3 py-2 rounded-lg text-sm ${t(isDark, 'text-slate-300 hover:bg-white/5', 'text-slate-600 hover:bg-slate-50')}`}
                   >
-                    Profile
+                    <Icon size={15}>{PROFILE_ICON}</Icon>
+                    {translate('settings_tab_account')}
                   </button>
                   <button
-                    onClick={() => { setShowSettings(true); setShowUserDropdown(false) }}
-                    className={t(isDark, 'w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5', 'w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50')}
+                    onClick={() => { setShowSettings(true); setSettingsTab('general'); setShowUserDropdown(false) }}
+                    className={`glass-interactive glass-interactive-flat w-full flex items-center gap-2.5 text-left px-3 py-2 rounded-lg text-sm ${t(isDark, 'text-slate-300 hover:bg-white/5', 'text-slate-600 hover:bg-slate-50')}`}
                   >
-                    Settings
+                    <Icon size={15}>
+                      <circle cx="12" cy="12" r="3" />
+                      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+                    </Icon>
+                    {translate('nav_settings')}
                   </button>
-                  <div className={t(isDark, 'border-t border-white/10 my-1', 'border-t border-slate-200 my-1')} />
+                  <div className={t(isDark, 'border-t border-white/10 -mx-1.5 my-1', 'border-t border-slate-200 -mx-1.5 my-1')} />
                   <button
                     onClick={() => { setConfirmLogout(true); setShowUserDropdown(false) }}
-                    className={t(isDark, 'w-full text-left px-4 py-2 text-sm text-red-300 hover:bg-white/5', 'w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-slate-50')}
+                    className={`glass-interactive glass-interactive-flat w-full flex items-center gap-2.5 text-left px-3 py-2 rounded-lg text-sm ${t(isDark, 'text-red-300 hover:bg-white/5', 'text-red-500 hover:bg-slate-50')}`}
                   >
-                    Log out
+                    <Icon size={15}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /></Icon>
+                    {translate('nav_logout')}
                   </button>
                 </div>
               )}
@@ -2977,6 +3772,16 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
         >
           {showSettings ? (
             <div key={settingsTab} style={{ animation: 'flashcard-in-forward 220ms ease-out' }}>
+              {settingsTab === 'general' && (
+                <GeneralSettingsPanel
+                  isDark={isDark}
+                  session={session}
+                  profilePhoto={profilePhoto}
+                  profileUsername={profileUsername}
+                  profileColor={profileColor}
+                  onGoToAccount={() => setSettingsTab('account')}
+                />
+              )}
               {settingsTab === 'account' && (
                 <ProfilePage
                   isDark={isDark}
@@ -3031,19 +3836,41 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
               <CalendarPanel isDark={isDark} />
             </div>
           ) : activeNav === 'dashboard' ? (
-            <div className="flex flex-col lg:flex-row gap-10">
-              <div className="flex-1 min-w-0">
-                <DashboardHero
-                  isDark={isDark}
-                  displayName={profileUsername || getDisplayName(session.user.email)}
-                  mostUrgentDoc={mostUrgentDoc}
-                  extraUrgentCount={extraUrgentCount}
-                />
-                <DocumentStatsChart isDark={isDark} documents={enriched} />
+            <div key={activeNav} style={{ animation: 'rise-in 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
+              <div className="flex flex-col lg:flex-row gap-10">
+                <div className="flex-1 min-w-0">
+                  <DashboardHero
+                    isDark={isDark}
+                    displayName={profileUsername || getDisplayName(session.user.email)}
+                  />
+                  <ExpirationChart isDark={isDark} documents={enriched} />
+                </div>
+                {/* News gets the whole right column now (was sharing it
+                    with the urgent-docs rail) so each headline has room for
+                    its photo — the rail moved below, full width. */}
+                <div className="lg:w-[340px] shrink-0">
+                  <NewsPanel isDark={isDark} />
+                </div>
               </div>
-              <div className="lg:w-[300px] shrink-0">
-                <UrgentDocsRail isDark={isDark} documents={enriched} onSelectDoc={setSelectedDoc} />
-              </div>
+              {/* Full page width here, not squeezed into either column above. */}
+              {progressDocs.length > 0 && (
+                <div className="mt-10">
+                  <p className={`text-xs font-semibold tracking-widest uppercase mb-4 ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>
+                    {translate('dashboard_progress_heading')}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {progressDocs.map((doc, i) => (
+                      <DocumentProgressCard
+                        key={doc.id}
+                        isDark={isDark}
+                        doc={doc}
+                        onSelect={() => setSelectedDoc(doc)}
+                        delay={Math.min(i * 0.05, 0.4)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : activeNav === 'reminders' ? (
             <div key={activeNav} style={{ animation: 'rise-in 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
@@ -3052,6 +3879,13 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
           ) : activeNav === 'history' ? (
             <div key={activeNav} style={{ animation: 'rise-in 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
               <HistoryFeed isDark={isDark} activityLog={activityLog} />
+            </div>
+          ) : activeNav === 'search_results' ? (
+            <div key={activeNav} style={{ animation: 'rise-in 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
+              <p className={`font-instrument text-3xl mb-6 ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>
+                {translate('search_results_heading', { query: searchQuery })}
+              </p>
+              {renderFilterBarAndGrid()}
             </div>
           ) : (
           <div key={activeNav}>
