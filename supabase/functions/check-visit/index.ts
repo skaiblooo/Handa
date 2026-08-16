@@ -3,10 +3,26 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // Browser calls to an edge function are cross-origin by default (the app
 // runs on a different host than *.supabase.co), so without these headers
 // the browser blocks the response before App.jsx ever sees it.
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Content-Type': 'application/json',
+//
+// Access-Control-Allow-Origin locks to known app origins when
+// ALLOWED_APP_ORIGINS is set (the same env var send-password-reset already
+// uses for redirect validation) and falls back to '*' when it's unset, so
+// setting the var can only ever narrow access — it never breaks the app if
+// it hasn't been configured yet.
+const allowedOrigins = (Deno.env.get('ALLOWED_APP_ORIGINS') || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+
+function corsHeadersFor(req: Request): Record<string, string> {
+  const origin = req.headers.get('origin') || ''
+  return {
+    'Access-Control-Allow-Origin':
+      allowedOrigins.length === 0 ? '*' : allowedOrigins.includes(origin) ? origin : allowedOrigins[0],
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Content-Type': 'application/json',
+    Vary: 'Origin',
+  }
 }
 
 // Lets the landing page decide whether to lead with signup (never seen
@@ -24,6 +40,8 @@ async function hashIp(ip: string): Promise<string> {
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req)
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }

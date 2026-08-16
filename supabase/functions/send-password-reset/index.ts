@@ -1,24 +1,32 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// Browser calls to an edge function are cross-origin by default (the app
-// runs on a different host than *.supabase.co), so without these headers
-// the browser blocks the response before Auth.jsx ever sees it.
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Content-Type': 'application/json',
-}
-
 // Only ever redirect back into the app itself — without this, someone could
 // POST straight to this function (bypassing Auth.jsx entirely) with an
 // arbitrary redirectTo and turn a legitimate password-reset email into a
 // phishing link. Set as an edge function secret (comma-separated origins);
 // with nothing set, every custom redirect is rejected and Supabase falls
 // back to its own dashboard-configured default — safe, just not branded.
+// The same list also locks down CORS below, since both are "which origins
+// count as this app" — with nothing set, CORS falls back to '*' instead
+// (today's behavior), so setting this var can only ever narrow access.
 const allowedOrigins = (Deno.env.get('ALLOWED_APP_ORIGINS') || '')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean)
+
+// Browser calls to an edge function are cross-origin by default (the app
+// runs on a different host than *.supabase.co), so without these headers
+// the browser blocks the response before Auth.jsx ever sees it.
+function corsHeadersFor(req: Request): Record<string, string> {
+  const origin = req.headers.get('origin') || ''
+  return {
+    'Access-Control-Allow-Origin':
+      allowedOrigins.length === 0 ? '*' : allowedOrigins.includes(origin) ? origin : allowedOrigins[0],
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Content-Type': 'application/json',
+    Vary: 'Origin',
+  }
+}
 
 function safeRedirect(url: unknown): string | undefined {
   if (typeof url !== 'string') return undefined
@@ -38,6 +46,8 @@ const RATE_LIMIT_WINDOW_MINUTES = 60
 // us the real recovery URL to embed, rather than letting Supabase's stock
 // template send a generic one.
 Deno.serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req)
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
