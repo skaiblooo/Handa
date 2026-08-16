@@ -2976,7 +2976,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
               <div className="relative">
                 <button
                   onClick={() => setShowSortMenu((v) => !v)}
-                  className={`glass-interactive glass-interactive-flat flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl ${t(isDark, 'text-slate-300', 'text-slate-600')}`}
+                  className={`glass-interactive flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl ${t(isDark, 'text-slate-300', 'text-slate-600')}`}
                 >
                   <Icon size={14}><path d="M3 6h18M6 12h12M10 18h4" /></Icon>
                   {translate(SORT_OPTIONS.find((o) => o.id === sortBy).labelKey)}
@@ -3192,7 +3192,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
           {showSettings ? (
             <button
               onClick={(e) => { e.stopPropagation(); setShowSettings(false) }}
-              className={`glass-interactive glass-interactive-flat flex items-center gap-2 rounded-full ${sidebarOpen ? 'pr-3' : ''} ${t(isDark, 'text-slate-300', 'text-slate-700')}`}
+              className={`glass-interactive flex items-center gap-2 rounded-full ${sidebarOpen ? 'pr-3' : ''} ${t(isDark, 'text-slate-300', 'text-slate-700')}`}
               title={translate('nav_back_to_dashboard')}
             >
               <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0">
@@ -3203,7 +3203,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
           ) : (
             <button
               onClick={(e) => { e.stopPropagation(); window.location.reload() }}
-              className={`glass-interactive glass-interactive-flat flex items-center gap-2 rounded-full ${sidebarOpen ? 'pr-3' : ''}`}
+              className={`glass-interactive flex items-center gap-2 rounded-full ${sidebarOpen ? 'pr-3' : ''}`}
             >
               <img src={orbitLogo} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
               {sidebarOpen && <span className={`font-dancing text-lg whitespace-nowrap ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>Orbit</span>}
@@ -3212,7 +3212,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
           {sidebarOpen && (
             <button
               onClick={(e) => { e.stopPropagation(); setSidebarOpen(false) }}
-              className={`glass-interactive glass-interactive-flat p-1.5 rounded-full ${t(isDark,
+              className={`glass-interactive p-1.5 rounded-full ${t(isDark,
                 'text-slate-500 hover:text-slate-100 hover:bg-white/10',
                 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
               )}`}
@@ -3540,7 +3540,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
             <button
               title={translate(isDark ? 'theme_toggle_to_light' : 'theme_toggle_to_dark')}
               onClick={() => setThemeMode(isDark ? 'light' : 'dark')}
-              className={`glass-interactive glass-interactive-flat w-9 h-9 rounded-full flex items-center justify-center ${t(isDark,
+              className={`glass-interactive w-9 h-9 rounded-full flex items-center justify-center ${t(isDark,
                 'text-slate-400 hover:text-slate-100 hover:bg-white/5',
                 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
               )}`}
@@ -3569,7 +3569,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                     })
                   }
                 }}
-                className={`glass-interactive glass-interactive-flat relative w-9 h-9 rounded-full flex items-center justify-center ${t(isDark,
+                className={`glass-interactive relative w-9 h-9 rounded-full flex items-center justify-center ${t(isDark,
                   'text-slate-400 hover:text-slate-100 hover:bg-white/5',
                   'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                 )}`}
@@ -3706,7 +3706,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
             <Dropdown open={showUserDropdown} onClose={() => setShowUserDropdown(false)} backdropZ="z-40" contentZ="z-50">
               <button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className={`glass-interactive glass-interactive-flat flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full ${t(isDark, 'hover:bg-white/5', 'hover:bg-slate-50')}`}
+                className={`glass-interactive flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full ${t(isDark, 'hover:bg-white/5', 'hover:bg-slate-50')}`}
               >
                 {profilePhoto ? (
                   <img src={profilePhoto} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />

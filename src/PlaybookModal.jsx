@@ -277,7 +277,7 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
               type="button"
               onClick={() => goToStep(Math.max(0, currentStep - 1))}
               disabled={currentStep === 0}
-              className={`glass-interactive glass-interactive-flat ${t(isDark,
+              className={`glass-interactive ${t(isDark,
                 'flex items-center gap-1 text-sm font-medium text-slate-300 px-4 py-2 rounded-xl hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent',
                 'flex items-center gap-1 text-sm font-medium text-slate-600 px-4 py-2 rounded-xl hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent'
               )}`}
@@ -290,7 +290,7 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
               <button
                 type="button"
                 onClick={() => toggleStep(currentStep)}
-                className={`glass-interactive glass-interactive-flat ${t(isDark,
+                className={`glass-interactive ${t(isDark,
                   'flex items-center gap-1.5 text-sm font-semibold text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 px-4 py-2 rounded-xl',
                   'flex items-center gap-1.5 text-sm font-semibold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-4 py-2 rounded-xl'
                 )}`}
