@@ -6,7 +6,7 @@ import ProfilePage from './ProfilePage'
 import { getDaysUntilExpiry, getUrgencyLevel, formatDaysUntil, formatExpiryDisplay, formatTimeAgo, formatCompactDaysUntil } from './utils/dateHelpers'
 import { getActivityLog, logActivity } from './utils/activityLog'
 import { getActualPushSubscription, subscribeToPush, unsubscribeFromPush, isPushSupported } from './utils/push'
-import { validatePhotoFile, uploadDocumentPhoto, getDocumentPhotoUrl } from './utils/documentPhotos'
+import { validatePhotoFile, uploadDocumentPhoto } from './utils/documentPhotos'
 import { useLanguage } from './i18n'
 import { AVATAR_COLORS, AVATAR_ACCENT_HEX } from './avatarColors'
 import { DOC_TYPE_LABELS, AGENCY_BADGE, URGENCY_META, CARD_THEME, CARD_FIELD_SCHEMAS, DOC_CATEGORIES, AGENCY_NAMES, AGENCY_BADGE_COLOR } from './data/docTypes'
@@ -411,6 +411,11 @@ const SETTINGS_NAV = [
         iconSrc: calendarSettingsIcon,
       },
       {
+        id: 'household',
+        labelKey: 'settings_tab_household',
+        icon: <><circle cx="9" cy="7" r="4" /><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6" /><circle cx="17" cy="7" r="3" /><path d="M22 21c0-2.8-1.8-5-4.5-5.7" /></>,
+      },
+      {
         id: 'data',
         labelKey: 'settings_tab_data_privacy',
         icon: <path d="M12 2L4 6v6c0 5.5 3.8 9 8 10 4.2-1 8-4.5 8-10V6l-8-4z" />,
@@ -753,7 +758,7 @@ function DocTypePicker({ isDark, docTypeIds, onSelect, onBack, onCancel }) {
 // date yet — asking them to fill those in would mean asking them to invent
 // data. This just confirms the type and shows the card in an obviously
 // unfinished state (dimmed, every field blank) instead.
-function ApplicationConfirmCard({ isDark, docType, title, onTitleChange, onBack, onCancel, onSave, saving, errorMsg }) {
+function ApplicationConfirmCard({ isDark, docType, title, onTitleChange, householdMembers, assignedMemberId, onAssignedMemberChange, onBack, onCancel, onSave, saving, errorMsg }) {
   const { translate } = useLanguage()
   return (
     <div
@@ -823,6 +828,40 @@ function ApplicationConfirmCard({ isDark, docType, title, onTitleChange, onBack,
         </div>
       </div>
 
+      {householdMembers.length > 0 && (
+        <div className="flex items-center gap-1.5 mb-3 overflow-x-auto no-scrollbar">
+          <button
+            type="button"
+            onClick={() => onAssignedMemberChange(null)}
+            className={`glass-interactive glass-interactive-flat flex items-center gap-1.5 shrink-0 rounded-full pl-1 pr-2.5 py-1 text-xs font-medium ${
+              assignedMemberId === null
+                ? t(isDark, 'bg-white/10 text-slate-100', 'bg-slate-200 text-slate-900')
+                : t(isDark, 'text-slate-400 hover:bg-white/5', 'text-slate-500 hover:bg-slate-100')
+            }`}
+          >
+            <span className={t(isDark, 'w-5 h-5 rounded-full bg-white/15 flex items-center justify-center', 'w-5 h-5 rounded-full bg-slate-300 flex items-center justify-center')}>
+              <Icon size={11}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></Icon>
+            </span>
+            {translate('add_doc_for_myself')}
+          </button>
+          {householdMembers.map((member) => (
+            <button
+              key={member.id}
+              type="button"
+              onClick={() => onAssignedMemberChange(member.id)}
+              className={`glass-interactive glass-interactive-flat flex items-center gap-1.5 shrink-0 rounded-full pl-1 pr-2.5 py-1 text-xs font-medium ${
+                assignedMemberId === member.id
+                  ? t(isDark, 'bg-white/10 text-slate-100', 'bg-slate-200 text-slate-900')
+                  : t(isDark, 'text-slate-400 hover:bg-white/5', 'text-slate-500 hover:bg-slate-100')
+              }`}
+            >
+              <HouseholdMemberAvatar member={member} size={20} />
+              {member.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       {errorMsg && <p className="text-xs text-red-400 mb-3">{errorMsg}</p>}
 
       <p className={t(isDark, 'text-xs text-slate-400 mb-3', 'text-xs text-slate-500 mb-3')}>
@@ -885,7 +924,7 @@ function computeSmartDefaults(type, existingDocs) {
   return { expiryDate, fields }
 }
 
-function AddDocumentCard({ isDark, userId, existingDocs, initialType, initialAgency, onAdded, onCancel }) {
+function AddDocumentCard({ isDark, userId, existingDocs, householdMembers, initialType, initialAgency, onAdded, onCancel }) {
   const { translate } = useLanguage()
   const [step, setStep] = useState('intent')
   const [intent, setIntent] = useState(null)
@@ -899,6 +938,7 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, initialAge
   const [photoFile, setPhotoFile] = useState(null)
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState(null)
   const [photoErrorKey, setPhotoErrorKey] = useState(null)
+  const [assignedMemberId, setAssignedMemberId] = useState(null)
 
   // Revokes the previous preview's object URL whenever it's replaced or
   // the card unmounts — otherwise each swapped photo leaks its blob until
@@ -1000,6 +1040,7 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, initialAge
       card_fields: isApplication ? {} : fields,
       intent: intent || 'renewal',
       photo_path: photoPath,
+      household_member_id: assignedMemberId,
     })
 
     if (error) {
@@ -1043,6 +1084,9 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, initialAge
         docType={docType}
         title={title}
         onTitleChange={setTitle}
+        householdMembers={householdMembers}
+        assignedMemberId={assignedMemberId}
+        onAssignedMemberChange={setAssignedMemberId}
         onBack={() => setStep(initialType ? 'intent' : 'type')}
         onCancel={onCancel}
         onSave={handleSave}
@@ -1119,6 +1163,40 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, initialAge
           </button>
         </div>
       </div>
+
+      {householdMembers.length > 0 && (
+        <div className="flex items-center gap-1.5 mb-3 overflow-x-auto no-scrollbar">
+          <button
+            type="button"
+            onClick={() => setAssignedMemberId(null)}
+            className={`glass-interactive glass-interactive-flat flex items-center gap-1.5 shrink-0 rounded-full pl-1 pr-2.5 py-1 text-xs font-medium ${
+              assignedMemberId === null
+                ? t(isDark, 'bg-white/10 text-slate-100', 'bg-slate-200 text-slate-900')
+                : t(isDark, 'text-slate-400 hover:bg-white/5', 'text-slate-500 hover:bg-slate-100')
+            }`}
+          >
+            <span className={t(isDark, 'w-5 h-5 rounded-full bg-white/15 flex items-center justify-center', 'w-5 h-5 rounded-full bg-slate-300 flex items-center justify-center')}>
+              <Icon size={11}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></Icon>
+            </span>
+            {translate('add_doc_for_myself')}
+          </button>
+          {householdMembers.map((member) => (
+            <button
+              key={member.id}
+              type="button"
+              onClick={() => setAssignedMemberId(member.id)}
+              className={`glass-interactive glass-interactive-flat flex items-center gap-1.5 shrink-0 rounded-full pl-1 pr-2.5 py-1 text-xs font-medium ${
+                assignedMemberId === member.id
+                  ? t(isDark, 'bg-white/10 text-slate-100', 'bg-slate-200 text-slate-900')
+                  : t(isDark, 'text-slate-400 hover:bg-white/5', 'text-slate-500 hover:bg-slate-100')
+              }`}
+            >
+              <HouseholdMemberAvatar member={member} size={20} />
+              {member.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {duplicateDocs.length > 0 && (
         <p className={t(isDark,
@@ -2149,6 +2227,198 @@ function CalendarPanel({ isDark }) {
   )
 }
 
+// Household members aren't separate accounts — just profiles the account
+// holder manages, so their avatar reuses the exact same color/initial
+// scheme as the account holder's own (AVATAR_COLORS), just without a
+// photo option since there's no upload flow for someone who isn't signed
+// in themselves.
+function HouseholdMemberAvatar({ member, size = 36 }) {
+  const gradient = AVATAR_COLORS[member.color] || AVATAR_COLORS[0]
+  return (
+    <div
+      className={`rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-semibold shrink-0`}
+      style={{ width: size, height: size, fontSize: size * 0.42 }}
+    >
+      {member.name?.[0]?.toUpperCase() || '?'}
+    </div>
+  )
+}
+
+function HouseholdMemberForm({ isDark, initial, saving, onCancel, onSave }) {
+  const { translate } = useLanguage()
+  const [name, setName] = useState(initial?.name || '')
+  const [relationship, setRelationship] = useState(initial?.relationship || '')
+  const [color, setColor] = useState(initial?.color ?? 0)
+
+  return (
+    <div className={`rounded-xl p-3 ${t(isDark, 'bg-white/5', 'bg-slate-50')}`}>
+      <div className="flex gap-2 mb-2.5">
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={translate('household_name_placeholder')}
+          maxLength={60}
+          autoFocus
+          className={t(isDark,
+            'flex-1 min-w-0 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-white/25',
+            'flex-1 min-w-0 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400'
+          )}
+        />
+        <input
+          type="text"
+          value={relationship}
+          onChange={(e) => setRelationship(e.target.value)}
+          placeholder={translate('household_relationship_placeholder')}
+          maxLength={40}
+          className={t(isDark,
+            'w-32 shrink-0 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-white/25',
+            'w-32 shrink-0 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400'
+          )}
+        />
+      </div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          {AVATAR_COLORS.map((gradient, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setColor(i)}
+              aria-label={`Color ${i + 1}`}
+              className={`w-6 h-6 rounded-full bg-gradient-to-br ${gradient} ${color === i ? t(isDark, 'ring-2 ring-white/70', 'ring-2 ring-slate-900/50') : ''}`}
+            />
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={onCancel}
+            className={`text-xs px-2.5 py-1.5 rounded-lg ${t(isDark, 'text-slate-400 hover:bg-white/5', 'text-slate-500 hover:bg-slate-100')}`}
+          >
+            {translate('confirm_cancel')}
+          </button>
+          <button
+            type="button"
+            disabled={!name.trim() || saving}
+            onClick={() => onSave({ name: name.trim(), relationship: relationship.trim(), color })}
+            className="glass-accent glass-interactive text-xs font-semibold text-white px-3 py-1.5 rounded-lg disabled:opacity-40"
+          >
+            {translate('household_save')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function HouseholdPanel({ isDark, userId, members, onRefresh }) {
+  const { translate } = useLanguage()
+  const [adding, setAdding] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [saving, setSaving] = useState(false)
+
+  async function handleAdd(values) {
+    setSaving(true)
+    await supabase.from('household_members').insert({ user_id: userId, ...values })
+    setSaving(false)
+    setAdding(false)
+    onRefresh()
+  }
+
+  async function handleUpdate(id, values) {
+    setSaving(true)
+    await supabase.from('household_members').update(values).eq('id', id)
+    setSaving(false)
+    setEditingId(null)
+    onRefresh()
+  }
+
+  async function handleDelete(id) {
+    await supabase.from('household_members').delete().eq('id', id)
+    setConfirmDeleteId(null)
+    onRefresh()
+  }
+
+  return (
+    <div>
+      <SettingsPanelHeader isDark={isDark} title={translate('settings_tab_household')} description={translate('household_desc')} />
+      <div className="max-w-md space-y-2">
+        {members.map((member) => (
+          <div key={member.id}>
+            {editingId === member.id ? (
+              <HouseholdMemberForm
+                isDark={isDark}
+                initial={member}
+                saving={saving}
+                onCancel={() => setEditingId(null)}
+                onSave={(values) => handleUpdate(member.id, values)}
+              />
+            ) : (
+              <div className={`flex items-center gap-3 rounded-xl p-3 ${t(isDark, 'bg-white/5', 'bg-slate-50')}`}>
+                <HouseholdMemberAvatar member={member} />
+                <div className="flex-1 min-w-0">
+                  <p className={t(isDark, 'text-sm font-medium text-slate-200 truncate', 'text-sm font-medium text-slate-700 truncate')}>{member.name}</p>
+                  {member.relationship && <p className="text-xs text-slate-500 truncate">{member.relationship}</p>}
+                </div>
+                {confirmDeleteId === member.id ? (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteId(null)}
+                      className={`text-xs px-2 py-1 rounded-lg ${t(isDark, 'text-slate-400 hover:bg-white/5', 'text-slate-500 hover:bg-slate-100')}`}
+                    >
+                      {translate('confirm_cancel')}
+                    </button>
+                    <button type="button" onClick={() => handleDelete(member.id)} className="text-xs font-medium text-red-400 hover:text-red-300 px-2 py-1 rounded-lg">
+                      {translate('household_confirm_delete')}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      title={translate('household_edit')}
+                      onClick={() => setEditingId(member.id)}
+                      className={`glass-interactive glass-interactive-flat p-1.5 rounded-full ${t(isDark, 'text-slate-400 hover:text-slate-100', 'text-slate-500 hover:text-slate-900')}`}
+                    >
+                      <Icon size={14}><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4z" /></Icon>
+                    </button>
+                    <button
+                      type="button"
+                      title={translate('household_remove')}
+                      onClick={() => setConfirmDeleteId(member.id)}
+                      className={`glass-interactive glass-interactive-flat p-1.5 rounded-full ${t(isDark, 'text-slate-400 hover:text-red-300', 'text-slate-500 hover:text-red-600')}`}
+                    >
+                      <Icon size={14}><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" /></Icon>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+
+        {adding ? (
+          <HouseholdMemberForm isDark={isDark} saving={saving} onCancel={() => setAdding(false)} onSave={handleAdd} />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className={`glass-interactive glass-interactive-flat w-full flex items-center justify-center gap-2 rounded-xl border border-dashed p-3 text-sm ${t(isDark,
+              'border-white/15 text-slate-400 hover:text-slate-200',
+              'border-slate-300 text-slate-500 hover:text-slate-700'
+            )}`}
+          >
+            <Icon size={14}><path d="M12 5v14M5 12h14" /></Icon>
+            {translate('household_add_someone')}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function DataPrivacyPanel({ isDark, documents }) {
   const { translate } = useLanguage()
   const [exported, setExported] = useState(false)
@@ -2251,6 +2521,7 @@ function OrbitAccordionItem({ isDark, orbit, isOpen, onToggle, renderContent, de
 export default function Dashboard({ session, isGuest = false, onUpgradeAccount }) {
   const { translate, lang, setLang } = useLanguage()
   const [documents, setDocuments] = useState([])
+  const [householdMembers, setHouseholdMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [activityLog, setActivityLog] = useState(() => getActivityLog(session.user.id))
   function logAction(text, type) {
@@ -2511,6 +2782,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
 
   useEffect(() => {
     fetchDocuments()
+    fetchHouseholdMembers()
   }, [])
 
   // Close sidebar when clicking truly empty background. Buttons/inputs are
@@ -2602,6 +2874,18 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
     setDocuments(data)
     if (!options.silent) setLoading(false)
     return data
+  }
+
+  async function fetchHouseholdMembers() {
+    const { data, error } = await supabase
+      .from('household_members')
+      .select('*')
+      .order('created_at', { ascending: true })
+    if (error) {
+      console.error('Error fetching household members:', error)
+      return
+    }
+    setHouseholdMembers(data)
   }
 
   // Mirrors isDark onto the root element so plain CSS (autofill overrides,
@@ -3169,7 +3453,15 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                   )}
 
                   <div className={`flex justify-between items-center gap-2 mb-2 ${selectionMode ? 'pl-6' : ''}`}>
-                    <p className={t(isDark, 'text-xs font-medium text-slate-300 truncate', 'text-xs font-medium text-slate-600 truncate')}>{doc.title}</p>
+                    <div className="min-w-0 flex items-center gap-1.5">
+                      <p className={t(isDark, 'text-xs font-medium text-slate-300 truncate', 'text-xs font-medium text-slate-600 truncate')}>{doc.title}</p>
+                      {doc.household_member_id && householdMembers.find((m) => m.id === doc.household_member_id) && (
+                        <HouseholdMemberAvatar
+                          member={householdMembers.find((m) => m.id === doc.household_member_id)}
+                          size={16}
+                        />
+                      )}
+                    </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       {!selectionMode && (
                         <div onClick={(e) => e.stopPropagation()}>
@@ -3933,6 +4225,14 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
               )}
               {settingsTab === 'language' && <LanguagePanel isDark={isDark} lang={lang} onSetLang={setLang} />}
               {settingsTab === 'calendar' && <CalendarPanel isDark={isDark} />}
+              {settingsTab === 'household' && (
+                <HouseholdPanel
+                  isDark={isDark}
+                  userId={session.user.id}
+                  members={householdMembers}
+                  onRefresh={fetchHouseholdMembers}
+                />
+              )}
               {settingsTab === 'data' && <DataPrivacyPanel isDark={isDark} documents={enriched} />}
             </div>
           ) : activeNav === 'requirements' ? (
@@ -4073,6 +4373,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
               isDark={isDark}
               userId={session.user.id}
               existingDocs={documents}
+              householdMembers={householdMembers}
               initialType={pendingDocType}
               initialAgency={pendingAgency}
               onAdded={(title) => { fetchDocuments(); setAddingDocument(false); logAction(`Added ${title}`, 'add') }}
@@ -4212,6 +4513,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
         docType={selectedDoc?.doc_type}
         userId={session.user.id}
         doc={selectedDoc}
+        householdMember={selectedDoc?.household_member_id ? householdMembers.find((m) => m.id === selectedDoc.household_member_id) : null}
         onStepsUpdated={handleStepsUpdated}
         onClose={() => setSelectedDoc(null)}
       />

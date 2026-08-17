@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import { useLanguage } from './i18n'
 import { validatePhotoFile, uploadDocumentPhoto, deleteDocumentPhoto, getDocumentPhotoUrl } from './utils/documentPhotos'
+import { AVATAR_COLORS } from './avatarColors'
 
 // Keeps the modal mounted for `duration` after it's told to close, so the
 // exit animation actually gets to play instead of the element just vanishing.
@@ -30,7 +31,7 @@ function Icon({ children, size = 16 }) {
   )
 }
 
-export default function PlaybookModal({ isDark, playbook, docType, userId, doc, onClose, onStepsUpdated }) {
+export default function PlaybookModal({ isDark, playbook, docType, userId, doc, householdMember, onClose, onStepsUpdated }) {
   const { translate } = useLanguage()
   const [feedbackGiven, setFeedbackGiven] = useState(false)
   const [showCommentBox, setShowCommentBox] = useState(false)
@@ -203,7 +204,23 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
               <Icon size={17}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6" /></Icon>
             </span>
             <div>
-              <p className={t(isDark, 'text-xs font-semibold tracking-widest text-slate-400', 'text-xs font-semibold tracking-widest text-slate-500')}>{docLabel}</p>
+              <div className="flex items-center gap-1.5">
+                <p className={t(isDark, 'text-xs font-semibold tracking-widest text-slate-400', 'text-xs font-semibold tracking-widest text-slate-500')}>{docLabel}</p>
+                {householdMember && (
+                  <span
+                    title={householdMember.name}
+                    className={`flex items-center gap-1 rounded-full pl-0.5 pr-1.5 py-0.5 text-[10px] font-medium ${t(isDark, 'bg-white/10 text-slate-300', 'bg-slate-100 text-slate-600')}`}
+                  >
+                    <span
+                      className={`w-3 h-3 rounded-full bg-gradient-to-br ${AVATAR_COLORS[householdMember.color] || AVATAR_COLORS[0]} flex items-center justify-center text-white shrink-0`}
+                      style={{ fontSize: 7 }}
+                    >
+                      {householdMember.name?.[0]?.toUpperCase()}
+                    </span>
+                    {householdMember.name}
+                  </span>
+                )}
+              </div>
               <p className={t(isDark, 'text-[11px] text-slate-600', 'text-[11px] text-slate-400')}>{translate('playbook_last_verified', { date: activePlaybook.lastVerified })}</p>
             </div>
           </div>
