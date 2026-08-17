@@ -133,7 +133,10 @@ export const translations = {
     calendar_desc: 'Sync your renewal deadlines and appointments to your calendar.',
     calendar_export_title: 'Export to Calendar',
     calendar_export_desc: 'Download your renewal dates as a calendar file.',
-    calendar_export_btn: 'Coming Soon',
+    calendar_export_desc_count: 'Download {count} renewal date(s) as a calendar file — import it into Google Calendar, Apple Calendar, or Outlook.',
+    calendar_export_desc_empty: 'No renewal dates to export yet.',
+    calendar_export_btn: 'Export .ics file',
+    calendar_export_done: 'Downloaded!',
 
     // Welcome header
     greeting_welcome_back: 'Welcome back',
@@ -506,7 +509,10 @@ export const translations = {
     calendar_desc: 'I-sync ang mga deadline ng renewal at appointment mo sa iyong kalendaryo.',
     calendar_export_title: 'I-export sa Kalendaryo',
     calendar_export_desc: 'I-download ang mga petsa ng renewal mo bilang calendar file.',
-    calendar_export_btn: 'Malapit Na',
+    calendar_export_desc_count: 'I-download ang {count} petsa ng renewal bilang calendar file — i-import sa Google Calendar, Apple Calendar, o Outlook.',
+    calendar_export_desc_empty: 'Wala pang petsa ng renewal na ie-export.',
+    calendar_export_btn: 'I-export ang .ics file',
+    calendar_export_done: 'Na-download!',
 
     greeting_welcome_back: 'Maligayang pagbabalik',
     greeting_hello: 'Kumusta',

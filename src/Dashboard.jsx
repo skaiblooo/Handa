@@ -7,6 +7,7 @@ import { getDaysUntilExpiry, getUrgencyLevel, formatDaysUntil, formatExpiryDispl
 import { getActivityLog, logActivity } from './utils/activityLog'
 import { getActualPushSubscription, subscribeToPush, unsubscribeFromPush, isPushSupported } from './utils/push'
 import { validatePhotoFile, uploadDocumentPhoto } from './utils/documentPhotos'
+import { downloadIcs } from './utils/calendarExport'
 import { useLanguage } from './i18n'
 import { AVATAR_COLORS, AVATAR_ACCENT_HEX } from './avatarColors'
 import { DOC_TYPE_LABELS, AGENCY_BADGE, URGENCY_META, CARD_THEME, CARD_FIELD_SCHEMAS, DOC_CATEGORIES, AGENCY_NAMES, AGENCY_BADGE_COLOR } from './data/docTypes'
@@ -2202,25 +2203,35 @@ function GeneralSettingsPanel({ isDark, session, profilePhoto, profileUsername, 
   )
 }
 
-function CalendarPanel({ isDark }) {
+function CalendarPanel({ isDark, documents }) {
   const { translate } = useLanguage()
+  const [justExported, setJustExported] = useState(false)
+  const exportableCount = documents.filter((doc) => doc.intent !== 'application' && doc.expiry_date).length
+
+  function handleExport() {
+    downloadIcs(documents)
+    setJustExported(true)
+  }
+
   return (
     <div>
       <SettingsPanelHeader isDark={isDark} title={translate('calendar_title')} description={translate('calendar_desc')} />
       <div className={`rounded-xl p-4 max-w-md flex items-center justify-between gap-4 border ${t(isDark, 'border-white/10', 'border-slate-200')}`}>
         <div>
           <p className={t(isDark, 'text-sm font-medium text-slate-200', 'text-sm font-medium text-slate-700')}>{translate('calendar_export_title')}</p>
-          <p className={t(isDark, 'text-xs text-slate-500', 'text-xs text-slate-400')}>{translate('calendar_export_desc')}</p>
+          <p className={t(isDark, 'text-xs text-slate-500', 'text-xs text-slate-400')}>
+            {exportableCount > 0
+              ? translate('calendar_export_desc_count', { count: exportableCount })
+              : translate('calendar_export_desc_empty')}
+          </p>
         </div>
         <button
           type="button"
-          disabled
-          className={t(isDark,
-            'shrink-0 text-sm font-medium bg-white/10 text-slate-500 px-4 py-2 rounded-lg cursor-not-allowed',
-            'shrink-0 text-sm font-medium bg-slate-200 text-slate-400 px-4 py-2 rounded-lg cursor-not-allowed'
-          )}
+          disabled={exportableCount === 0}
+          onClick={handleExport}
+          className={`glass-accent glass-interactive shrink-0 text-sm font-medium text-white px-4 py-2 rounded-lg disabled:opacity-40 disabled:pointer-events-none`}
         >
-          {translate('calendar_export_btn')}
+          {justExported ? translate('calendar_export_done') : translate('calendar_export_btn')}
         </button>
       </div>
     </div>
@@ -4224,7 +4235,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                 />
               )}
               {settingsTab === 'language' && <LanguagePanel isDark={isDark} lang={lang} onSetLang={setLang} />}
-              {settingsTab === 'calendar' && <CalendarPanel isDark={isDark} />}
+              {settingsTab === 'calendar' && <CalendarPanel isDark={isDark} documents={enriched} />}
               {settingsTab === 'household' && (
                 <HouseholdPanel
                   isDark={isDark}
