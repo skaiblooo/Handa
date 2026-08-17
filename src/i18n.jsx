@@ -235,6 +235,10 @@ export const translations = {
     add_doc_back: 'Back',
     add_doc_cancel: 'Cancel',
     add_doc_duplicate_warning: "You already have {count} {label} tracked. That's fine if you're tracking a renewal, just flagging it.",
+    add_doc_attach_photo: 'Attach a photo (optional)',
+    add_doc_photo_invalid_type: 'Please choose a JPG, PNG, or WEBP image.',
+    add_doc_photo_too_large: "That photo's too large — 10MB max.",
+    add_doc_photo_upload_failed: "Couldn't upload that photo. You can still save without it.",
     add_doc_step2_momentum: "You're almost done, just the details",
 
     // Auth
@@ -341,6 +345,7 @@ export const translations = {
 
     // Playbook modal (renewal steps)
     playbook_last_verified: 'Last verified {date}',
+    playbook_view_photo: 'View photo',
     playbook_how_to_apply: 'How to Apply',
     playbook_step_counter: 'Step {current} of {total}',
     playbook_what_youll_need: "WHAT YOU'LL NEED",
@@ -574,6 +579,10 @@ export const translations = {
     add_doc_back: 'Bumalik',
     add_doc_cancel: 'Kanselahin',
     add_doc_duplicate_warning: 'Mayroon ka nang {count} {label} na sinusubaybayan. Okay lang iyan kung nagsu-subaybay ka ng renewal, bini-flag lang namin ito.',
+    add_doc_attach_photo: 'Maglagay ng larawan (opsyonal)',
+    add_doc_photo_invalid_type: 'Pumili ng JPG, PNG, o WEBP na larawan.',
+    add_doc_photo_too_large: 'Masyadong malaki ang larawan — 10MB max.',
+    add_doc_photo_upload_failed: 'Hindi na-upload ang larawan. Puwede mo pa ring i-save nang wala ito.',
     add_doc_step2_momentum: 'Malapit ka nang matapos, mga detalye na lang',
 
     auth_get_started: 'Maligayang pagdating, Astronaut',
@@ -677,6 +686,7 @@ export const translations = {
     profile_2fa_copied: 'Nakopya!',
 
     playbook_last_verified: 'Huling beripikado {date}',
+    playbook_view_photo: 'Tingnan ang larawan',
     playbook_how_to_apply: 'Paano Mag-apply',
     playbook_step_counter: 'Hakbang {current} ng {total}',
     playbook_what_youll_need: 'ANG KAKAILANGANIN MO',

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import { useLanguage } from './i18n'
+import { getDocumentPhotoUrl } from './utils/documentPhotos'
 
 // Keeps the modal mounted for `duration` after it's told to close, so the
 // exit animation actually gets to play instead of the element just vanishing.
@@ -40,6 +41,7 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
   // Overrides activeDoc.completed_steps the instant a step is toggled, so the
   // checkmark responds immediately instead of waiting on a round trip.
   const [optimisticCompleted, setOptimisticCompleted] = useState(null)
+  const [viewingPhoto, setViewingPhoto] = useState(false)
 
   const isOpen = !!playbook
   const shouldRender = useDelayedUnmount(isOpen)
@@ -120,6 +122,13 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
 
   const docLabel = activeDocType ? activeDocType.replace(/_/g, ' ').toUpperCase() : ''
 
+  async function viewPhoto() {
+    setViewingPhoto(true)
+    const url = await getDocumentPhotoUrl(supabase, activeDoc?.photo_path)
+    setViewingPhoto(false)
+    if (url) window.open(url, '_blank', 'noopener')
+  }
+
   return (
     <div
       className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50"
@@ -147,7 +156,23 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
               <p className={t(isDark, 'text-[11px] text-slate-600', 'text-[11px] text-slate-400')}>{translate('playbook_last_verified', { date: activePlaybook.lastVerified })}</p>
             </div>
           </div>
-          <button onClick={onClose} className={t(isDark, 'text-slate-500 hover:text-slate-100 text-xl leading-none', 'text-slate-400 hover:text-slate-900 text-xl leading-none')}>&times;</button>
+          <div className="flex items-center gap-3 shrink-0">
+            {activeDoc?.photo_path && (
+              <button
+                type="button"
+                onClick={viewPhoto}
+                disabled={viewingPhoto}
+                className={`glass-interactive glass-interactive-flat flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg disabled:opacity-50 ${t(isDark,
+                  'text-slate-300 hover:bg-white/5',
+                  'text-slate-600 hover:bg-slate-100'
+                )}`}
+              >
+                <Icon size={13}><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" /><circle cx="12" cy="13" r="4" /></Icon>
+                {translate('playbook_view_photo')}
+              </button>
+            )}
+            <button onClick={onClose} className={t(isDark, 'text-slate-500 hover:text-slate-100 text-xl leading-none', 'text-slate-400 hover:text-slate-900 text-xl leading-none')}>&times;</button>
+          </div>
         </div>
 
         <h2 className={t(isDark, 'text-2xl font-semibold text-slate-100 mb-4', 'text-2xl font-semibold text-slate-900 mb-4')}>{translate('playbook_how_to_apply')}</h2>

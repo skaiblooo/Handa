@@ -6,6 +6,7 @@ import ProfilePage from './ProfilePage'
 import { getDaysUntilExpiry, getUrgencyLevel, formatDaysUntil, formatExpiryDisplay, formatTimeAgo, formatCompactDaysUntil } from './utils/dateHelpers'
 import { getActivityLog, logActivity } from './utils/activityLog'
 import { getActualPushSubscription, subscribeToPush, unsubscribeFromPush, isPushSupported } from './utils/push'
+import { validatePhotoFile, uploadDocumentPhoto, getDocumentPhotoUrl } from './utils/documentPhotos'
 import { useLanguage } from './i18n'
 import { AVATAR_COLORS, AVATAR_ACCENT_HEX } from './avatarColors'
 import { DOC_TYPE_LABELS, AGENCY_BADGE, URGENCY_META, CARD_THEME, CARD_FIELD_SCHEMAS, DOC_CATEGORIES, AGENCY_NAMES, AGENCY_BADGE_COLOR } from './data/docTypes'
@@ -895,6 +896,38 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, initialAge
   const [fields, setFields] = useState(() => (initialType ? computeSmartDefaults(initialType, existingDocs).fields : {}))
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState(null)
+  const [photoErrorKey, setPhotoErrorKey] = useState(null)
+
+  // Revokes the previous preview's object URL whenever it's replaced or
+  // the card unmounts — otherwise each swapped photo leaks its blob until
+  // the tab closes.
+  useEffect(() => {
+    return () => {
+      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl)
+    }
+  }, [photoPreviewUrl])
+
+  function handlePhotoSelect(file) {
+    if (!file) return
+    const problem = validatePhotoFile(file)
+    if (problem) {
+      setPhotoErrorKey(problem)
+      return
+    }
+    setPhotoErrorKey(null)
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl)
+    setPhotoFile(file)
+    setPhotoPreviewUrl(URL.createObjectURL(file))
+  }
+
+  function removePhoto() {
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl)
+    setPhotoFile(null)
+    setPhotoPreviewUrl(null)
+    setPhotoErrorKey(null)
+  }
 
   const isApplication = intent === 'application'
 
@@ -948,6 +981,17 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, initialAge
     setSaving(true)
     setErrorMsg('')
 
+    let photoPath = null
+    if (photoFile) {
+      const uploadResult = await uploadDocumentPhoto(supabase, userId, photoFile)
+      if (!uploadResult.ok) {
+        setErrorMsg(translate('add_doc_photo_upload_failed'))
+        setSaving(false)
+        return
+      }
+      photoPath = uploadResult.path
+    }
+
     const { error } = await supabase.from('documents').insert({
       user_id: userId,
       title: title.trim() || DOC_TYPE_LABELS[docType],
@@ -955,6 +999,7 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, initialAge
       expiry_date: isApplication ? placeholderExpiryForApplication(docType) : expiryDate,
       card_fields: isApplication ? {} : fields,
       intent: intent || 'renewal',
+      photo_path: photoPath,
     })
 
     if (error) {
@@ -1095,6 +1140,41 @@ function AddDocumentCard({ isDark, userId, existingDocs, initialType, initialAge
         onExpiryChange={setExpiryDate}
         editing
       />
+
+      <div className="mt-3">
+        {photoPreviewUrl ? (
+          <div className={`flex items-center gap-2.5 rounded-xl p-2 ${t(isDark, 'bg-white/5', 'bg-slate-50')}`}>
+            <img src={photoPreviewUrl} alt="" className="w-11 h-11 rounded-lg object-cover shrink-0" />
+            <span className={`flex-1 min-w-0 truncate text-xs ${t(isDark, 'text-slate-300', 'text-slate-600')}`}>
+              {photoFile.name}
+            </span>
+            <button
+              type="button"
+              onClick={removePhoto}
+              className={`glass-interactive glass-interactive-flat p-1.5 rounded-full shrink-0 ${t(isDark, 'text-slate-400 hover:text-slate-100', 'text-slate-500 hover:text-slate-900')}`}
+            >
+              <Icon size={14}><path d="M18 6L6 18M6 6l12 12" /></Icon>
+            </button>
+          </div>
+        ) : (
+          <label
+            className={`glass-interactive glass-interactive-flat flex items-center justify-center gap-2 rounded-xl border border-dashed p-2.5 text-xs cursor-pointer ${t(isDark,
+              'border-white/15 text-slate-400 hover:text-slate-200',
+              'border-slate-300 text-slate-500 hover:text-slate-700'
+            )}`}
+          >
+            <Icon size={14}><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" /><circle cx="12" cy="13" r="4" /></Icon>
+            {translate('add_doc_attach_photo')}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => handlePhotoSelect(e.target.files?.[0])}
+            />
+          </label>
+        )}
+        {photoErrorKey && <p className="text-xs text-red-400 mt-1.5">{translate(photoErrorKey)}</p>}
+      </div>
     </div>
   )
 }
