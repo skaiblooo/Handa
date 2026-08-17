@@ -34,3 +34,17 @@ export async function getDocumentPhotoUrl(supabase, path) {
   if (error) return null
   return data.signedUrl
 }
+
+// Best-effort — called both on an explicit "remove" and to clean up the
+// old file after a "replace". Swallowing the error rather than surfacing
+// it: an orphaned storage object is a minor cleanup miss, not something
+// worth blocking the user's actual action (removing/replacing the photo
+// on their document, which is the part that has to succeed) over.
+export async function deleteDocumentPhoto(supabase, path) {
+  if (!path) return
+  try {
+    await supabase.storage.from('document-photos').remove([path])
+  } catch {
+    // best-effort
+  }
+}

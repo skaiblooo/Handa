@@ -346,6 +346,8 @@ export const translations = {
     // Playbook modal (renewal steps)
     playbook_last_verified: 'Last verified {date}',
     playbook_view_photo: 'View photo',
+    playbook_replace_photo: 'Replace photo',
+    playbook_remove_photo: 'Remove photo',
     playbook_how_to_apply: 'How to Apply',
     playbook_step_counter: 'Step {current} of {total}',
     playbook_what_youll_need: "WHAT YOU'LL NEED",
@@ -687,6 +689,8 @@ export const translations = {
 
     playbook_last_verified: 'Huling beripikado {date}',
     playbook_view_photo: 'Tingnan ang larawan',
+    playbook_replace_photo: 'Palitan ang larawan',
+    playbook_remove_photo: 'Alisin ang larawan',
     playbook_how_to_apply: 'Paano Mag-apply',
     playbook_step_counter: 'Hakbang {current} ng {total}',
     playbook_what_youll_need: 'ANG KAKAILANGANIN MO',

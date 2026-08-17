@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import { useLanguage } from './i18n'
-import { getDocumentPhotoUrl } from './utils/documentPhotos'
+import { validatePhotoFile, uploadDocumentPhoto, deleteDocumentPhoto, getDocumentPhotoUrl } from './utils/documentPhotos'
 
 // Keeps the modal mounted for `duration` after it's told to close, so the
 // exit animation actually gets to play instead of the element just vanishing.
@@ -42,6 +42,8 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
   // checkmark responds immediately instead of waiting on a round trip.
   const [optimisticCompleted, setOptimisticCompleted] = useState(null)
   const [viewingPhoto, setViewingPhoto] = useState(false)
+  const [photoBusy, setPhotoBusy] = useState(false)
+  const [photoErrorKey, setPhotoErrorKey] = useState(null)
 
   const isOpen = !!playbook
   const shouldRender = useDelayedUnmount(isOpen)
@@ -54,6 +56,7 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
       setShowCommentBox(false)
       setComment('')
       setOptimisticCompleted(null)
+      setPhotoErrorKey(null)
       // Resume wherever they left off, instead of always starting back at step 1.
       const completed = doc?.completed_steps || []
       const firstIncomplete = playbook.steps.findIndex((_, i) => !completed.includes(i))
@@ -129,6 +132,54 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
     if (url) window.open(url, '_blank', 'noopener')
   }
 
+  async function attachOrReplacePhoto(file) {
+    if (!file) return
+    const problem = validatePhotoFile(file)
+    if (problem) {
+      setPhotoErrorKey(problem)
+      return
+    }
+    setPhotoErrorKey(null)
+    setPhotoBusy(true)
+
+    const uploadResult = await uploadDocumentPhoto(supabase, userId, file)
+    if (!uploadResult.ok) {
+      setPhotoErrorKey('add_doc_photo_upload_failed')
+      setPhotoBusy(false)
+      return
+    }
+
+    const previousPath = activeDoc?.photo_path
+    const { error } = await supabase
+      .from('documents')
+      .update({ photo_path: uploadResult.path })
+      .eq('id', activeDoc.id)
+
+    if (error) {
+      // Row update failed — don't leave an unreferenced file behind.
+      await deleteDocumentPhoto(supabase, uploadResult.path)
+      setPhotoErrorKey('add_doc_photo_upload_failed')
+      setPhotoBusy(false)
+      return
+    }
+
+    if (previousPath) await deleteDocumentPhoto(supabase, previousPath)
+    if (onStepsUpdated) await onStepsUpdated()
+    setPhotoBusy(false)
+  }
+
+  async function removePhoto() {
+    const path = activeDoc?.photo_path
+    if (!path) return
+    setPhotoBusy(true)
+    const { error } = await supabase.from('documents').update({ photo_path: null }).eq('id', activeDoc.id)
+    if (!error) {
+      await deleteDocumentPhoto(supabase, path)
+      if (onStepsUpdated) await onStepsUpdated()
+    }
+    setPhotoBusy(false)
+  }
+
   return (
     <div
       className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50"
@@ -156,24 +207,64 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
               <p className={t(isDark, 'text-[11px] text-slate-600', 'text-[11px] text-slate-400')}>{translate('playbook_last_verified', { date: activePlaybook.lastVerified })}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
-            {activeDoc?.photo_path && (
-              <button
-                type="button"
-                onClick={viewPhoto}
-                disabled={viewingPhoto}
-                className={`glass-interactive glass-interactive-flat flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg disabled:opacity-50 ${t(isDark,
+          <div className="flex items-center gap-1.5 shrink-0">
+            {activeDoc?.photo_path ? (
+              <>
+                <button
+                  type="button"
+                  title={translate('playbook_view_photo')}
+                  onClick={viewPhoto}
+                  disabled={viewingPhoto || photoBusy}
+                  className={`glass-interactive glass-interactive-flat p-1.5 rounded-full disabled:opacity-40 ${t(isDark, 'text-slate-400 hover:text-slate-100', 'text-slate-500 hover:text-slate-900')}`}
+                >
+                  <Icon size={15}><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" /><circle cx="12" cy="12" r="3" /></Icon>
+                </button>
+                <label
+                  title={translate('playbook_replace_photo')}
+                  className={`glass-interactive glass-interactive-flat p-1.5 rounded-full cursor-pointer ${photoBusy ? 'pointer-events-none opacity-40' : ''} ${t(isDark, 'text-slate-400 hover:text-slate-100', 'text-slate-500 hover:text-slate-900')}`}
+                >
+                  <Icon size={15}><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" /><circle cx="12" cy="13" r="4" /></Icon>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => attachOrReplacePhoto(e.target.files?.[0])}
+                  />
+                </label>
+                <button
+                  type="button"
+                  title={translate('playbook_remove_photo')}
+                  onClick={removePhoto}
+                  disabled={photoBusy}
+                  className={`glass-interactive glass-interactive-flat p-1.5 rounded-full disabled:opacity-40 ${t(isDark, 'text-slate-400 hover:text-red-300', 'text-slate-500 hover:text-red-600')}`}
+                >
+                  <Icon size={15}><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" /></Icon>
+                </button>
+              </>
+            ) : (
+              <label
+                className={`glass-interactive glass-interactive-flat flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg cursor-pointer ${photoBusy ? 'pointer-events-none opacity-40' : ''} ${t(isDark,
                   'text-slate-300 hover:bg-white/5',
                   'text-slate-600 hover:bg-slate-100'
                 )}`}
               >
                 <Icon size={13}><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" /><circle cx="12" cy="13" r="4" /></Icon>
-                {translate('playbook_view_photo')}
-              </button>
+                {translate('add_doc_attach_photo')}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(e) => attachOrReplacePhoto(e.target.files?.[0])}
+                />
+              </label>
             )}
-            <button onClick={onClose} className={t(isDark, 'text-slate-500 hover:text-slate-100 text-xl leading-none', 'text-slate-400 hover:text-slate-900 text-xl leading-none')}>&times;</button>
+            <button onClick={onClose} className={t(isDark, 'text-slate-500 hover:text-slate-100 text-xl leading-none ml-1', 'text-slate-400 hover:text-slate-900 text-xl leading-none ml-1')}>&times;</button>
           </div>
         </div>
+
+        {photoErrorKey && (
+          <p className="text-xs text-red-400 mb-3 -mt-1">{translate(photoErrorKey)}</p>
+        )}
 
         <h2 className={t(isDark, 'text-2xl font-semibold text-slate-100 mb-4', 'text-2xl font-semibold text-slate-900 mb-4')}>{translate('playbook_how_to_apply')}</h2>
 
