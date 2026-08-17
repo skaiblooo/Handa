@@ -4252,7 +4252,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
             </div>
           ) : activeNav === 'appointments' ? (
             <div key={activeNav} style={{ animation: 'rise-in 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
-              <CalendarPanel isDark={isDark} />
+              <CalendarPanel isDark={isDark} documents={enriched} />
             </div>
           ) : activeNav === 'dashboard' ? (
             <div key={activeNav} style={{ animation: 'rise-in 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
