@@ -496,6 +496,21 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
             </span>
             {activePlaybook.estimatedTime}
           </p>
+          {activePlaybook.officialSite && (
+            <p className="flex items-center gap-2">
+              <span className={t(isDark, 'text-slate-500 shrink-0', 'text-slate-400 shrink-0')} title={translate('playbook_official_site')}>
+                <Icon size={15}><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><path d="M15 3h6v6" /><path d="M10 14L21 3" /></Icon>
+              </span>
+              <a
+                href={activePlaybook.officialSite.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={t(isDark, 'text-blue-300 hover:text-blue-200 underline underline-offset-2', 'text-blue-600 hover:text-blue-700 underline underline-offset-2')}
+              >
+                {activePlaybook.officialSite.name}
+              </a>
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col items-center text-center">

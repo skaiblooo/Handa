@@ -6,6 +6,20 @@
 // timelines. Where it doesn't meaningfully differ (a PSA birth certificate
 // is requested the same way every time), both variants share the same
 // content rather than inventing a distinction that doesn't exist.
+//
+// officialSite on every variant is deliberately the agency's own root
+// .gov.ph domain (or, where the agency's real portal lives off-domain,
+// the specific subdomain multiple independent sources confirm as the
+// genuine one — e.g. portal.lto.gov.ph, passport.gov.ph,
+// clearance.nbi.gov.ph) rather than a deep link into a specific sub-page.
+// Verified by web search rather than trusted from memory: search results
+// for every one of these are dominated by convincing copycat sites
+// (myltoportal.org, nbiclearnce.ph, philhealthportal.ph, and similar)
+// mimicking the real government portal, some clearly built to collect
+// personal data or charge fake "service fees" — so this list is as much
+// about steering someone away from a lookalike as it is convenience.
+// Root domains also age better than a specific sub-page, which is more
+// likely to move.
 export const playbooks = {
   drivers_license: {
     lastVerified: '2026-08-01',
@@ -54,6 +68,7 @@ export const playbooks = {
       ],
       estimatedCost: '₱1,500–₱4,000+ (SP fee, PDC training, medical, license fee)',
       estimatedTime: 'A few weeks to a couple of months, mostly gated by SP validity and PDC scheduling',
+      officialSite: { url: 'https://portal.lto.gov.ph', name: 'LTO LTMS Portal' },
     },
     renewal: {
       title: "Driver's License Renewal",
@@ -99,6 +114,7 @@ export const playbooks = {
       ],
       estimatedCost: '₱585–₱1,300 (base fee + medical certificate)',
       estimatedTime: 'Same day to a few weeks, depending on appointment availability',
+      officialSite: { url: 'https://portal.lto.gov.ph', name: 'LTO LTMS Portal' },
     },
   },
 
@@ -135,6 +151,7 @@ export const playbooks = {
       ],
       estimatedCost: 'Free',
       estimatedTime: 'Several weeks to a few months for delivery',
+      officialSite: { url: 'https://philsys.gov.ph', name: 'PhilSys Portal' },
     },
     renewal: {
       title: 'National ID Replacement / Update',
@@ -168,6 +185,7 @@ export const playbooks = {
       ],
       estimatedCost: 'Free for first correction; minimal fee for lost/damaged replacement',
       estimatedTime: 'Several weeks',
+      officialSite: { url: 'https://philsys.gov.ph', name: 'PhilSys Portal' },
     },
   },
 
@@ -203,6 +221,7 @@ export const playbooks = {
       ],
       estimatedCost: 'Free',
       estimatedTime: 'Same day online, longer if a branch visit is needed',
+      officialSite: { url: 'https://www.sss.gov.ph', name: 'SSS Website' },
     },
     renewal: {
       title: 'SSS My.SSS Account & Records',
@@ -235,6 +254,7 @@ export const playbooks = {
       ],
       estimatedCost: 'Free for registration',
       estimatedTime: 'Same day online, longer if branch visit is needed',
+      officialSite: { url: 'https://www.sss.gov.ph', name: 'SSS Website' },
     },
   },
 
@@ -271,6 +291,7 @@ export const playbooks = {
       ],
       estimatedCost: 'Free to register',
       estimatedTime: 'Same day online, longer if a branch visit is needed',
+      officialSite: { url: 'https://www.philhealth.gov.ph', name: 'PhilHealth Website' },
     },
     renewal: {
       title: 'PhilHealth Membership',
@@ -303,6 +324,7 @@ export const playbooks = {
       ],
       estimatedCost: 'Contribution-based (varies by income bracket)',
       estimatedTime: 'Same day online',
+      officialSite: { url: 'https://www.philhealth.gov.ph', name: 'PhilHealth Website' },
     },
   },
 
@@ -339,6 +361,7 @@ export const playbooks = {
       ],
       estimatedCost: 'Free to register',
       estimatedTime: 'Same day online, longer if a branch visit is needed',
+      officialSite: { url: 'https://www.pagibigfund.gov.ph', name: 'Pag-IBIG Fund Website' },
     },
     renewal: {
       title: 'Pag-IBIG Membership',
@@ -371,6 +394,7 @@ export const playbooks = {
       ],
       estimatedCost: 'Contribution-based',
       estimatedTime: 'Same day online',
+      officialSite: { url: 'https://www.pagibigfund.gov.ph', name: 'Pag-IBIG Fund Website' },
     },
   },
 
@@ -404,6 +428,7 @@ export const playbooks = {
       ],
       estimatedCost: '₱155–₱365 depending on delivery method',
       estimatedTime: '3-10 business days',
+      officialSite: { url: 'https://www.psa.gov.ph/birth-certificate', name: 'PSA Website' },
     },
   },
 
@@ -440,6 +465,7 @@ export const playbooks = {
       ],
       estimatedCost: 'Free to register',
       estimatedTime: 'Same day to a few business days',
+      officialSite: { url: 'https://www.bir.gov.ph', name: 'BIR Website' },
     },
     renewal: {
       title: 'TIN / BIR Records Update',
@@ -472,6 +498,7 @@ export const playbooks = {
       ],
       estimatedCost: 'Varies by transaction',
       estimatedTime: 'Same day to a few business days',
+      officialSite: { url: 'https://www.bir.gov.ph', name: 'BIR Website' },
     },
   },
 
@@ -521,6 +548,7 @@ export const playbooks = {
       ],
       estimatedCost: '₱950 (regular processing) to ₱1,200 (expedited)',
       estimatedTime: '6-15 business days once your appointment date arrives; first-timer slots can be booked weeks out',
+      officialSite: { url: 'https://passport.gov.ph', name: 'DFA Passport Appointment System' },
     },
     renewal: {
       title: 'Passport Renewal',
@@ -561,6 +589,7 @@ export const playbooks = {
       ],
       estimatedCost: '₱950 (regular processing) to ₱1,200 (expedited)',
       estimatedTime: '6-15 business days depending on processing type',
+      officialSite: { url: 'https://passport.gov.ph', name: 'DFA Passport Appointment System' },
     },
   },
 
@@ -609,6 +638,7 @@ export const playbooks = {
       ],
       estimatedCost: '₱130 + minor transaction fee if paid online',
       estimatedTime: 'Same day if no hit; 3-10 business days if flagged for verification',
+      officialSite: { url: 'https://clearance.nbi.gov.ph', name: 'NBI Clearance Portal' },
     },
     renewal: {
       title: 'NBI Clearance Renewal',
@@ -648,6 +678,7 @@ export const playbooks = {
       ],
       estimatedCost: '₱130 + minor transaction fee if paid online',
       estimatedTime: 'Same day, often fully online with no branch visit',
+      officialSite: { url: 'https://clearance.nbi.gov.ph', name: 'NBI Clearance Portal' },
     },
   },
 }
