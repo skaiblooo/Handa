@@ -3,6 +3,7 @@ import { supabase } from './supabaseClient'
 import { useLanguage } from './i18n'
 import { validatePhotoFile, uploadDocumentPhoto, deleteDocumentPhoto, getDocumentPhotoUrl } from './utils/documentPhotos'
 import { AVATAR_COLORS } from './avatarColors'
+import { AGENCY_BADGE } from './data/docTypes'
 
 // Keeps the modal mounted for `duration` after it's told to close, so the
 // exit animation actually gets to play instead of the element just vanishing.
@@ -28,6 +29,104 @@ function Icon({ children, size = 16 }) {
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       {children}
     </svg>
+  )
+}
+
+// Agency-level, not a specific branch — there's no branch directory to pick
+// one from here, and building one is its own separate content task. Reports
+// live 48 hours before aging out of the average, since a wait time from
+// three days ago says nothing useful about right now.
+const WAIT_REPORT_WINDOW_HOURS = 48
+const WAIT_BUCKETS = [
+  { minutes: 10, labelKey: 'wait_bucket_under_15' },
+  { minutes: 22, labelKey: 'wait_bucket_15_30' },
+  { minutes: 45, labelKey: 'wait_bucket_30_60' },
+  { minutes: 75, labelKey: 'wait_bucket_over_60' },
+]
+
+function WaitTimeSection({ isDark, agencyCode, userId }) {
+  const { translate } = useLanguage()
+  const [reports, setReports] = useState(null) // null = still loading
+  const [submitting, setSubmitting] = useState(false)
+  const [justSubmitted, setJustSubmitted] = useState(false)
+
+  useEffect(() => {
+    if (!agencyCode) return
+    let cancelled = false
+    setReports(null)
+    setJustSubmitted(false)
+    async function load() {
+      const since = new Date(Date.now() - WAIT_REPORT_WINDOW_HOURS * 60 * 60 * 1000).toISOString()
+      const { data } = await supabase
+        .from('branch_wait_reports')
+        .select('wait_minutes')
+        .eq('agency_code', agencyCode)
+        .gte('reported_at', since)
+        .order('reported_at', { ascending: false })
+        .limit(50)
+      if (!cancelled) setReports(data || [])
+    }
+    load()
+    return () => { cancelled = true }
+  }, [agencyCode])
+
+  async function submitWait(minutes) {
+    setSubmitting(true)
+    const { error } = await supabase.from('branch_wait_reports').insert({
+      user_id: userId,
+      agency_code: agencyCode,
+      wait_minutes: minutes,
+    })
+    setSubmitting(false)
+    if (!error) {
+      setJustSubmitted(true)
+      setReports((prev) => [{ wait_minutes: minutes }, ...(prev || [])])
+    }
+  }
+
+  if (!agencyCode) return null
+
+  const avgMinutes =
+    reports && reports.length > 0
+      ? Math.round(reports.reduce((sum, r) => sum + r.wait_minutes, 0) / reports.length)
+      : null
+
+  return (
+    <div className={`rounded-xl p-3 mb-3 ${t(isDark, 'bg-white/5', 'bg-slate-50')}`}>
+      <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+        <p className={t(isDark, 'text-xs font-semibold text-slate-300', 'text-xs font-semibold text-slate-600')}>
+          {translate('wait_times_heading', { agency: agencyCode })}
+        </p>
+        {reports !== null && (
+          <span className="text-xs text-slate-500">
+            {avgMinutes !== null
+              ? translate('wait_times_summary', { minutes: avgMinutes, count: reports.length })
+              : translate('wait_times_none')}
+          </span>
+        )}
+      </div>
+      {justSubmitted ? (
+        <p className="text-xs text-emerald-400">{translate('wait_times_thanks')}</p>
+      ) : (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className={t(isDark, 'text-xs text-slate-500 mr-1', 'text-xs text-slate-400 mr-1')}>{translate('wait_times_prompt')}</span>
+          {WAIT_BUCKETS.map((bucket) => (
+            <button
+              key={bucket.minutes}
+              type="button"
+              disabled={submitting}
+              onClick={() => submitWait(bucket.minutes)}
+              className={`glass-interactive glass-interactive-flat text-xs px-2.5 py-1 rounded-full disabled:opacity-40 ${t(isDark,
+                'bg-white/10 text-slate-300 hover:bg-white/15',
+                'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              )}`}
+            >
+              {translate(bucket.labelKey)}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -512,6 +611,8 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
             </p>
           )}
         </div>
+
+        <WaitTimeSection isDark={isDark} agencyCode={AGENCY_BADGE[activeDocType]?.label} userId={userId} />
 
         <div className="flex flex-col items-center text-center">
           {feedbackGiven ? (
