@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient'
 import { useLanguage } from './i18n'
 import { validatePhotoFile, uploadDocumentPhoto, deleteDocumentPhoto, getDocumentPhotoUrl } from './utils/documentPhotos'
 import { AVATAR_COLORS } from './avatarColors'
-import { AGENCY_BADGE } from './data/docTypes'
+import { AGENCY_BADGE, TYPICAL_VALIDITY_YEARS } from './data/docTypes'
 
 // Keeps the modal mounted for `duration` after it's told to close, so the
 // exit animation actually gets to play instead of the element just vanishing.
@@ -130,7 +130,7 @@ function WaitTimeSection({ isDark, agencyCode, userId }) {
   )
 }
 
-export default function PlaybookModal({ isDark, playbook, docType, userId, doc, householdMember, onClose, onStepsUpdated }) {
+export default function PlaybookModal({ isDark, playbook, docType, userId, doc, householdMember, onClose, onStepsUpdated, onActivity }) {
   const { translate } = useLanguage()
   const [feedbackGiven, setFeedbackGiven] = useState(false)
   const [showCommentBox, setShowCommentBox] = useState(false)
@@ -144,6 +144,16 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
   const [viewingPhoto, setViewingPhoto] = useState(false)
   const [photoBusy, setPhotoBusy] = useState(false)
   const [photoErrorKey, setPhotoErrorKey] = useState(null)
+  // Finishing the checklist doesn't, by itself, mean the physical document
+  // is in hand yet — this is a separate, explicit "I actually got it" step
+  // that rolls the document forward to its next cycle instead of leaving a
+  // fully-checked-off list sitting there with no consequence. Also how a
+  // first-time application graduates into a real tracked renewal: its
+  // expiry_date until now was only ever a placeholder.
+  const [showRenewForm, setShowRenewForm] = useState(false)
+  const [newExpiryDate, setNewExpiryDate] = useState('')
+  const [renewBusy, setRenewBusy] = useState(false)
+  const [renewError, setRenewError] = useState('')
 
   const isOpen = !!playbook
   const shouldRender = useDelayedUnmount(isOpen)
@@ -157,6 +167,8 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
       setComment('')
       setOptimisticCompleted(null)
       setPhotoErrorKey(null)
+      setShowRenewForm(false)
+      setRenewError('')
       // Resume wherever they left off, instead of always starting back at step 1.
       const completed = doc?.completed_steps || []
       const firstIncomplete = playbook.steps.findIndex((_, i) => !completed.includes(i))
@@ -204,6 +216,51 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
       .eq('id', activeDoc.id)
 
     if (!error && onStepsUpdated) onStepsUpdated()
+  }
+
+  // Smart-defaults the new expiry the same way a fresh add does (today +
+  // the type's typical validity), so confirming is normally just "yes,
+  // that's right" rather than a blank date field to fill in from scratch.
+  function openRenewForm() {
+    const years = TYPICAL_VALIDITY_YEARS[activeDocType]
+    const d = new Date()
+    if (years) d.setFullYear(d.getFullYear() + years)
+    else d.setFullYear(d.getFullYear() + 1)
+    setNewExpiryDate(d.toISOString().slice(0, 10))
+    setRenewError('')
+    setShowRenewForm(true)
+  }
+
+  async function confirmRenewal() {
+    if (!newExpiryDate) {
+      setRenewError(translate('playbook_renew_date_required'))
+      return
+    }
+    setRenewBusy(true)
+    setRenewError('')
+    // Rolls the same document forward to its next cycle instead of leaving
+    // a fully-checked-off list with no consequence: a fresh expiry date,
+    // a reset checklist, and — for a first-time application — this is also
+    // the moment its placeholder expiry_date becomes a real one and it
+    // graduates to intent 'renewal' for every cycle after this.
+    const { error } = await supabase
+      .from('documents')
+      .update({ expiry_date: newExpiryDate, completed_steps: [], intent: 'renewal' })
+      .eq('id', activeDoc.id)
+    setRenewBusy(false)
+    if (error) {
+      setRenewError(error.message)
+      return
+    }
+    setShowRenewForm(false)
+    // The optimistic override was still holding every step as complete
+    // from the checklist that just finished — without clearing it, the
+    // modal keeps showing a fully-checked list even though the database
+    // (and the card behind this modal) now says otherwise.
+    setOptimisticCompleted([])
+    goToStep(0)
+    onActivity?.(`Renewed ${activeDoc?.title || docLabel}`, 'update')
+    if (onStepsUpdated) onStepsUpdated()
   }
 
   async function submitFeedback(wasAccurate) {
@@ -611,6 +668,66 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
             </p>
           )}
         </div>
+
+        {totalSteps > 0 && completedSteps.length === totalSteps && (
+          <div className={`rounded-2xl border p-4 mb-4 ${t(isDark, 'border-emerald-400/20 bg-emerald-400/[0.04]', 'border-emerald-200 bg-emerald-50')}`}>
+            {showRenewForm ? (
+              <div className="flex flex-col gap-3">
+                <div>
+                  <label className={t(isDark, 'text-xs text-slate-400 mb-1.5 block', 'text-xs text-slate-500 mb-1.5 block')}>
+                    {translate('playbook_renew_new_expiry_label')}
+                  </label>
+                  <input
+                    type="date"
+                    value={newExpiryDate}
+                    onChange={(e) => setNewExpiryDate(e.target.value)}
+                    className={t(isDark,
+                      'glass-dark-sm rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-400/50 transition-colors',
+                      'glass-light-sm rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-400 transition-colors'
+                    )}
+                  />
+                </div>
+                {renewError && <p className="text-xs text-red-400">{renewError}</p>}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={confirmRenewal}
+                    disabled={renewBusy}
+                    className="glass-accent glass-interactive text-white font-semibold px-4 py-2 rounded-xl text-sm disabled:opacity-60"
+                  >
+                    {renewBusy ? translate('playbook_renew_saving') : translate('playbook_renew_confirm_btn')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowRenewForm(false)}
+                    disabled={renewBusy}
+                    className={t(isDark, 'text-sm text-slate-400 hover:text-slate-100 px-3 py-2', 'text-sm text-slate-500 hover:text-slate-900 px-3 py-2')}
+                  >
+                    {translate('playbook_renew_cancel_btn')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <p className={t(isDark, 'text-sm font-medium text-slate-100', 'text-sm font-medium text-slate-900')}>
+                    {translate('playbook_renewal_complete_title')}
+                  </p>
+                  <p className={t(isDark, 'text-xs text-slate-400 mt-0.5', 'text-xs text-slate-500 mt-0.5')}>
+                    {translate('playbook_renewal_complete_desc')}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={openRenewForm}
+                  className="glass-accent glass-interactive shrink-0 text-sm font-semibold text-white px-4 py-2 rounded-xl"
+                >
+                  {translate('playbook_renewal_complete_btn')}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         <WaitTimeSection isDark={isDark} agencyCode={AGENCY_BADGE[activeDocType]?.label} userId={userId} />
 

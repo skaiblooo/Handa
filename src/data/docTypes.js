@@ -361,3 +361,15 @@ export const URGENCY_META = {
   // expiry-driven scale.
   ongoing: { label: 'Ongoing', dot: 'bg-blue-400', bar: 'bg-blue-400', badgeDark: 'bg-blue-400/10 text-blue-300', badgeLight: 'bg-blue-100 text-blue-700', fill: 30 },
 }
+
+// Only document types with a well-established, fixed official validity
+// period get a smart-default expiry date — inventing a number for types
+// without one (e.g. National ID, SSS) would just be a guess dressed up as
+// fact. Shared between the "add a document" smart defaults and the
+// "renew this document" flow, since both need the same answer to "how far
+// out should the next expiry date default to."
+export const TYPICAL_VALIDITY_YEARS = {
+  drivers_license: 10,
+  passport: 10,
+  nbi_clearance: 1,
+}

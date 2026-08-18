@@ -11,7 +11,7 @@ import { downloadIcs } from './utils/calendarExport'
 import StarfieldBackground from './StarfieldBackground'
 import { useLanguage } from './i18n'
 import { AVATAR_COLORS, AVATAR_ACCENT_HEX } from './avatarColors'
-import { DOC_TYPE_LABELS, AGENCY_BADGE, URGENCY_META, CARD_THEME, CARD_FIELD_SCHEMAS, DOC_CATEGORIES, AGENCY_NAMES, AGENCY_BADGE_COLOR } from './data/docTypes'
+import { DOC_TYPE_LABELS, AGENCY_BADGE, URGENCY_META, CARD_THEME, CARD_FIELD_SCHEMAS, DOC_CATEGORIES, AGENCY_NAMES, AGENCY_BADGE_COLOR, TYPICAL_VALIDITY_YEARS } from './data/docTypes'
 import ltoLogo from './assets/LTO LOGO.webp'
 import psaLogo from './assets/PSA LOGO.webp'
 import dfaLogo from './assets/DFA logo.webp'
@@ -101,15 +101,6 @@ const DEPARTMENT_LOGOS = {
 }
 
 export { DOC_TYPE_LABELS, AGENCY_BADGE, CARD_THEME, CARD_FIELD_SCHEMAS }
-
-// Only document types with a well-established, fixed official validity
-// period get a smart-default expiry date — inventing a number for types
-// without one (e.g. National ID, SSS) would just be a guess dressed up as fact.
-const TYPICAL_VALIDITY_YEARS = {
-  drivers_license: 10,
-  passport: 10,
-  nbi_clearance: 1,
-}
 
 export function BlankAvatar({ size = 40 }) {
   return (
@@ -4473,6 +4464,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
         householdMember={selectedDoc?.household_member_id ? householdMembers.find((m) => m.id === selectedDoc.household_member_id) : null}
         onStepsUpdated={handleStepsUpdated}
         onClose={() => setSelectedDoc(null)}
+        onActivity={logAction}
       />
       </div>
     </div>
