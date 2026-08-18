@@ -402,7 +402,7 @@ function ExpandableRow({ isDark, iconSrc, title, subtitle, open, onToggle, child
       <button
         type="button"
         onClick={onToggle}
-        className={`glass-interactive ${t(isDark,
+        className={`glass-interactive glass-interactive-slow ${t(isDark,
           'w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-white/5',
           'w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-slate-50'
         )}`}

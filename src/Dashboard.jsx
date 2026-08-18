@@ -510,7 +510,7 @@ function AddDocumentTile({ isDark, onClick, tileRef, label, fullWidth }) {
       type="button"
       onClick={onClick}
       onMouseDown={(e) => e.stopPropagation()}
-      className={`glass-interactive flex items-center justify-center gap-3 rounded-2xl border-2 border-dashed ${
+      className={`glass-interactive glass-interactive-slow flex items-center justify-center gap-3 rounded-2xl border-2 border-dashed ${
         fullWidth ? 'flex-row py-5' : 'flex-col min-h-[220px]'
       } ${t(isDark,
         'glass-dark border-white/15 hover:border-white/30 text-slate-500 hover:text-slate-300',
@@ -627,9 +627,9 @@ function CategoryPicker({ isDark, onSelect, onCancel }) {
             key={cat.id}
             type="button"
             onClick={() => onSelect(cat)}
-            className={`glass-interactive ${t(isDark,
-              'flex flex-col items-center gap-2 p-3 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20',
-              'flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+            className={`glass-interactive glass-interactive-slow ${t(isDark,
+              'glass-dark flex flex-col items-center gap-2 p-3 rounded-xl border border-white/10',
+              'glass-light flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-200'
             )}`}
           >
             <span className={t(isDark, 'w-11 h-11 rounded-xl bg-white/10 text-slate-200 flex items-center justify-center shrink-0', 'w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0')}>
@@ -1200,7 +1200,7 @@ function AddDocumentCard({ isDark, userId, existingDocs, householdMembers, initi
           </div>
         ) : (
           <label
-            className={`glass-interactive glass-interactive-flat flex items-center justify-center gap-2 rounded-xl border border-dashed p-2.5 text-xs cursor-pointer ${t(isDark,
+            className={`glass-interactive glass-interactive-flat glass-interactive-slow flex items-center justify-center gap-2 rounded-xl border border-dashed p-2.5 text-xs cursor-pointer ${t(isDark,
               'glass-dark border-white/15 text-slate-400 hover:text-slate-200',
               'glass-light border-slate-300 text-slate-500 hover:text-slate-700'
             )}`}
@@ -1601,7 +1601,7 @@ function DocumentProgressCard({ isDark, doc, onSelect, delay }) {
     <button
       type="button"
       onClick={onSelect}
-      className={`glass-interactive text-left rounded-2xl p-4 ${t(isDark, 'glass-dark', 'glass-light')}`}
+      className={`glass-interactive glass-interactive-slow text-left rounded-2xl p-4 ${t(isDark, 'glass-dark', 'glass-light')}`}
       style={{ animation: `rise-in 0.5s cubic-bezier(0.16,1,0.3,1) ${delay}s both` }}
     >
       <div className="flex items-start justify-between gap-2 mb-3">
@@ -2075,7 +2075,7 @@ function LinkedDocumentsPanel({ isDark, documents, onAddType }) {
               <div
                 key={opt.value}
                 onClick={() => onAddType(opt.value)}
-                className={`glass-interactive cursor-pointer flex items-center gap-3 rounded-xl p-3 border ${t(isDark, 'border-white/10', 'border-slate-200')}`}
+                className={`glass-interactive glass-interactive-slow cursor-pointer flex items-center gap-3 rounded-xl p-3 border ${t(isDark, 'glass-dark border-white/10', 'glass-light border-slate-200')}`}
               >
                 <AgencyBadge docType={opt.value} />
                 <div className="flex-1 min-w-0">
@@ -2088,7 +2088,7 @@ function LinkedDocumentsPanel({ isDark, documents, onAddType }) {
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); onAddType(opt.value) }}
-                    className="glass-accent glass-interactive shrink-0 text-xs font-medium text-white px-3 py-1.5 rounded-lg"
+                    className="glass-accent glass-interactive glass-interactive-slow shrink-0 text-xs font-medium text-white px-3 py-1.5 rounded-lg"
                   >
                     {translate('linked_docs_add')}
                   </button>
@@ -2119,7 +2119,7 @@ function LanguagePanel({ isDark, lang, onSetLang }) {
               key={opt.id}
               type="button"
               onClick={() => onSetLang(opt.id)}
-              className={`glass-interactive flex-1 flex items-center justify-center gap-2 rounded-xl py-4 border ${t(isDark, 'border-white/10', 'border-slate-200')} ${active ? 'ring-2 ring-blue-400' : ''}`}
+              className={`glass-interactive glass-interactive-slow flex-1 flex items-center justify-center gap-2 rounded-xl py-4 border ${t(isDark, 'glass-dark border-white/10', 'glass-light border-slate-200')} ${active ? 'ring-2 ring-blue-400' : ''}`}
             >
               <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 ${active ? 'border-blue-500' : t(isDark, 'border-slate-600', 'border-slate-300')}`}>
                 {active && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
@@ -2165,7 +2165,7 @@ function GeneralSettingsPanel({ isDark, session, profilePhoto, profileUsername, 
         </div>
         <button
           onClick={onGoToAccount}
-          className="glass-accent glass-interactive shrink-0 text-xs font-semibold text-white px-3 py-2 rounded-lg"
+          className="glass-accent glass-interactive glass-interactive-slow shrink-0 text-xs font-semibold text-white px-3 py-2 rounded-lg"
         >
           {translate('settings_general_edit_account')}
         </button>
@@ -2388,7 +2388,7 @@ function HouseholdPanel({ isDark, userId, members, onRefresh }) {
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className={`glass-interactive glass-interactive-flat w-full flex items-center justify-center gap-2 rounded-xl border border-dashed p-3 text-sm ${t(isDark,
+            className={`glass-interactive glass-interactive-flat glass-interactive-slow w-full flex items-center justify-center gap-2 rounded-xl border border-dashed p-3 text-sm ${t(isDark,
               'glass-dark border-white/15 text-slate-400 hover:text-slate-200',
               'glass-light border-slate-300 text-slate-500 hover:text-slate-700'
             )}`}
@@ -2436,7 +2436,7 @@ function DataPrivacyPanel({ isDark, documents }) {
         <button
           type="button"
           onClick={handleExport}
-          className="glass-accent glass-interactive shrink-0 text-sm font-medium text-white px-4 py-2 rounded-lg"
+          className="glass-accent glass-interactive glass-interactive-slow shrink-0 text-sm font-medium text-white px-4 py-2 rounded-lg"
         >
           {exported ? translate('data_privacy_export_done') : translate('data_privacy_export_btn')}
         </button>

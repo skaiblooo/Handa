@@ -296,6 +296,21 @@ input:-webkit-autofill:active {
   }
 }
 
+/* Pair alongside glass-interactive (never instead of it) on anything
+   markedly narrower than the sidebar rows the sweep was originally tuned
+   against (grid tiles, pill buttons, stat cards, language options).
+   background-position moves by a fixed percentage of the element's own
+   width, so at the same 0.5s duration a narrow element's sweep covers far
+   fewer pixels and reads as an instant flash rather than a traveling
+   highlight — this buys it more wall-clock time to register instead.
+   Opposite direction from glass-interactive-quick (which speeds things up
+   for fast-scanned lists); only overrides the :hover transition's timing. */
+@utility glass-interactive-slow {
+  &:hover {
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, background-position 0.85s ease-out;
+  }
+}
+
 /* Pair alongside glass-interactive (never instead of it) on rows in a
    scannable list — My Orbits accordion headers, notification rows — where
    the cursor grazes several rows a second while scanning. glass-
