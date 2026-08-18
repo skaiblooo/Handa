@@ -339,16 +339,22 @@ input:-webkit-autofill:active {
 /* Pair alongside glass-interactive (never instead of it) on a row that
    spans nearly the full page width — My Orbits department headers,
    notification rows, the full-width Add Orbit tile. Confirmed by a
-   screen recording: the sweep gradient was tuned against the sidebar's
-   ~240px rows, and stretched across 1000px+ it doesn't read as a subtle
-   shimmer — it reads as a hard, flashlight-style wipe crossing the whole
-   row, and scanning down several rows in a row leaves more than one of
-   them visibly mid-wipe at the same time even though each one's
-   animation is behaving correctly on its own. Drops just the
-   background-image/background-position sweep; the lift, shadow, and
-   color transitions this pairs with are untouched. */
+   screen recording: the sweep travels the same 220% of background-size
+   regardless of element width, but a row this wide covers that
+   percentage in far more physical pixels than the ~240px sidebar it was
+   tuned against, so at the same 0.5s duration the light crosses too much
+   ground too fast to read as a glide — it reads as a hard flashlight
+   wipe, and scanning down several rows leaves more than one mid-wipe at
+   once. Slows both directions down (roughly proportional to how much
+   wider these rows are than the sidebar) so the same travel reads as a
+   smooth, deliberate sweep instead of a flash — same gradient, same
+   distance, just given enough time to actually look like it's moving. */
 @utility glass-interactive-wide {
-  background-image: none;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, background-position 0.45s ease-out;
+
+  &:hover {
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, background-position 1.3s ease-out;
+  }
 }
 
 /* Pair alongside glass-interactive on a plain menu row (search suggestions,
