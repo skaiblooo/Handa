@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabaseClient'
-import { getPlaybook } from './data/playbooks'
+import { getPlaybook, parseCostRange } from './data/playbooks'
 import PlaybookModal from './PlaybookModal'
 import ProfilePage from './ProfilePage'
 import { getDaysUntilExpiry, getUrgencyLevel, formatDaysUntil, formatExpiryDisplay, formatTimeAgo, formatCompactDaysUntil } from './utils/dateHelpers'
@@ -1412,6 +1412,54 @@ function ExpirationChart({ isDark, documents }) {
             <p className={t(isDark, 'text-slate-500', 'text-slate-400')}>{translate('expiry_chart_none')}</p>
           )}
         </div>
+      )}
+    </div>
+  )
+}
+
+// Sums each tracked document's playbook cost into a single min–max range.
+// A document whose cost can't be pinned to a number ("Contribution-based",
+// "Varies by transaction") is left out of the sum entirely rather than
+// guessed at — its count is shown separately so the total reads as a floor,
+// not a false promise of completeness.
+function CostRollupCard({ isDark, documents }) {
+  const { translate } = useLanguage()
+
+  const costed = documents
+    .map((doc) => ({ doc, playbook: getPlaybook(doc.doc_type, doc.intent) }))
+    .filter((d) => d.playbook)
+    .map((d) => ({ ...d, range: parseCostRange(d.playbook.estimatedCost) }))
+
+  const parsed = costed.filter((d) => d.range)
+  const unparsed = costed.filter((d) => !d.range)
+  const totalMin = parsed.reduce((sum, d) => sum + d.range.min, 0)
+  const totalMax = parsed.reduce((sum, d) => sum + d.range.max, 0)
+  const peso = (n) => `₱${n.toLocaleString('en-US')}`
+
+  if (costed.length === 0) return null
+
+  return (
+    <div
+      className={`relative mt-6 rounded-2xl p-5 md:p-6 ${t(isDark, 'glass-dark', 'glass-light')}`}
+      style={{ animation: 'rise-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.85s both' }}
+    >
+      <p className={`text-xs font-semibold tracking-widest uppercase ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>
+        {translate('cost_rollup_title')}
+      </p>
+      <p className={`font-instrument text-4xl mt-1.5 ${t(isDark, 'text-slate-100', 'text-slate-900')}`}>
+        {parsed.length === 0
+          ? '—'
+          : totalMin === totalMax
+            ? peso(totalMin)
+            : `${peso(totalMin)}–${peso(totalMax)}`}
+      </p>
+      <p className={`text-xs mt-0.5 ${t(isDark, 'text-slate-500', 'text-slate-400')}`}>
+        {translate('cost_rollup_subtitle', { count: parsed.length })}
+      </p>
+      {unparsed.length > 0 && (
+        <p className={`text-xs mt-3 pt-3 border-t ${t(isDark, 'text-slate-500 border-white/10', 'text-slate-400 border-slate-200')}`}>
+          {translate('cost_rollup_variable', { count: unparsed.length })}
+        </p>
       )}
     </div>
   )
@@ -3748,7 +3796,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
             style={{ backgroundColor: 'color-mix(in srgb, var(--accent-500) 15%, transparent)', border: '1px solid color-mix(in srgb, var(--accent-500) 30%, transparent)' }}
           >
             <span className={t(isDark, 'text-slate-300', 'text-slate-700')}>
-              {translate('offline_banner_text').replace('{time}', formatTimeAgo(offlineCacheInfo.cachedAt))}
+              {translate('offline_banner_text', { time: formatTimeAgo(offlineCacheInfo.cachedAt) })}
             </span>
             <button
               onClick={() => fetchDocuments()}
@@ -4246,6 +4294,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                     displayName={profileUsername || getDisplayName(session.user.email)}
                   />
                   <ExpirationChart isDark={isDark} documents={enriched} />
+                  <CostRollupCard isDark={isDark} documents={enriched} />
                 </div>
                 {/* News gets the whole right column now (was sharing it
                     with the urgent-docs rail) so each headline has room for

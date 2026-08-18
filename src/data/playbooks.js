@@ -695,3 +695,27 @@ export function getPlaybook(docType, intent) {
   if (!variant) return null
   return { ...variant, lastVerified: entry.lastVerified }
 }
+
+// estimatedCost is free text, not a number — it's written for a human
+// reading one playbook at a time ("₱1,500–₱4,000+ (SP fee, PDC training,
+// medical, license fee)", "Contribution-based (varies by income bracket)").
+// Summing it across someone's tracked documents needs actual numbers, so
+// this pulls out every ₱ amount and returns the low/high spread. Only an
+// exact "free" string is treated as ₱0 — a partial match like "Free for
+// first correction; minimal fee for lost/damaged replacement" still has a
+// real, unquantified cost buried in it, so that (and "Contribution-based",
+// "Varies by transaction", etc.) comes back null rather than a confident
+// wrong number.
+const FREE_COST_STRINGS = new Set(['free', 'free to register', 'free for registration'])
+
+export function parseCostRange(estimatedCost) {
+  if (!estimatedCost) return null
+  const amounts = [...estimatedCost.matchAll(/₱\s?([\d,]+(?:\.\d+)?)/g)].map((m) => Number(m[1].replace(/,/g, '')))
+  if (amounts.length > 0) {
+    return { min: Math.min(...amounts), max: Math.max(...amounts) }
+  }
+  if (FREE_COST_STRINGS.has(estimatedCost.trim().toLowerCase())) {
+    return { min: 0, max: 0 }
+  }
+  return null
+}

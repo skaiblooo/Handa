@@ -24,6 +24,9 @@ export const translations = {
     expiry_chart_busiest: '{month} is your busiest month: {count} due',
     expiry_chart_none: 'Nothing due this month',
     chart_tooltip_more: '+{count} more',
+    cost_rollup_title: 'Estimated Renewal Costs',
+    cost_rollup_subtitle: 'Across {count} tracked documents',
+    cost_rollup_variable: '+{count} more with variable or contribution-based pricing, not included above',
 
     // Settings sidebar
     settings_title: 'Settings',
@@ -418,6 +421,9 @@ export const translations = {
     expiry_chart_busiest: '{month} ang pinaka-abalang buwan mo: {count} ang dapat gawin',
     expiry_chart_none: 'Walang dapat gawin ngayong buwan',
     chart_tooltip_more: '+{count} pa',
+    cost_rollup_title: 'Tinatayang Gastos sa Pag-renew',
+    cost_rollup_subtitle: 'Mula sa {count} dokumentong sinusubaybayan',
+    cost_rollup_variable: '+{count} pa na iba-iba o nakabatay sa kontribusyon ang bayad, hindi kasama sa taas',
     nav_back_to_dashboard: 'Bumalik sa Dashboard',
 
     settings_title: 'Mga Setting',
