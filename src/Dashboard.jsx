@@ -1566,7 +1566,7 @@ function NewsPanel({ isDark }) {
                   href={a.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="glass-interactive w-full h-full shrink-0 flex flex-col rounded-xl overflow-hidden"
+                  className={`glass-interactive w-full h-full shrink-0 flex flex-col rounded-xl overflow-hidden ${t(isDark, 'glass-dark', 'glass-light')}`}
                   style={{ scrollSnapAlign: 'start' }}
                 >
                   <NewsThumb src={a.image} isDark={isDark} />
