@@ -658,7 +658,10 @@ function CategoryPicker({ isDark, onSelect, onBack }) {
 
 function DocTypePicker({ isDark, docTypeIds, onSelect, onBack, onCancel }) {
   const { translate } = useLanguage()
-  const options = DOC_TYPE_OPTIONS.filter((opt) => docTypeIds.includes(opt.value))
+  // 'custom' is appended below regardless of category — filtered out here
+  // first so it never shows up twice when browsing the "Other" category,
+  // which also legitimately lists it.
+  const options = DOC_TYPE_OPTIONS.filter((opt) => docTypeIds.includes(opt.value) && opt.value !== 'custom')
   return (
     <div
       onMouseDown={(e) => e.stopPropagation()}
@@ -712,6 +715,19 @@ function DocTypePicker({ isDark, docTypeIds, onSelect, onBack, onCancel }) {
             <span className={t(isDark, 'text-[10px] text-center text-slate-300 leading-tight', 'text-[10px] text-center text-slate-600 leading-tight')}>{opt.label}</span>
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => onSelect('custom')}
+          className={`glass-interactive ${t(isDark,
+            'flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border border-dashed border-white/20 text-slate-400',
+            'flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border border-dashed border-slate-300 text-slate-500'
+          )}`}
+        >
+          <span className={t(isDark, 'w-9 h-9 rounded-full bg-white/10 flex items-center justify-center', 'w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center')}>
+            <Icon size={16}><path d="M12 5v14M5 12h14" /></Icon>
+          </span>
+          <span className="text-[10px] text-center leading-tight">{translate('add_doc_custom_type')}</span>
+        </button>
       </div>
     </div>
   )
@@ -945,7 +961,7 @@ function AddDocumentCard({ isDark, userId, existingDocs, householdMembers, initi
       setStep(initialAgency ? 'type' : 'category')
       return
     }
-    if (chosenIntent === 'application') {
+    if (chosenIntent === 'application' && initialType !== 'custom') {
       setStep('confirm')
       return
     }
@@ -960,9 +976,14 @@ function AddDocumentCard({ isDark, userId, existingDocs, householdMembers, initi
     setStep('type')
   }
 
+  // A custom type has no established application-vs-renewal process to
+  // distinguish (that fork exists for real government procedures, not an
+  // arbitrary document someone's naming themselves) and no typical validity
+  // period to smart-default from, so it always lands on the same "fill in
+  // the details, pick a real expiry" step regardless of intent.
   function selectType(type) {
     setDocType(type)
-    if (isApplication) {
+    if (isApplication && type !== 'custom') {
       setStep('confirm')
       return
     }
@@ -976,8 +997,10 @@ function AddDocumentCard({ isDark, userId, existingDocs, householdMembers, initi
     setFields((f) => ({ ...f, [key]: value }))
   }
 
+  const expiryRequired = !isApplication || docType === 'custom'
+
   async function handleSave() {
-    if (!isApplication && !expiryDate) {
+    if (expiryRequired && !expiryDate) {
       setErrorMsg('Please set an expiry date.')
       return
     }
@@ -999,9 +1022,13 @@ function AddDocumentCard({ isDark, userId, existingDocs, householdMembers, initi
       user_id: userId,
       title: title.trim() || DOC_TYPE_LABELS[docType],
       doc_type: docType,
-      expiry_date: isApplication ? placeholderExpiryForApplication(docType) : expiryDate,
-      card_fields: isApplication ? {} : fields,
-      intent: intent || 'renewal',
+      expiry_date: expiryRequired ? expiryDate : placeholderExpiryForApplication(docType),
+      card_fields: expiryRequired ? fields : {},
+      // A custom entry always has a real expiry the moment it's saved —
+      // 'application' elsewhere means "no real expiry yet, still in
+      // progress," which was never true for one of these regardless of
+      // which intent button got it here.
+      intent: docType === 'custom' ? 'renewal' : (intent || 'renewal'),
       photo_path: photoPath,
       household_member_id: assignedMemberId,
     })

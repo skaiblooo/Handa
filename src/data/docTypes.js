@@ -282,6 +282,13 @@ const DOC_TYPES = [
   { id: 'affidavit_of_support', label: 'Affidavit of Support', agency: 'NOTARY', category: 'other' },
   { id: 'spa', label: 'Special Power of Attorney (SPA)', agency: 'NOTARY', category: 'other' },
   { id: 'authorization_letter', label: 'Authorization Letter', agency: 'PRIVATE', category: 'other' },
+  // Not tied to one category — DocTypePicker appends this as a bonus tile
+  // to every category's grid, not just "Other"'s, since the thing someone
+  // can't find might belong anywhere. A single shared type rather than a
+  // one-off per category: what matters for a custom entry isn't which
+  // category it was reached from, just that it has its own name and a real
+  // (not smart-defaulted) expiry date.
+  { id: 'custom', label: 'Custom Document', agency: 'PRIVATE', category: 'other' },
 ]
 
 const GENERIC_SCHEMA = [
