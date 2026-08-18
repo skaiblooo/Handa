@@ -336,6 +336,21 @@ input:-webkit-autofill:active {
   }
 }
 
+/* Pair alongside glass-interactive (never instead of it) on a row that
+   spans nearly the full page width — My Orbits department headers,
+   notification rows, the full-width Add Orbit tile. Confirmed by a
+   screen recording: the sweep gradient was tuned against the sidebar's
+   ~240px rows, and stretched across 1000px+ it doesn't read as a subtle
+   shimmer — it reads as a hard, flashlight-style wipe crossing the whole
+   row, and scanning down several rows in a row leaves more than one of
+   them visibly mid-wipe at the same time even though each one's
+   animation is behaving correctly on its own. Drops just the
+   background-image/background-position sweep; the lift, shadow, and
+   color transitions this pairs with are untouched. */
+@utility glass-interactive-wide {
+  background-image: none;
+}
+
 /* Pair alongside glass-interactive on a plain menu row (search suggestions,
    dropdown items) that sits inside a surface that is already glass —
    glass-interactive's hover box-shadow includes a bright inset top edge
