@@ -3,6 +3,7 @@ import { supabase } from './supabaseClient'
 import { useLanguage } from './i18n'
 import { AVATAR_COLORS, AVATAR_ACCENT_HEX } from './avatarColors'
 import loginIllustration from './assets/login-bg.webp'
+import PeekingBlip from './landing/PeekingBlip'
 
 const FIELD_ERROR_LIFETIME = 3500
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -275,7 +276,10 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', onGuest
           against the outer edge like a plain flex justify-end would put it. */}
       <div className="relative min-h-screen w-full flex">
         <div className="w-full md:w-[37%] md:ml-auto flex items-center justify-center px-6 md:px-12 lg:px-16 py-16">
-        <div className="w-full max-w-sm">
+        <div className="relative w-full max-w-sm">
+          {/* Glances toward whichever field just errored, same reactive
+              beat as the demo mockups elsewhere on the landing pages. */}
+          <PeekingBlip edge="left" look={fieldError} lookAt={fieldError?.field === 'password' ? 'down' : 'up'} size={52} />
           {isSignUp && profileStep ? (
             <>
               <button

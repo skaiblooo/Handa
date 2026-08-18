@@ -13,7 +13,7 @@ export default function NotificationShowcase() {
         <div className="text-center lg:text-left">
           <h2 className="font-instrument text-white text-3xl md:text-4xl">Reminders that actually reach you</h2>
           <p className="text-white/50 text-sm mt-3 max-w-sm mx-auto lg:mx-0">
-            A push notification and an email at 30, 7, and 1 day before a document expires, so a renewal never sneaks up on you.
+            Push and email alerts 30, 7, and 1 day before something expires.
           </p>
         </div>
       </div>

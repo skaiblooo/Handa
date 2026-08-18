@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { DOC_TYPE_LABELS, AGENCY_BADGE, AGENCY_BADGE_COLOR, CARD_THEME, CARD_FIELD_SCHEMAS, DOC_CATEGORIES } from '../data/docTypes'
+import PeekingBlip from './PeekingBlip'
 import satellitesIcon from '../assets/satellites.png'
 import spaceTravelIcon from '../assets/space-travel.png'
 import notificationIcon from '../assets/notification.png'
@@ -871,7 +872,13 @@ export default function DashboardDemo() {
   const step = STEPS[stepIndex]
 
   return (
-    <div className="w-full">
+    <div className="relative w-full">
+      {/* Peeks out from the mockup's own edge rather than inside it — sits
+          earlier in the DOM than the tilted browser-window box, so that
+          box's own opaque body is what "hides" the rest of it, same trick
+          as the phone mockup. Glances toward the mockup on every step
+          change, as if it's watching the demo play out. */}
+      <PeekingBlip edge="right" look={stepIndex} lookAt="left" />
       {/* perspective on the outer box, the actual rotation on the mockup
           itself — the whole browser-window plane tilts as one rigid unit
           in 3D space (like a screenshot mockup tool), so everything inside

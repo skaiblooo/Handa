@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import orbitLogo from '../assets/orbit logo.png'
+import PeekingBlip from './PeekingBlip'
 
 // Mirrors the real push notification format send-reminders actually
 // sends (title "Documents expiring soon", body "<document> expires in
@@ -59,31 +60,58 @@ export default function AnimatedPhone() {
   const current = NOTIFICATIONS[index]
 
   return (
-    <div className="flex justify-center">
-      {/* Phone bezel */}
-      <div
-        className="relative w-[260px] h-[540px] rounded-[2.75rem] p-3"
-        style={{
-          background: 'linear-gradient(160deg, #1a1d24 0%, #08090c 100%)',
-          boxShadow: '0 40px 80px -20px rgba(0,0,0,0.7), inset 0 1px 0 0 rgba(255,255,255,0.08)',
-        }}
-      >
-        <div className="relative w-full h-full rounded-[2.1rem] overflow-hidden bg-[#020308]">
-          <StarfieldBackgroundInline />
-          {/* Dynamic island */}
-          <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-24 h-6 rounded-full bg-black z-20" />
-          {/* Lock-screen clock, then the notification in normal flow below
-              it (with real reserved height) so the two can never overlap
-              regardless of how tall either one renders. */}
-          <div className="relative z-10 h-full flex flex-col items-center pt-16 px-3">
-            <span className="font-instrument text-white text-5xl leading-none">9:41</span>
-            <span className="text-white/50 text-xs mt-2 tracking-wide">Tuesday, August 18</span>
-            <div className="relative w-full mt-8" style={{ height: 68 }}>
-              {reducedMotion ? (
-                <NotificationBanner doc={NOTIFICATIONS[0].doc} days={NOTIFICATIONS[0].days} visible={true} />
-              ) : (
-                <NotificationBanner doc={current.doc} days={current.days} visible={visible} />
-              )}
+    <div className="flex justify-center py-6">
+      {/* Tilted the opposite way from the dashboard mockup (rotateY +22deg
+          here vs. -22deg there) — this phone sits on the left of its
+          section instead of the right, so mirroring the tilt keeps both
+          mockups reading as leaning toward the page's center column rather
+          than both leaning the same absolute direction. */}
+      <div className="relative" style={{ perspective: '1800px' }}>
+        {/* Peeks out from behind the phone rather than living on the lock
+            screen itself — sits under the bezel in stacking order (no
+            z-index needed, it's simply earlier in the DOM) so the phone's
+            own opaque body is what does the "hiding," the same trick the
+            in-app peek mockups use against a card edge. */}
+        <PeekingBlip edge="left" look={index} lookAt="right" />
+        <div
+          className="relative"
+          style={{ transformStyle: 'preserve-3d', transform: 'rotateX(4deg) rotateY(22deg) rotate(1deg)' }}
+        >
+          {/* Phone bezel — proportioned to a real modern iPhone's ~9:19.5
+              screen ratio rather than a rounder, more generic phone shape. */}
+          <div
+            className="relative w-[272px] h-[588px] rounded-[3.1rem] p-[3px]"
+            style={{
+              background: 'linear-gradient(160deg, #2a2d34 0%, #0a0b0d 55%, #08090c 100%)',
+              boxShadow: '0 40px 80px -20px rgba(0,0,0,0.7), inset 0 1px 0 0 rgba(255,255,255,0.12)',
+            }}
+          >
+            {/* Side buttons, purely decorative — a flat mockup with none at
+                all is the detail that most reads as "not a real phone." */}
+            <div className="absolute -left-[3px] top-[130px] w-[3px] h-8 rounded-l-sm bg-[#151619]" />
+            <div className="absolute -left-[3px] top-[172px] w-[3px] h-14 rounded-l-sm bg-[#151619]" />
+            <div className="absolute -right-[3px] top-[150px] w-[3px] h-20 rounded-r-sm bg-[#151619]" />
+
+            <div className="relative w-full h-full rounded-[2.85rem] overflow-hidden bg-[#020308] border border-white/[0.06]">
+              <StarfieldBackgroundInline />
+              {/* Dynamic island */}
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-[92px] h-[26px] rounded-full bg-black z-20" />
+              {/* Lock-screen clock, then the notification in normal flow below
+                  it (with real reserved height) so the two can never overlap
+                  regardless of how tall either one renders. */}
+              <div className="relative z-10 h-full flex flex-col items-center pt-16 px-3">
+                <span className="font-instrument text-white text-5xl leading-none">9:41</span>
+                <span className="text-white/50 text-xs mt-2 tracking-wide">Tuesday, August 18</span>
+                <div className="relative w-full mt-8" style={{ height: 68 }}>
+                  {reducedMotion ? (
+                    <NotificationBanner doc={NOTIFICATIONS[0].doc} days={NOTIFICATIONS[0].days} visible={true} />
+                  ) : (
+                    <NotificationBanner doc={current.doc} days={current.days} visible={visible} />
+                  )}
+                </div>
+              </div>
+              {/* Home indicator */}
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-[5px] rounded-full bg-white/35 z-20" />
             </div>
           </div>
         </div>
