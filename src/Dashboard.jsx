@@ -543,25 +543,33 @@ function IntentPicker({ isDark, onSelect, onCancel }) {
           <Icon size={16}><path d="M18 6L6 18M6 6l12 12" /></Icon>
         </button>
       </div>
-      <div className="grid grid-cols-2 gap-2.5">
-        <button
-          type="button"
-          onClick={() => onSelect('application')}
-          className={`glass-interactive glass-accent flex flex-col items-center text-center gap-2.5 py-6 rounded-xl text-white`}
-        >
-          <Icon size={26}><path d="M12 5v14M5 12h14" /></Icon>
-          <span className="text-sm font-semibold">{translate('add_doc_intent_application')}</span>
-        </button>
+      <div className="relative grid grid-cols-2 gap-2.5">
         <button
           type="button"
           onClick={() => onSelect('renewal')}
+          className={`glass-interactive glass-accent flex flex-col items-center text-center gap-2.5 py-6 rounded-xl text-white`}
+        >
+          <Icon size={26}><path d="M3 12a9 9 0 0115.3-6.4M21 12a9 9 0 01-15.3 6.4" /><path d="M21 3v6h-6M3 21v-6h6" /></Icon>
+          <span className="text-sm font-semibold">{translate('add_doc_intent_renewal')}</span>
+        </button>
+        <span
+          className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold ${t(isDark,
+            'bg-[#0a0a0f] border border-white/10 text-slate-500',
+            'bg-white border border-slate-200 text-slate-400'
+          )}`}
+        >
+          {translate('add_doc_intent_or')}
+        </span>
+        <button
+          type="button"
+          onClick={() => onSelect('application')}
           className={`glass-interactive flex flex-col items-center text-center gap-2.5 py-6 rounded-xl ${t(isDark,
             'glass-dark text-slate-200',
             'glass-light text-slate-700'
           )}`}
         >
-          <Icon size={26}><path d="M3 12a9 9 0 0115.3-6.4M21 12a9 9 0 01-15.3 6.4" /><path d="M21 3v6h-6M3 21v-6h6" /></Icon>
-          <span className="text-sm font-semibold">{translate('add_doc_intent_renewal')}</span>
+          <Icon size={26}><path d="M12 5v14M5 12h14" /></Icon>
+          <span className="text-sm font-semibold">{translate('add_doc_intent_application')}</span>
         </button>
       </div>
     </div>
@@ -588,7 +596,7 @@ const CATEGORY_ICONS = {
 // (a plain, static bubble stack, not a functional carousel) plus a "+N"
 // bubble for everything else it holds, so a category isn't a total mystery
 // before you tap it.
-function CategoryPicker({ isDark, onSelect, onCancel }) {
+function CategoryPicker({ isDark, onSelect, onBack }) {
   const { translate } = useLanguage()
   return (
     <div
@@ -602,8 +610,8 @@ function CategoryPicker({ isDark, onSelect, onCancel }) {
         <h3 className={t(isDark, 'font-semibold text-slate-100', 'font-semibold text-slate-900')}>{translate('add_doc_choose_type')}</h3>
         <button
           type="button"
-          title={translate('add_doc_cancel')}
-          onClick={onCancel}
+          title={translate('add_doc_back')}
+          onClick={onBack}
           className={`glass-interactive glass-interactive-flat ${t(isDark,
             'p-1.5 rounded-full text-slate-500 hover:text-slate-100 hover:bg-white/10 shrink-0',
             'p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 shrink-0'
@@ -618,7 +626,7 @@ function CategoryPicker({ isDark, onSelect, onCancel }) {
             key={cat.id}
             type="button"
             onClick={() => onSelect(cat)}
-            className={`glass-interactive glass-interactive-slow ${t(isDark,
+            className={`glass-interactive ${t(isDark,
               'glass-dark flex flex-col items-center gap-2 p-3 rounded-xl border border-white/10',
               'glass-light flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-200'
             )}`}
@@ -695,7 +703,7 @@ function DocTypePicker({ isDark, docTypeIds, onSelect, onBack, onCancel }) {
             key={opt.value}
             type="button"
             onClick={() => onSelect(opt.value)}
-            className={`glass-interactive glass-interactive-slow ${t(isDark,
+            className={`glass-interactive ${t(isDark,
               'glass-dark flex flex-col items-center gap-1.5 p-3 rounded-xl border border-white/10',
               'glass-light flex flex-col items-center gap-1.5 p-3 rounded-xl border border-slate-200'
             )}`}
@@ -1012,7 +1020,7 @@ function AddDocumentCard({ isDark, userId, existingDocs, householdMembers, initi
   }
 
   if (step === 'category') {
-    return <CategoryPicker isDark={isDark} onSelect={selectCategory} onCancel={onCancel} />
+    return <CategoryPicker isDark={isDark} onSelect={selectCategory} onBack={() => setStep('intent')} />
   }
 
   if (step === 'type') {
@@ -1312,7 +1320,7 @@ function ExpirationChart({ isDark, documents }) {
 
   return (
     <div
-      className={`relative mt-10 rounded-2xl p-5 md:p-6 ${t(isDark, 'glass-dark', 'glass-light')}`}
+      className={`glass-interactive glass-interactive-no-sweep relative mt-10 rounded-2xl p-5 md:p-6 ${t(isDark, 'glass-dark', 'glass-light')}`}
       style={{ animation: 'rise-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.75s both' }}
     >
       <div className="mb-5">
@@ -1431,7 +1439,6 @@ function CostRollupCard({ isDark, documents }) {
     .map((d) => ({ ...d, range: parseCostRange(d.playbook.estimatedCost) }))
 
   const parsed = costed.filter((d) => d.range)
-  const unparsed = costed.filter((d) => !d.range)
   const totalMin = parsed.reduce((sum, d) => sum + d.range.min, 0)
   const totalMax = parsed.reduce((sum, d) => sum + d.range.max, 0)
   const peso = (n) => `₱${n.toLocaleString('en-US')}`
@@ -1440,7 +1447,7 @@ function CostRollupCard({ isDark, documents }) {
 
   return (
     <div
-      className={`relative mt-6 rounded-2xl p-5 md:p-6 ${t(isDark, 'glass-dark', 'glass-light')}`}
+      className={`glass-interactive glass-interactive-no-sweep relative mt-6 rounded-2xl p-5 md:p-6 ${t(isDark, 'glass-dark', 'glass-light')}`}
       style={{ animation: 'rise-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.85s both' }}
     >
       <p className={`text-xs font-semibold tracking-widest uppercase ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>
@@ -1456,11 +1463,6 @@ function CostRollupCard({ isDark, documents }) {
       <p className={`text-xs mt-0.5 ${t(isDark, 'text-slate-500', 'text-slate-400')}`}>
         {translate('cost_rollup_subtitle', { count: parsed.length })}
       </p>
-      {unparsed.length > 0 && (
-        <p className={`text-xs mt-3 pt-3 border-t ${t(isDark, 'text-slate-500 border-white/10', 'text-slate-400 border-slate-200')}`}>
-          {translate('cost_rollup_variable', { count: unparsed.length })}
-        </p>
-      )}
     </div>
   )
 }
@@ -1479,7 +1481,7 @@ function NewsThumb({ src, isDark }) {
         <img
           src={src}
           alt=""
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
           loading="lazy"
           onError={() => setBroken(true)}
         />
@@ -1812,6 +1814,10 @@ function NotificationsFeed({ isDark, documents, onSelectDoc }) {
   const [tab, setTab] = useState('all')
   const [favorites, setFavorites] = useState(() => new Set())
   const [archived, setArchived] = useState(() => new Set())
+  // Checkbox selection for bulk delete — cleared whenever the visible set
+  // changes underneath it (switching tabs, searching) so a stale selection
+  // can never silently delete something no longer even in view.
+  const [selected, setSelected] = useState(() => new Set())
   const tabRefs = useRef({})
   const [tabIndicator, setTabIndicator] = useState(null)
 
@@ -1841,6 +1847,14 @@ function NotificationsFeed({ isDark, documents, onSelectDoc }) {
       return next
     })
   }
+  function toggleSelected(id) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   const visible = items.filter((n) => {
     if (query && !n.title.toLowerCase().includes(query.toLowerCase())) return false
@@ -1848,6 +1862,25 @@ function NotificationsFeed({ isDark, documents, onSelectDoc }) {
     if (tab === 'favorite') return favorites.has(n.id)
     return !archived.has(n.id)
   })
+
+  const allSelected = visible.length > 0 && visible.every((n) => selected.has(n.id))
+
+  function toggleSelectAll() {
+    setSelected(allSelected ? new Set() : new Set(visible.map((n) => n.id)))
+  }
+  // "Delete" here means the same thing "Archive" already did — these are
+  // notifications derived live from documents, not their own DB rows, so
+  // there's nothing to actually destroy. Routing bulk-delete through the
+  // same archived Set means the Archive tab doubles as an undo view instead
+  // of this being a second, harder-to-recover removal mechanism.
+  function deleteSelected() {
+    setArchived((prev) => new Set([...prev, ...selected]))
+    setSelected(new Set())
+  }
+  function deleteAll() {
+    setArchived((prev) => new Set([...prev, ...visible.map((n) => n.id)]))
+    setSelected(new Set())
+  }
 
   const tabs = [
     { id: 'all', label: 'All', count: items.filter((n) => !archived.has(n.id)).length },
@@ -1922,6 +1955,46 @@ function NotificationsFeed({ isDark, documents, onSelectDoc }) {
         </div>
       </div>
 
+      {visible.length > 0 && (
+        <div className="flex items-center gap-3 mb-3 px-1">
+          <button
+            type="button"
+            onClick={toggleSelectAll}
+            className={`glass-interactive glass-interactive-quick flex items-center gap-2 text-xs font-medium px-2 py-1 rounded-lg ${t(isDark, 'text-slate-400 hover:text-slate-200', 'text-slate-500 hover:text-slate-700')}`}
+          >
+            <span
+              className={`w-4 h-4 rounded flex items-center justify-center border shrink-0 transition-colors ${
+                allSelected
+                  ? 'bg-[var(--accent-400)] border-[var(--accent-400)] text-slate-950'
+                  : t(isDark, 'border-white/25', 'border-slate-300')
+              }`}
+            >
+              {allSelected && <Icon size={11}><path d="M20 6L9 17l-5-5" /></Icon>}
+            </span>
+            Select all
+          </button>
+          {selected.size > 0 && (
+            <>
+              <span className={t(isDark, 'text-xs text-slate-500', 'text-xs text-slate-400')}>{selected.size} selected</span>
+              <button
+                type="button"
+                onClick={deleteSelected}
+                className={`glass-interactive glass-interactive-quick text-xs font-medium px-2.5 py-1 rounded-lg ${t(isDark, 'text-red-300 hover:bg-red-500/10', 'text-red-600 hover:bg-red-50')}`}
+              >
+                Delete
+              </button>
+            </>
+          )}
+          <button
+            type="button"
+            onClick={deleteAll}
+            className={`glass-interactive glass-interactive-quick ml-auto text-xs font-medium px-2.5 py-1 rounded-lg ${t(isDark, 'text-slate-400 hover:text-red-300', 'text-slate-500 hover:text-red-600')}`}
+          >
+            Delete all
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col gap-2">
         {visible.length === 0 ? (
           <div className={`rounded-2xl p-8 text-center text-sm border ${t(isDark, 'border-white/10 text-slate-400', 'border-slate-200 text-slate-500')}`}>
@@ -1931,16 +2004,31 @@ function NotificationsFeed({ isDark, documents, onSelectDoc }) {
           visible.map((n, i) => {
             const meta = URGENCY_META[n.urgency]
             const isFav = favorites.has(n.id)
-            const isArchived = archived.has(n.id)
+            const isSelected = selected.has(n.id)
             const dept = AGENCY_BADGE[n.doc.doc_type]?.label
             const logo = DEPARTMENT_LOGOS[dept]
             return (
               <div
                 key={n.id}
                 onClick={() => onSelectDoc?.(n.doc)}
-                className={`glass-interactive glass-interactive-quick glass-interactive-no-sweep cursor-pointer flex items-center gap-3 rounded-2xl p-3.5 border ${t(isDark, 'glass-dark border-white/10', 'glass-light border-slate-200')}`}
-                style={{ animation: 'rise-in 0.4s cubic-bezier(0.16,1,0.3,1) both', animationDelay: `${Math.min(i * 0.04, 0.3)}s` }}
+                className={`glass-interactive glass-interactive-quick glass-interactive-no-sweep cursor-pointer flex items-center gap-3 rounded-2xl p-3.5 border transition-shadow ${t(isDark, 'glass-dark border-white/10', 'glass-light border-slate-200')}`}
+                style={{
+                  animation: 'rise-in 0.4s cubic-bezier(0.16,1,0.3,1) both',
+                  animationDelay: `${Math.min(i * 0.04, 0.3)}s`,
+                  boxShadow: isSelected ? '0 0 0 1.5px var(--accent-400), 0 0 20px -4px var(--accent-400)' : undefined,
+                }}
               >
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleSelected(n.id) }}
+                  title={isSelected ? 'Deselect' : 'Select'}
+                  className={`w-4 h-4 rounded flex items-center justify-center border shrink-0 transition-colors ${
+                    isSelected
+                      ? 'bg-[var(--accent-400)] border-[var(--accent-400)] text-slate-950'
+                      : t(isDark, 'border-white/25', 'border-slate-300')
+                  }`}
+                >
+                  {isSelected && <Icon size={11}><path d="M20 6L9 17l-5-5" /></Icon>}
+                </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); toggleFavorite(n.id) }}
                   title={isFav ? 'Unfavorite' : 'Favorite'}
@@ -1962,20 +2050,17 @@ function NotificationsFeed({ isDark, documents, onSelectDoc }) {
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm truncate ${t(isDark, 'text-slate-200', 'text-slate-700')}`}>{n.title}</p>
-                  {n.sub && <p className="text-xs text-slate-500 mt-0.5">{n.sub}</p>}
                 </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); toggleArchived(n.id) }}
-                  title={isArchived ? 'Restore' : 'Archive'}
-                  className={`glass-interactive glass-interactive-quick p-1.5 rounded-full shrink-0 ${t(isDark, 'hover:bg-red-500/15', 'hover:bg-red-100')}`}
-                >
-                  <img
-                    src={trashIcon}
-                    alt=""
-                    className="w-[15px] h-[15px] object-contain"
-                    style={{ filter: isDark ? 'invert(1) brightness(1.3)' : 'brightness(0) opacity(0.6)' }}
-                  />
-                </button>
+                {tab === 'archive' ? (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleArchived(n.id) }}
+                    className={`glass-interactive glass-interactive-quick shrink-0 text-xs font-medium px-2.5 py-1 rounded-lg ${t(isDark, 'text-slate-300 hover:bg-white/5', 'text-slate-600 hover:bg-slate-100')}`}
+                  >
+                    Restore
+                  </button>
+                ) : (
+                  n.sub && <p className={`text-xs shrink-0 ${t(isDark, 'text-slate-500', 'text-slate-400')}`}>{n.sub}</p>
+                )}
               </div>
             )
           })

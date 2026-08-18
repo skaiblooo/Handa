@@ -278,11 +278,18 @@ input:-webkit-autofill:active {
     outline-offset: 2px;
   }
 
-  &:hover {
-    background-position: -60% 0;
-    transform: translateY(-1px) scale(1.012);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.4), 0 10px 24px -10px rgba(15, 23, 42, 0.35);
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, background-position 0.5s ease-out;
+  /* Gated to devices with a real hover-capable pointer. Touch has no
+     "pointer left" event to match a "pointer entered" one — a tap leaves
+     :hover permanently on until something else happens to be tapped, which
+     is exactly what read as the sweep/lift "getting stuck" on phones. On
+     touch, :active below still gives a tap its own press-down feedback. */
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background-position: -60% 0;
+      transform: translateY(-1px) scale(1.012);
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.4), 0 10px 24px -10px rgba(15, 23, 42, 0.35);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, background-position 0.5s ease-out;
+    }
   }
 
   &:active {

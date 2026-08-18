@@ -26,7 +26,6 @@ export const translations = {
     chart_tooltip_more: '+{count} more',
     cost_rollup_title: 'Estimated Renewal Costs',
     cost_rollup_subtitle: 'Across {count} tracked documents',
-    cost_rollup_variable: '+{count} more with variable or contribution-based pricing, not included above',
 
     // Settings sidebar
     settings_title: 'Settings',
@@ -234,12 +233,13 @@ export const translations = {
     confirm_logout_btn: 'Log out',
 
     // Add document flow
-    add_doc_choose_intent: 'First time, or renewing?',
+    add_doc_choose_intent: 'First time or Renewing',
     add_doc_choose_intent_desc: "This decides which steps we'll show you.",
-    add_doc_intent_application: "I'm applying for the first time",
-    add_doc_intent_application_desc: "I don't have this yet",
-    add_doc_intent_renewal: 'I already have it',
+    add_doc_intent_application: "I don't have this yet",
+    add_doc_intent_application_desc: "I'm applying for the first time",
+    add_doc_intent_renewal: 'I already have this',
     add_doc_intent_renewal_desc: "I'm renewing or managing an existing one",
+    add_doc_intent_or: 'OR',
     add_doc_choose_type: 'What are you adding?',
     add_doc_choose_type_desc: 'Choose a category to get started.',
     add_doc_choose_specific_type: 'Which one exactly?',
@@ -427,7 +427,6 @@ export const translations = {
     chart_tooltip_more: '+{count} pa',
     cost_rollup_title: 'Tinatayang Gastos sa Pag-renew',
     cost_rollup_subtitle: 'Mula sa {count} dokumentong sinusubaybayan',
-    cost_rollup_variable: '+{count} pa na iba-iba o nakabatay sa kontribusyon ang bayad, hindi kasama sa taas',
     nav_back_to_dashboard: 'Bumalik sa Dashboard',
 
     settings_title: 'Mga Setting',
@@ -621,12 +620,13 @@ export const translations = {
     confirm_logout_body: 'Kailangan mong mag-sign in ulit para ma-access ang mga dokumento mo.',
     confirm_logout_btn: 'Mag-log Out',
 
-    add_doc_choose_intent: 'Una mong beses, o nag-re-renew?',
+    add_doc_choose_intent: 'Unang Beses o Nagre-renew',
     add_doc_choose_intent_desc: 'Ito ang magpapasya kung anong mga hakbang ang ipapakita namin.',
-    add_doc_intent_application: 'Nag-a-apply ako sa unang pagkakataon',
-    add_doc_intent_application_desc: 'Wala pa ako nito',
+    add_doc_intent_application: 'Wala pa ako nito',
+    add_doc_intent_application_desc: 'Nag-a-apply ako sa unang pagkakataon',
     add_doc_intent_renewal: 'Meron na akong ito',
     add_doc_intent_renewal_desc: 'Nag-re-renew ako o may hawak na akong isa',
+    add_doc_intent_or: 'O',
     add_doc_choose_type: 'Ano ang idadagdag mo?',
     add_doc_choose_type_desc: 'Pumili ng kategorya para magsimula.',
     add_doc_choose_specific_type: 'Alin eksakto?',
