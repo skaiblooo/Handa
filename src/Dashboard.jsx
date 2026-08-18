@@ -1999,7 +1999,7 @@ function HistoryFeed({ isDark, activityLog }) {
   )
 }
 
-function NotificationsPanel({ isDark, emailAlerts, onEmailAlerts, pushAlerts, onPushAlerts, pushBusy, pushSupported, smsAlerts, onSmsAlerts, weeklyDigest, onWeeklyDigest }) {
+function NotificationsPanel({ isDark, emailAlerts, onEmailAlerts, pushAlerts, onPushAlerts, pushBusy, pushSupported, weeklyDigest, onWeeklyDigest }) {
   const { translate } = useLanguage()
   return (
     <div>
@@ -2020,13 +2020,6 @@ function NotificationsPanel({ isDark, emailAlerts, onEmailAlerts, pushAlerts, on
             </p>
           </div>
           <ToggleSwitch isDark={isDark} checked={pushAlerts} onChange={onPushAlerts} disabled={pushBusy || !pushSupported} />
-        </div>
-        <div className="flex items-center justify-between gap-4 p-4">
-          <div>
-            <p className={t(isDark, 'text-sm font-medium text-slate-200', 'text-sm font-medium text-slate-700')}>{translate('notifications_sms_label')}</p>
-            <p className={t(isDark, 'text-xs text-slate-500', 'text-xs text-slate-400')}>{translate('notifications_sms_desc')}</p>
-          </div>
-          <ToggleSwitch isDark={isDark} checked={smsAlerts} onChange={onSmsAlerts} />
         </div>
         <div className="flex items-center justify-between gap-4 p-4">
           <div>
@@ -2583,21 +2576,35 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [isGuest, documents.length])
 
-  const [notifPrefs, setNotifPrefs] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(`orbit_notification_prefs_${session.user.id}`) || 'null')
-      return { emailAlerts: true, pushAlerts: true, smsAlerts: false, weeklyDigest: true, ...saved }
-    } catch {
-      return { emailAlerts: true, pushAlerts: true, smsAlerts: false, weeklyDigest: true }
-    }
-  })
+  // emailAlerts/weeklyDigest live in the notification_prefs table now, not
+  // localStorage — send-reminders and send-monthly-digest run server-side
+  // and have no way to read a browser's localStorage, so a toggle that only
+  // ever wrote there was never actually respected by the emails it claimed
+  // to control. Defaults (both true) match what a never-touched row means
+  // server-side too, so a user who's never opened this panel keeps getting
+  // reminders exactly as before.
+  const [notifPrefs, setNotifPrefs] = useState({ emailAlerts: true, pushAlerts: true, weeklyDigest: true })
   useEffect(() => {
-    try {
-      localStorage.setItem(`orbit_notification_prefs_${session.user.id}`, JSON.stringify(notifPrefs))
-    } catch {
-      // localStorage can throw (quota exceeded, private browsing) — persistence is best-effort.
-    }
-  }, [notifPrefs, session.user.id])
+    let cancelled = false
+    supabase
+      .from('notification_prefs')
+      .select('email_alerts, weekly_digest')
+      .eq('user_id', session.user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled || !data) return
+        setNotifPrefs((p) => ({ ...p, emailAlerts: data.email_alerts, weeklyDigest: data.weekly_digest }))
+      })
+    return () => { cancelled = true }
+  }, [session.user.id])
+  async function updateNotifPref(patch) {
+    setNotifPrefs((p) => ({ ...p, ...patch }))
+    const dbPatch = {}
+    if ('emailAlerts' in patch) dbPatch.email_alerts = patch.emailAlerts
+    if ('weeklyDigest' in patch) dbPatch.weekly_digest = patch.weeklyDigest
+    if (Object.keys(dbPatch).length === 0) return
+    await supabase.from('notification_prefs').upsert({ user_id: session.user.id, ...dbPatch }, { onConflict: 'user_id' })
+  }
   // The stored preference alone can't be trusted — permission can be
   // revoked, or site data cleared, entirely outside this app's control —
   // so on load this reconciles the toggle against whether a real browser
@@ -4149,15 +4156,13 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                 <NotificationsPanel
                   isDark={isDark}
                   emailAlerts={notifPrefs.emailAlerts}
-                  onEmailAlerts={(v) => setNotifPrefs((p) => ({ ...p, emailAlerts: v }))}
+                  onEmailAlerts={(v) => updateNotifPref({ emailAlerts: v })}
                   pushAlerts={notifPrefs.pushAlerts}
                   onPushAlerts={handlePushToggle}
                   pushBusy={pushToggleBusy}
                   pushSupported={isPushSupported()}
-                  smsAlerts={notifPrefs.smsAlerts}
-                  onSmsAlerts={(v) => setNotifPrefs((p) => ({ ...p, smsAlerts: v }))}
                   weeklyDigest={notifPrefs.weeklyDigest}
-                  onWeeklyDigest={(v) => setNotifPrefs((p) => ({ ...p, weeklyDigest: v }))}
+                  onWeeklyDigest={(v) => updateNotifPref({ weeklyDigest: v })}
                 />
               )}
               {settingsTab === 'linked_documents' && (

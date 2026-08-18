@@ -134,7 +134,17 @@ const daysUntil = Math.round((expiry.getTime() - today.getTime()) / (1000 * 60 *
     const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId)
     const email = userData?.user?.email
 
-    if (email) {
+    // No row means the user has never touched the toggle — defaults to
+    // true so a never-opened Settings panel behaves exactly like before
+    // this preference existed.
+    const { data: prefs } = await supabaseAdmin
+      .from('notification_prefs')
+      .select('email_alerts')
+      .eq('user_id', userId)
+      .maybeSingle()
+    const emailAllowed = prefs?.email_alerts ?? true
+
+    if (email && emailAllowed) {
       const docsList = toSend[userId]
         .map((d) => `<li>${escapeHtml(d.title)}, expires ${escapeHtml(d.expiry_date)} (${d.threshold} days left)</li>`)
         .join('')

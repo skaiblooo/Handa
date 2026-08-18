@@ -67,6 +67,16 @@ Deno.serve(async (req) => {
     const email = userData?.user?.email
     if (!email) continue // guests have nowhere for this to go; nothing to send
 
+    // No row means the user has never touched the toggle — defaults to
+    // true so a never-opened Settings panel behaves exactly like before
+    // this preference existed.
+    const { data: prefs } = await supabaseAdmin
+      .from('notification_prefs')
+      .select('weekly_digest')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (prefs?.weekly_digest === false) continue
+
     const { total, dueSoon } = byUser[userId]
     const docWord = total === 1 ? 'document' : 'documents'
 

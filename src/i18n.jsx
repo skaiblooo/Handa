@@ -108,10 +108,8 @@ export const translations = {
     notifications_push_label: 'Push notifications',
     notifications_push_desc: 'Browser & mobile alerts',
     notifications_push_unsupported: "Not supported on this browser",
-    notifications_sms_label: 'SMS alerts',
-    notifications_sms_desc: 'Text message reminders',
-    notifications_digest_label: 'Weekly digest',
-    notifications_digest_desc: 'Summary every Sunday',
+    notifications_digest_label: 'Monthly digest',
+    notifications_digest_desc: 'Summary on the 1st of each month',
 
     // Linked Documents panel
     linked_docs_title: 'Linked Documents',
@@ -488,10 +486,8 @@ export const translations = {
     notifications_push_label: 'Push notifications',
     notifications_push_desc: 'Alerto sa browser at mobile',
     notifications_push_unsupported: 'Hindi suportado sa browser na ito',
-    notifications_sms_label: 'SMS alerts',
-    notifications_sms_desc: 'Paalala sa text message',
-    notifications_digest_label: 'Lingguhang buod',
-    notifications_digest_desc: 'Buod tuwing Linggo',
+    notifications_digest_label: 'Buwanang buod',
+    notifications_digest_desc: 'Buod tuwing ika-1 ng buwan',
 
     linked_docs_title: 'Nakakonektang Dokumento',
     linked_docs_desc: 'Lahat ng dokumentong pang-gobyerno na kayang subaybayan ng Orbit. Idagdag ang mga wala ka pa.',
