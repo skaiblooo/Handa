@@ -311,8 +311,8 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
                     className={`flex items-center gap-1 rounded-full pl-0.5 pr-1.5 py-0.5 text-[10px] font-medium ${t(isDark, 'bg-white/10 text-slate-300', 'bg-slate-100 text-slate-600')}`}
                   >
                     <span
-                      className={`w-3 h-3 rounded-full bg-gradient-to-br ${AVATAR_COLORS[householdMember.color] || AVATAR_COLORS[0]} flex items-center justify-center text-white shrink-0`}
-                      style={{ fontSize: 7 }}
+                      className="w-3 h-3 rounded-full flex items-center justify-center text-white shrink-0"
+                      style={{ fontSize: 7, backgroundColor: AVATAR_COLORS[householdMember.color] || AVATAR_COLORS[0] }}
                     >
                       {householdMember.name?.[0]?.toUpperCase()}
                     </span>

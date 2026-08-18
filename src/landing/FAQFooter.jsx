@@ -15,7 +15,7 @@ const FAQS = [
   },
   {
     q: 'Will I get spammed with reminders?',
-    a: 'Nope! You get one email per document at each milestone (30 days, 7 days, and 1 day before expiry), not repeated daily nudges.',
+    a: 'Nope! You get one email per document at each milestone: 30 days, 7 days, and 1 day before expiry.',
   },
 ]
 

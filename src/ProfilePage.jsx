@@ -1133,7 +1133,10 @@ export default function ProfilePage({ isDark, session, photoUrl, onPhotoChange, 
               {photoUrl ? (
                 <img src={photoUrl} alt="Profile" className="w-20 h-20 rounded-2xl object-cover" />
               ) : (
-                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${AVATAR_COLORS[color] || AVATAR_COLORS[0]} flex items-center justify-center text-3xl font-bold text-white`}>
+                <div
+                  style={{ backgroundColor: AVATAR_COLORS[color] || AVATAR_COLORS[0] }}
+                  className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold text-white"
+                >
                   {(username || session.user.email || 'G')[0].toUpperCase()}
                 </div>
               )}

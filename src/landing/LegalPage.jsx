@@ -1,13 +1,13 @@
 import { useEffect } from 'react'
 
-const LAST_UPDATED = 'August 14, 2026'
+const LAST_UPDATED = 'August 18, 2026'
 
 const PRIVACY_SECTIONS = [
   {
     title: 'What we collect',
     body: [
-      'Account info: your email address and password (handled by our authentication provider, Supabase — we never see or store your raw password), or your Google account details if you sign in with Google.',
-      'Guest sessions: if you try Orbit without signing up, we create an anonymous session so your data isn’t lost if you come back — no email or password is required until you choose to save it.',
+      'Account info: your email address and password (handled by our authentication provider, Supabase, and we never see or store your raw password), or your Google account details if you sign in with Google.',
+      'Guest sessions: if you try Orbit without signing up, we create an anonymous session so your data isn’t lost if you come back. No email or password is required until you choose to save it.',
       'Document data you enter: the fields you fill in for each tracked document (names, dates, ID numbers, expiry dates) and which renewal steps you’ve marked done. This is the data Orbit exists to help you manage, so it’s stored to power reminders and the app itself.',
       'Usage basics: things like which requirement checklists you viewed and optional feedback you submit on whether a checklist was accurate.',
     ],
@@ -16,13 +16,13 @@ const PRIVACY_SECTIONS = [
     title: 'What we don’t do',
     body: [
       'We don’t sell your data, and we don’t share your document details with third parties for advertising.',
-      'We’re not a government service and have no official connection to the DFA, LTO, PSA, or any other agency named in the app — the requirement checklists are informational, sourced from public processes and kept dated so you can judge how current they are.',
+      'We’re not a government service and have no official connection to the DFA, LTO, PSA, or any other agency named in the app. The requirement checklists are informational, sourced from public processes and kept dated so you can judge how current they are.',
     ],
   },
   {
     title: 'How we use it',
     body: [
-      'To show your dashboard, track expiry dates, and send renewal reminder emails at 30, 7, and 1 day before a document expires — one email per milestone, not repeated nudges.',
+      'To show your dashboard, track expiry dates, and send renewal reminder emails at 30, 7, and 1 day before a document expires: one email per milestone, not repeated nudges.',
       'To let you export a JSON copy of everything you’re tracking at any time from Settings → Data & Privacy.',
       'To improve the requirement checklists, using the accuracy feedback you optionally submit.',
     ],
@@ -30,14 +30,14 @@ const PRIVACY_SECTIONS = [
   {
     title: 'Where it’s stored',
     body: [
-      'Your data is stored with Supabase (Postgres + authentication) and reminder emails are sent through Resend. Both are standard infrastructure providers — we don’t run our own servers to store your documents.',
+      'Your data is stored with Supabase (Postgres + authentication) and reminder emails are sent through Resend. Both are standard infrastructure providers. We don’t run our own servers to store your documents.',
     ],
   },
   {
     title: 'Your controls',
     body: [
       'Export: download everything you’re tracking as JSON at any time.',
-      'Delete: you can delete individual documents and orbits yourself from the app. Full account deletion isn’t self-serve yet — contact us and we’ll take care of it by hand.',
+      'Delete: you can delete individual documents and orbits yourself from the app. Full account deletion isn’t self-serve yet; contact us and we’ll take care of it by hand.',
       'Guest data: if you’re using Orbit as a guest and never save an account, that data lives only in that anonymous session and isn’t linked to any email of yours.',
     ],
   },
@@ -48,7 +48,7 @@ const TERMS_SECTIONS = [
     title: 'Using Orbit',
     body: [
       'Orbit is a personal document tracker: you tell it what you’re tracking, it tracks expiry dates and reminds you before they lapse. It’s free to use.',
-      'You’re responsible for the accuracy of what you enter — Orbit reminds you based on the dates you provide, and doesn’t independently verify them against any government system.',
+      'You’re responsible for the accuracy of what you enter. Orbit reminds you based on the dates you provide, and doesn’t independently verify them against any government system.',
     ],
   },
   {
@@ -61,7 +61,7 @@ const TERMS_SECTIONS = [
   {
     title: 'Your account',
     body: [
-      'Keep your login credentials to yourself — you’re responsible for activity under your account.',
+      'Keep your login credentials to yourself. You’re responsible for activity under your account.',
       'Guest sessions are convenient but temporary in spirit: if you want to keep your data long-term, save an account with an email and password from the guest banner.',
     ],
   },
@@ -93,7 +93,7 @@ function LegalSection({ title, body }) {
 }
 
 // A lightweight standalone page (not a modal) so it reads like a real,
-// linkable destination rather than a popup — matches the plain dark
+// linkable destination rather than a popup, matching the plain dark
 // background/instrument-serif heading style the rest of the landing page
 // uses, just without the video/photo backdrops those sections carry.
 export default function LegalPage({ page, onBack }) {

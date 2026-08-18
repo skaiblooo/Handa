@@ -1773,13 +1773,14 @@ function ThemePanel({ isDark, themeMode, onSetMode, accentColor, onSetAccentColo
 
       <SettingsPanelHeader isDark={isDark} title={translate('accent_color_title')} description={translate('accent_color_desc')} />
       <div className="flex items-center gap-3">
-        {AVATAR_COLORS.map((gradient, i) => (
+        {AVATAR_COLORS.map((hex, i) => (
           <button
-            key={gradient}
+            key={hex}
             type="button"
             onClick={() => onSetAccentColor(i)}
             aria-label={`Color ${i + 1}`}
-            className={`glass-interactive w-10 h-10 rounded-full bg-gradient-to-br ${gradient} ${t(isDark,
+            style={{ backgroundColor: hex }}
+            className={`glass-interactive w-10 h-10 rounded-full ${t(isDark,
               accentColor === i ? 'ring-2 ring-offset-2 ring-offset-[#0a0a0f] ring-white' : '',
               accentColor === i ? 'ring-2 ring-offset-2 ring-offset-white ring-slate-900' : ''
             )}`}
@@ -2180,7 +2181,10 @@ function GeneralSettingsPanel({ isDark, session, profilePhoto, profileUsername, 
         {profilePhoto ? (
           <img src={profilePhoto} alt="" className="w-16 h-16 rounded-full object-cover shrink-0" />
         ) : (
-          <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${AVATAR_COLORS[profileColor] || AVATAR_COLORS[0]} flex items-center justify-center text-xl font-semibold text-white shrink-0`}>
+          <div
+            style={{ backgroundColor: AVATAR_COLORS[profileColor] || AVATAR_COLORS[0] }}
+            className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-semibold text-white shrink-0"
+          >
             {(profileUsername || session.user.email || 'G')[0].toUpperCase()}
           </div>
         )}
@@ -2244,11 +2248,11 @@ function CalendarPanel({ isDark, documents }) {
 // photo option since there's no upload flow for someone who isn't signed
 // in themselves.
 function HouseholdMemberAvatar({ member, size = 36 }) {
-  const gradient = AVATAR_COLORS[member.color] || AVATAR_COLORS[0]
+  const hex = AVATAR_COLORS[member.color] || AVATAR_COLORS[0]
   return (
     <div
-      className={`rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-semibold shrink-0`}
-      style={{ width: size, height: size, fontSize: size * 0.42 }}
+      className="rounded-full flex items-center justify-center text-white font-semibold shrink-0"
+      style={{ width: size, height: size, fontSize: size * 0.42, backgroundColor: hex }}
     >
       {member.name?.[0]?.toUpperCase() || '?'}
     </div>
@@ -2290,13 +2294,14 @@ function HouseholdMemberForm({ isDark, initial, saving, onCancel, onSave }) {
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          {AVATAR_COLORS.map((gradient, i) => (
+          {AVATAR_COLORS.map((hex, i) => (
             <button
               key={i}
               type="button"
               onClick={() => setColor(i)}
               aria-label={`Color ${i + 1}`}
-              className={`w-6 h-6 rounded-full bg-gradient-to-br ${gradient} ${color === i ? t(isDark, 'ring-2 ring-white/70', 'ring-2 ring-slate-900/50') : ''}`}
+              style={{ backgroundColor: hex }}
+              className={`w-6 h-6 rounded-full ${color === i ? t(isDark, 'ring-2 ring-white/70', 'ring-2 ring-slate-900/50') : ''}`}
             />
           ))}
         </div>
@@ -4120,7 +4125,10 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                 {profilePhoto ? (
                   <img src={profilePhoto} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
                 ) : (
-                  <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${AVATAR_COLORS[profileColor] || AVATAR_COLORS[0]} flex items-center justify-center text-sm font-semibold text-white shrink-0`}>
+                  <div
+                    style={{ backgroundColor: AVATAR_COLORS[profileColor] || AVATAR_COLORS[0] }}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold text-white shrink-0"
+                  >
                     {(profileUsername || session.user.email || 'G')[0].toUpperCase()}
                   </div>
                 )}

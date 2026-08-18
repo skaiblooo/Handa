@@ -5,6 +5,19 @@ import { AVATAR_COLORS, AVATAR_ACCENT_HEX } from './avatarColors'
 import loginIllustration from './assets/login-bg.webp'
 
 const FIELD_ERROR_LIFETIME = 3500
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+// A small glass pill instead of bare colored text, so a form-level error or
+// confirmation reads as part of the same liquid-glass system as everything
+// else on this page rather than a plain floating line of text.
+function FormMessage({ tone = 'error', children }) {
+  if (!children) return null
+  return (
+    <div className={`glass-dark rounded-lg px-3 py-2 text-sm ${tone === 'error' ? 'text-red-300' : 'text-emerald-300'}`}>
+      {children}
+    </div>
+  )
+}
 
 // Anchored under a field instead of the browser's own native validation
 // bubble — that one can't be restyled and looks out of place next to the
@@ -120,12 +133,12 @@ function GoogleIcon() {
   )
 }
 
-export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuestUpgrade = false, onCancelGuestUpgrade, onGuestStart, guestError = '' }) {
+export default function Auth({ defaultMode = 'login', prefillEmail = '', onGuestStart, guestError = '' }) {
   const { translate } = useLanguage()
   const [email, setEmail] = useState(prefillEmail)
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [isSignUp, setIsSignUp] = useState(isGuestUpgrade || defaultMode === 'signup')
+  const [isSignUp, setIsSignUp] = useState(defaultMode === 'signup')
   const [errorMsg, setErrorMsg] = useState('')
   const [infoMsg, setInfoMsg] = useState('')
   const [loading, setLoading] = useState(false)
@@ -142,7 +155,7 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
   // Letting people choose a username and color first — before they've
   // committed to anything — makes the account already feel a little bit
   // theirs, so finishing signup feels like continuing, not starting over.
-  const [profileStep, setProfileStep] = useState(!isGuestUpgrade)
+  const [profileStep, setProfileStep] = useState(true)
   const [chosenUsername, setChosenUsername] = useState('')
   const [chosenColor, setChosenColor] = useState(0)
 
@@ -169,7 +182,7 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
       setFieldError({ field: 'email', message: translate('auth_error_email_required') })
       return
     }
-    if (!email.includes('@')) {
+    if (!EMAIL_RE.test(email.trim())) {
       setFieldError({ field: 'email', message: translate('auth_error_email_invalid') })
       return
     }
@@ -181,13 +194,7 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
     setLoading(true)
 
     if (isSignUp) {
-      // A guest is already signed in with a real (anonymous) user id and
-      // real data attached to it. Upgrading that session in place with
-      // updateUser keeps everything they've already added; signUp would
-      // instead create a brand new, empty account and orphan the old one.
-      const { data, error } = isGuestUpgrade
-        ? await supabase.auth.updateUser({ email, password })
-        : await supabase.auth.signUp({ email, password })
+      const { data, error } = await supabase.auth.signUp({ email, password })
       if (error) {
         setErrorMsg(error.message)
       } else if (data?.user?.id) {
@@ -203,9 +210,7 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
         } catch {
           // best-effort persistence
         }
-        if (isGuestUpgrade) {
-          setInfoMsg(translate('auth_guest_upgrade_success'))
-        } else if (!data.session) {
+        if (!data.session) {
           // No session back means Supabase is holding the account for email
           // confirmation before it's usable — without this, submitting just
           // silently does nothing from the user's point of view.
@@ -282,7 +287,7 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
               </button>
 
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-semibold text-white mb-2">{translate('auth_get_started')}</h2>
+                <h2 className="font-instrument text-4xl text-white mb-2">{translate('auth_get_started')}</h2>
                 <p className="text-slate-400">{translate('auth_profile_step_subtitle')}</p>
               </div>
 
@@ -312,13 +317,14 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
                     {translate('auth_color_label')}
                   </label>
                   <div className="flex items-center gap-3">
-                    {AVATAR_COLORS.map((gradient, i) => (
+                    {AVATAR_COLORS.map((hex, i) => (
                       <button
-                        key={gradient}
+                        key={hex}
                         type="button"
                         onClick={() => setChosenColor(i)}
                         aria-label={`Color ${i + 1}`}
-                        className={`glass-interactive w-9 h-9 rounded-full bg-gradient-to-br ${gradient} ${
+                        style={{ backgroundColor: hex }}
+                        className={`glass-interactive w-9 h-9 rounded-full ${
                           chosenColor === i ? 'ring-2 ring-offset-2 ring-offset-[#0a0a0f] ring-white' : ''
                         }`}
                       />
@@ -331,7 +337,8 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
                     once they're inside the dashboard. */}
                 <div className="glass-dark rounded-xl p-3 flex items-center gap-3 transition-colors duration-300">
                   <div
-                    className={`w-9 h-9 rounded-full bg-gradient-to-br ${AVATAR_COLORS[chosenColor]} flex items-center justify-center text-xs font-semibold text-white shrink-0`}
+                    style={{ backgroundColor: AVATAR_COLORS[chosenColor] }}
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0"
                   >
                     {(chosenUsername.trim()[0] || 'H').toUpperCase()}
                   </div>
@@ -362,20 +369,12 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
                 >
                   {startingDashboard ? translate('auth_please_wait') : translate('auth_continue')}
                 </FillButton>
-                {guestError && <p className="text-red-400 text-sm text-center">{guestError}</p>}
+                <FormMessage>{guestError}</FormMessage>
               </div>
             </>
           ) : (
             <>
-              {isGuestUpgrade ? (
-                <button
-                  onClick={onCancelGuestUpgrade}
-                  className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-300 mb-6"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-                  {translate('auth_guest_upgrade_cancel')}
-                </button>
-              ) : isSignUp && (
+              {isSignUp && (
                 <button
                   onClick={() => setProfileStep(true)}
                   className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-300 mb-6"
@@ -386,11 +385,11 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
               )}
 
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-semibold text-white mb-2">
-                  {isGuestUpgrade ? translate('auth_guest_upgrade_title') : isSignUp ? translate('auth_get_started') : translate('auth_welcome_back')}
+                <h2 className="font-instrument text-4xl text-white mb-2">
+                  {isSignUp ? translate('auth_get_started') : translate('auth_welcome_back')}
                 </h2>
                 <p className="text-slate-400">
-                  {withCursiveOrbit(isGuestUpgrade ? translate('auth_guest_upgrade_subtitle') : isSignUp ? translate('auth_signup_subtitle') : translate('auth_login_subtitle'))}
+                  {withCursiveOrbit(isSignUp ? translate('auth_signup_subtitle') : translate('auth_login_subtitle'))}
                 </p>
               </div>
 
@@ -407,6 +406,11 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
                       placeholder={translate('auth_email_placeholder')}
                       value={email}
                       onChange={(e) => { setEmail(e.target.value); if (fieldError?.field === 'email') setFieldError(null) }}
+                      onBlur={() => {
+                        if (email.trim() && !EMAIL_RE.test(email.trim())) {
+                          setFieldError({ field: 'email', message: translate('auth_error_email_invalid') })
+                        }
+                      }}
                       className="w-full glass-dark-sm rounded-lg pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-400/50 transition-colors"
                     />
                     <FieldError message={fieldError?.field === 'email' ? fieldError.message : null} />
@@ -447,52 +451,50 @@ export default function Auth({ defaultMode = 'login', prefillEmail = '', isGuest
                   )}
                 </div>
 
-                {errorMsg && <p className="text-red-400 text-sm">{errorMsg}</p>}
-                {infoMsg && <p className="text-emerald-400 text-sm">{infoMsg}</p>}
+                <FormMessage>{errorMsg}</FormMessage>
+                <FormMessage tone="info">{infoMsg}</FormMessage>
 
                 <FillButton type="submit" disabled={loading} className="py-3 mt-1">
                   {loading ? translate('auth_please_wait') : isSignUp ? translate('auth_continue') : translate('auth_login_btn')}
                 </FillButton>
               </form>
 
-              {!isGuestUpgrade && (
+              <div className="flex items-center gap-3 my-6">
+                <div className="h-px bg-white/10 flex-1" />
+                <span className="text-slate-500 text-sm">{translate('auth_or')}</span>
+                <div className="h-px bg-white/10 flex-1" />
+              </div>
+
+              <button
+                onClick={handleGoogleSignIn}
+                className="glass-dark glass-interactive w-full flex items-center justify-center gap-3 rounded-lg py-3 text-white"
+              >
+                <GoogleIcon />
+                {translate('auth_continue_google')}
+              </button>
+
+              <p className="text-sm text-slate-500 mt-8 text-center">
+                {isSignUp ? translate('auth_have_account') : translate('auth_no_account')}{' '}
+                <button
+                  onClick={() => (isSignUp ? backToLogin() : startSignUp())}
+                  className="text-blue-400 hover:text-blue-300 font-medium"
+                >
+                  {isSignUp ? translate('auth_toggle_login') : translate('auth_toggle_signup')}
+                </button>
+              </p>
+
+              {onGuestStart && (
                 <>
-                  <div className="flex items-center gap-3 my-6">
-                    <div className="h-px bg-white/10 flex-1" />
-                    <span className="text-slate-500 text-sm">{translate('auth_or')}</span>
-                    <div className="h-px bg-white/10 flex-1" />
-                  </div>
-
                   <button
-                    onClick={handleGoogleSignIn}
-                    className="glass-dark glass-interactive w-full flex items-center justify-center gap-3 rounded-lg py-3 text-white"
+                    type="button"
+                    onClick={() => onGuestStart()}
+                    className="w-full text-sm text-slate-500 hover:text-slate-300 mt-4 text-center"
                   >
-                    <GoogleIcon />
-                    {translate('auth_continue_google')}
+                    {translate('auth_continue_guest')}
                   </button>
-
-                  <p className="text-sm text-slate-500 mt-8 text-center">
-                    {isSignUp ? translate('auth_have_account') : translate('auth_no_account')}{' '}
-                    <button
-                      onClick={() => (isSignUp ? backToLogin() : startSignUp())}
-                      className="text-blue-400 hover:text-blue-300 font-medium"
-                    >
-                      {isSignUp ? translate('auth_toggle_login') : translate('auth_toggle_signup')}
-                    </button>
-                  </p>
-
-                  {onGuestStart && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => onGuestStart()}
-                        className="w-full text-sm text-slate-500 hover:text-slate-300 mt-4 text-center"
-                      >
-                        {translate('auth_continue_guest')}
-                      </button>
-                      {guestError && <p className="text-red-400 text-sm text-center mt-2">{guestError}</p>}
-                    </>
-                  )}
+                  <div className="mt-2">
+                    <FormMessage>{guestError}</FormMessage>
+                  </div>
                 </>
               )}
             </>
@@ -556,7 +558,7 @@ export function CompleteGoogleProfileScreen({ session, onDone }) {
         </div>
 
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-semibold text-white mb-2">{translate('auth_google_complete_title')}</h2>
+          <h2 className="font-instrument text-4xl text-white mb-2">{translate('auth_google_complete_title')}</h2>
           <p className="text-slate-400">{translate('auth_google_complete_subtitle')}</p>
         </div>
 
@@ -607,13 +609,14 @@ export function CompleteGoogleProfileScreen({ session, onDone }) {
               {translate('auth_color_label')}
             </label>
             <div className="flex items-center gap-3">
-              {AVATAR_COLORS.map((gradient, i) => (
+              {AVATAR_COLORS.map((hex, i) => (
                 <button
-                  key={gradient}
+                  key={hex}
                   type="button"
                   onClick={() => setColor(i)}
                   aria-label={`Color ${i + 1}`}
-                  className={`glass-interactive w-9 h-9 rounded-full bg-gradient-to-br ${gradient} ${
+                  style={{ backgroundColor: hex }}
+                  className={`glass-interactive w-9 h-9 rounded-full ${
                     color === i ? 'ring-2 ring-offset-2 ring-offset-[#0a0a0f] ring-white' : ''
                   }`}
                 />
@@ -694,7 +697,7 @@ export function ResetPasswordScreen({ onDone }) {
         </div>
 
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-semibold text-white mb-2">{translate('auth_reset_password_title')}</h2>
+          <h2 className="font-instrument text-4xl text-white mb-2">{translate('auth_reset_password_title')}</h2>
           <p className="text-slate-400">{translate('auth_reset_password_subtitle')}</p>
         </div>
 
@@ -742,10 +745,140 @@ export function ResetPasswordScreen({ onDone }) {
             </div>
           </div>
 
-          {errorMsg && <p className="text-red-400 text-sm">{errorMsg}</p>}
+          <FormMessage>{errorMsg}</FormMessage>
 
           <FillButton type="submit" disabled={loading} className="py-3 mt-1">
             {loading ? translate('auth_please_wait') : translate('auth_reset_password_btn')}
+          </FillButton>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// A centered modal over the dashboard, not a full-page swap — a guest
+// clicking "Save my account" should never feel like they left what they
+// were doing. Reuses the same email/password/updateUser flow the old
+// isGuestUpgrade branch of Auth used, just presented as an overlay.
+export function GuestUpgradeModal({ onCancel, guestError = '' }) {
+  const { translate } = useLanguage()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+  const [infoMsg, setInfoMsg] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [fieldError, setFieldError] = useState(null)
+
+  useEffect(() => {
+    if (!fieldError) return
+    const timer = setTimeout(() => setFieldError(null), FIELD_ERROR_LIFETIME)
+    return () => clearTimeout(timer)
+  }, [fieldError])
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setErrorMsg('')
+    setInfoMsg('')
+    setFieldError(null)
+
+    if (!email.trim()) {
+      setFieldError({ field: 'email', message: translate('auth_error_email_required') })
+      return
+    }
+    if (!EMAIL_RE.test(email.trim())) {
+      setFieldError({ field: 'email', message: translate('auth_error_email_invalid') })
+      return
+    }
+    if (!password) {
+      setFieldError({ field: 'password', message: translate('auth_error_password_required') })
+      return
+    }
+
+    setLoading(true)
+    // Upgrading the anonymous session in place with updateUser keeps
+    // everything the guest already added; signUp would create a brand new,
+    // empty account and orphan the old one instead.
+    const { error } = await supabase.auth.updateUser({ email, password })
+    setLoading(false)
+    if (error) {
+      setErrorMsg(error.message)
+      return
+    }
+    setInfoMsg(translate('auth_guest_upgrade_success'))
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
+      <div className="glass-dark relative w-full max-w-sm rounded-2xl p-8">
+        <button
+          type="button"
+          onClick={onCancel}
+          aria-label={translate('auth_guest_upgrade_cancel')}
+          className="glass-interactive absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-white"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+        </button>
+
+        <div className="text-center mb-8">
+          <h2 className="font-instrument text-3xl text-white mb-2">{translate('auth_guest_upgrade_title')}</h2>
+          <p className="text-slate-400 text-sm">{translate('auth_guest_upgrade_subtitle')}</p>
+        </div>
+
+        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
+          <div>
+            <label className="text-sm text-blue-400 font-medium mb-1.5 block">{translate('auth_email_label')}</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 z-10 pointer-events-none">
+                <MailIcon />
+              </span>
+              <input
+                type="email"
+                autoComplete="email"
+                placeholder={translate('auth_email_placeholder')}
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); if (fieldError?.field === 'email') setFieldError(null) }}
+                onBlur={() => {
+                  if (email.trim() && !EMAIL_RE.test(email.trim())) {
+                    setFieldError({ field: 'email', message: translate('auth_error_email_invalid') })
+                  }
+                }}
+                className="w-full glass-dark-sm rounded-lg pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-400/50 transition-colors"
+              />
+              <FieldError message={fieldError?.field === 'email' ? fieldError.message : null} />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm text-blue-400 font-medium mb-1.5 block">{translate('auth_password')}</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 z-10 pointer-events-none">
+                <LockIcon />
+              </span>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); if (fieldError?.field === 'password') setFieldError(null) }}
+                className="w-full glass-dark-sm rounded-lg pl-10 pr-10 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-400/50 transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 z-10"
+              >
+                <EyeIcon open={showPassword} />
+              </button>
+              <FieldError message={fieldError?.field === 'password' ? fieldError.message : null} />
+            </div>
+          </div>
+
+          <FormMessage>{errorMsg || guestError}</FormMessage>
+          <FormMessage tone="info">{infoMsg}</FormMessage>
+
+          <FillButton type="submit" disabled={loading} className="py-3 mt-1">
+            {loading ? translate('auth_please_wait') : translate('auth_continue')}
           </FillButton>
         </form>
       </div>

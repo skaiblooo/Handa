@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
-import Auth, { ResetPasswordScreen, CompleteGoogleProfileScreen } from './Auth'
+import Auth, { ResetPasswordScreen, CompleteGoogleProfileScreen, GuestUpgradeModal } from './Auth'
 import Dashboard from './Dashboard'
 import Landing from './landing/Landing'
 import { LanguageProvider } from './i18n'
@@ -23,6 +23,24 @@ function App() {
   // says otherwise, so the auth screen never has to wait on the network.
   const [authRouting, setAuthRouting] = useState({ mode: 'signup', email: '' })
   const [guestError, setGuestError] = useState('')
+
+  // Swapping Landing for Auth is a pure client-side state change with no
+  // history entry of its own, so the browser back button had nowhere to go
+  // but out of the site entirely. Pushing a history entry when entering
+  // Auth, and following back/forward navigation to match, keeps the back
+  // button inside the app instead.
+  function goToAuth() {
+    window.history.pushState({ orbitEntered: true }, '')
+    setEntered(true)
+  }
+
+  useEffect(() => {
+    function onPopState(e) {
+      setEntered(!!e.state?.orbitEntered)
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -102,21 +120,24 @@ function App() {
         <ResetPasswordScreen onDone={() => setIsRecovery(false)} />
       ) : session && needsGoogleProfile ? (
         <CompleteGoogleProfileScreen session={session} onDone={() => setNeedsGoogleProfile(false)} />
-      ) : session && !(isGuest && upgradingGuest) ? (
-        <Dashboard
-          session={session}
-          isGuest={isGuest}
-          onUpgradeAccount={() => setUpgradingGuest(true)}
-        />
-      ) : !session && !entered ? (
-        <Landing onGetStarted={() => setEntered(true)} />
+      ) : session ? (
+        <>
+          <Dashboard
+            session={session}
+            isGuest={isGuest}
+            onUpgradeAccount={() => setUpgradingGuest(true)}
+          />
+          {isGuest && upgradingGuest && (
+            <GuestUpgradeModal onCancel={() => setUpgradingGuest(false)} />
+          )}
+        </>
+      ) : !entered ? (
+        <Landing onGetStarted={goToAuth} />
       ) : (
         <Auth
           defaultMode={authRouting.mode}
           prefillEmail={authRouting.email}
-          isGuestUpgrade={isGuest && upgradingGuest}
-          onCancelGuestUpgrade={() => setUpgradingGuest(false)}
-          onGuestStart={isGuest ? undefined : startGuest}
+          onGuestStart={startGuest}
           guestError={guestError}
         />
       )}
