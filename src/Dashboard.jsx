@@ -2318,12 +2318,12 @@ function LanguagePanel({ isDark, lang, onSetLang }) {
 // same edit-profile form, which felt like two buttons doing one thing.
 // This is a lighter, read-only overview instead, with a link into the real
 // edit form rather than duplicating it.
-function GeneralSettingsPanel({ isDark, session, profilePhoto, profileUsername, profileColor, onGoToAccount }) {
+function GeneralSettingsPanel({ isDark, session, profilePhoto, profileUsername, profileColor, onGoToAccount, onLogout }) {
   const { translate } = useLanguage()
   return (
     <div>
       <SettingsPanelHeader isDark={isDark} title={translate('settings_general_title')} description={translate('settings_general_desc')} />
-      <div className={`rounded-2xl p-5 max-w-md flex items-center gap-4 ${t(isDark, 'glass-dark', 'glass-light')}`}>
+      <div className={`rounded-2xl p-5 max-w-md flex items-center gap-4 mb-4 ${t(isDark, 'glass-dark', 'glass-light')}`}>
         {profilePhoto ? (
           <img src={profilePhoto} alt="" className="w-16 h-16 rounded-full object-cover shrink-0" />
         ) : (
@@ -2349,6 +2349,17 @@ function GeneralSettingsPanel({ isDark, session, profilePhoto, profileUsername, 
           {translate('settings_general_edit_account')}
         </button>
       </div>
+
+      <button
+        type="button"
+        onClick={onLogout}
+        className={`glass-interactive glass-interactive-slow w-full max-w-md flex items-center justify-between gap-4 rounded-2xl p-4 mb-6 ${t(isDark, 'glass-dark', 'glass-light')}`}
+      >
+        <span className={`text-sm font-medium ${t(isDark, 'text-slate-200', 'text-slate-700')}`}>{translate('settings_general_sign_out')}</span>
+        <Icon size={16}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></Icon>
+      </button>
+
+      <p className={`text-xs max-w-md ${t(isDark, 'text-slate-500', 'text-slate-400')}`}>{translate('settings_general_about')}</p>
     </div>
   )
 }
@@ -4374,6 +4385,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                   profileUsername={profileUsername}
                   profileColor={profileColor}
                   onGoToAccount={() => setSettingsTab('account')}
+                  onLogout={() => setConfirmLogout(true)}
                 />
               )}
               {settingsTab === 'account' && (
