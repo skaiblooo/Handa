@@ -235,7 +235,7 @@ function Topbar() {
           <img src={notificationIcon} alt="" className="w-[16px] h-[16px] object-contain" style={{ filter: 'invert(1) brightness(1.3)' }} />
         </span>
         <div className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-sm font-semibold text-white shrink-0">E</div>
+          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-semibold text-white shrink-0">E</div>
           <div className="hidden sm:flex flex-col items-start leading-tight">
             <span className="text-sm font-semibold text-slate-100">Explorer</span>
             <span className="text-xs text-slate-400">explorer@orbit.app</span>
@@ -576,7 +576,7 @@ function FillModal({ hoveredId, pressedId, register }) {
           <span className="p-1.5 rounded-full text-slate-500"><Icon size={14}><path d="M18 6L6 18M6 6l12 12" /></Icon></span>
         </div>
       </div>
-      <div className={`bg-gradient-to-br ${theme.gradient} rounded-2xl overflow-hidden text-white p-4 border border-white/15`}>
+      <div className={`${theme.card} rounded-2xl overflow-hidden text-white p-4 border border-white/15`}>
         <p className="text-[8px] font-semibold tracking-wide opacity-75">{theme.agency}</p>
         <p className="text-[8px] font-semibold tracking-wide opacity-75">{theme.office}</p>
         <p className="text-sm font-bold tracking-wide mt-1 mb-3">{theme.docName}</p>

@@ -6,7 +6,7 @@ import ProfilePage from './ProfilePage'
 import { getDaysUntilExpiry, getUrgencyLevel, formatDaysUntil, formatExpiryDisplay, formatTimeAgo, formatCompactDaysUntil } from './utils/dateHelpers'
 import { getActivityLog, logActivity } from './utils/activityLog'
 import { getActualPushSubscription, subscribeToPush, unsubscribeFromPush, isPushSupported } from './utils/push'
-import { validatePhotoFile, uploadDocumentPhoto } from './utils/documentPhotos'
+import { validatePhotoFile, uploadDocumentPhoto, getDocumentPhotoUrl } from './utils/documentPhotos'
 import { downloadIcs } from './utils/calendarExport'
 import StarfieldBackground from './StarfieldBackground'
 import { useLanguage } from './i18n'
@@ -116,13 +116,13 @@ export function BlankAvatar({ size = 40 }) {
 // a light-mode page (or the light Earth photo) the "dark" card washed out
 // to near-white with unreadable white-on-white text. An ID card face is
 // meant to look like a physical card regardless of the app's own theme, so
-// it gets its own always-dark, always-opaque-enough gradient background
-// instead (per document type, via CARD_THEME).
+// it gets its own always-dark, always-opaque-enough flat background instead
+// (per document type, via CARD_THEME) — flat, not a gradient, on purpose.
 function IDCardFace({ docType, children, minHeight = 208, faceStyle }) {
-  const gradient = CARD_THEME[docType]?.gradient || 'from-slate-700 to-slate-950'
+  const card = CARD_THEME[docType]?.card || 'bg-slate-950'
   return (
     <div
-      className={`bg-gradient-to-br ${gradient} rounded-2xl overflow-hidden text-white flex flex-col border border-white/15`}
+      className={`${card} rounded-2xl overflow-hidden text-white flex flex-col border border-white/15`}
       style={{
         minHeight,
         boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.22), inset 0 0 22px 0 rgba(255,255,255,0.03), 0 10px 30px -12px rgba(0,0,0,0.55)',
@@ -189,6 +189,32 @@ export function IDCardFront({ docType, title, fields, onFieldChange, expiryDate,
       </div>
     </IDCardFace>
   )
+}
+
+// A photo of the real document is strictly better than our generic mockup
+// once one exists — it's literally the thing being tracked, not a
+// stand-in for it. Falls back to IDCardFront when there's no photo (or
+// while the signed URL is still loading) so nothing changes for anyone
+// who hasn't attached one.
+function DocumentCardFront({ docType, title, fields, expiryDate, photoPath }) {
+  const [photoUrl, setPhotoUrl] = useState(null)
+  useEffect(() => {
+    if (!photoPath) return
+    let cancelled = false
+    getDocumentPhotoUrl(supabase, photoPath).then((url) => {
+      if (!cancelled) setPhotoUrl(url)
+    })
+    return () => { cancelled = true }
+  }, [photoPath])
+
+  if (photoPath && photoUrl) {
+    return (
+      <div className="rounded-2xl overflow-hidden border border-white/15" style={{ minHeight: 208 }}>
+        <img src={photoUrl} alt={title} className="w-full h-full object-cover" style={{ minHeight: 208 }} />
+      </div>
+    )
+  }
+  return <IDCardFront docType={docType} title={title} fields={fields} expiryDate={expiryDate} editing={false} />
 }
 
 export function IDCardBack({ docType, doc, meta, playbook, totalSteps, completedCount, progressPct, nextStepText }) {
@@ -501,7 +527,7 @@ function AddDocumentTile({ isDark, onClick, tileRef, label, fullWidth }) {
       type="button"
       onClick={onClick}
       onMouseDown={(e) => e.stopPropagation()}
-      className={`glass-interactive glass-interactive-slow ${fullWidth ? 'glass-interactive-no-sweep' : ''} flex items-center justify-center gap-3 rounded-2xl border-2 border-dashed ${
+      className={`glass-interactive glass-interactive-no-sweep flex items-center justify-center gap-3 rounded-2xl border-2 border-dashed ${
         fullWidth ? 'flex-row py-5' : 'flex-col min-h-[220px]'
       } ${t(isDark,
         'glass-dark border-white/15 hover:border-white/30 text-slate-500 hover:text-slate-300',
@@ -542,6 +568,15 @@ function IntentPicker({ isDark, onSelect, onCancel }) {
         >
           <Icon size={16}><path d="M18 6L6 18M6 6l12 12" /></Icon>
         </button>
+      </div>
+      <div className="relative grid grid-cols-2 gap-2.5 mb-1.5">
+        <p className={`text-center text-xs font-semibold tracking-wide ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>{translate('add_doc_intent_renewal_label')}</p>
+        <p className={`text-center text-xs font-semibold tracking-wide ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>{translate('add_doc_intent_application_label')}</p>
+        <span
+          className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] font-semibold ${t(isDark, 'text-slate-500', 'text-slate-400')}`}
+        >
+          {translate('add_doc_intent_or')}
+        </span>
       </div>
       <div className="relative grid grid-cols-2 gap-2.5">
         <button
@@ -737,7 +772,7 @@ function DocTypePicker({ isDark, docTypeIds, onSelect, onBack, onCancel }) {
 // date yet — asking them to fill those in would mean asking them to invent
 // data. This just confirms the type and shows the card in an obviously
 // unfinished state (dimmed, every field blank) instead.
-function ApplicationConfirmCard({ isDark, docType, title, onTitleChange, householdMembers, assignedMemberId, onAssignedMemberChange, onBack, onCancel, onSave, saving, errorMsg }) {
+function ApplicationConfirmCard({ isDark, docType, title, onTitleChange, householdMembers, assignedMemberId, onAssignedMemberChange, onBack, onCancel, onSave, saving, errorMsg, profilePhoto, profileColor }) {
   const { translate } = useLanguage()
   return (
     <div
@@ -747,15 +782,10 @@ function ApplicationConfirmCard({ isDark, docType, title, onTitleChange, househo
         'relative text-left rounded-2xl glass-light p-4'
       )}
     >
-      <div className="flex items-center gap-2 mb-3">
-        <div className="flex gap-1 flex-1">
-          <div className="h-1 flex-1 rounded-full bg-blue-400" />
-          <div className="h-1 flex-1 rounded-full bg-blue-400" />
-          <div className="h-1 flex-1 rounded-full bg-blue-400" />
-        </div>
-        <span className={t(isDark, 'text-[10px] text-slate-500 shrink-0', 'text-[10px] text-slate-400 shrink-0')}>
-          {translate('add_doc_step2_momentum')}
-        </span>
+      <div className="flex gap-1 mb-3">
+        <div className="h-1 flex-1 rounded-full bg-blue-400" />
+        <div className="h-1 flex-1 rounded-full bg-blue-400" />
+        <div className="h-1 flex-1 rounded-full bg-blue-400" />
       </div>
       <div className="flex justify-between items-center mb-3">
         <input
@@ -818,9 +848,13 @@ function ApplicationConfirmCard({ isDark, docType, title, onTitleChange, househo
                 : t(isDark, 'text-slate-400 hover:bg-white/5', 'text-slate-500 hover:bg-slate-100')
             }`}
           >
-            <span className={t(isDark, 'w-5 h-5 rounded-full bg-white/15 flex items-center justify-center', 'w-5 h-5 rounded-full bg-slate-300 flex items-center justify-center')}>
-              <Icon size={11}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></Icon>
-            </span>
+            {profilePhoto ? (
+              <img src={profilePhoto} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
+            ) : (
+              <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-white" style={{ backgroundColor: AVATAR_COLORS[profileColor] || AVATAR_COLORS[0] }}>
+                <Icon size={11}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></Icon>
+              </span>
+            )}
             {translate('add_doc_for_myself')}
           </button>
           {householdMembers.map((member) => (
@@ -903,7 +937,7 @@ function computeSmartDefaults(type, existingDocs) {
   return { expiryDate, fields }
 }
 
-function AddDocumentCard({ isDark, userId, existingDocs, householdMembers, initialType, initialAgency, onAdded, onCancel }) {
+function AddDocumentCard({ isDark, userId, existingDocs, householdMembers, initialType, initialAgency, onAdded, onCancel, profilePhoto, profileColor }) {
   const { translate } = useLanguage()
   const [step, setStep] = useState('intent')
   const [intent, setIntent] = useState(null)
@@ -1082,6 +1116,8 @@ function AddDocumentCard({ isDark, userId, existingDocs, householdMembers, initi
         onSave={handleSave}
         saving={saving}
         errorMsg={errorMsg}
+        profilePhoto={profilePhoto}
+        profileColor={profileColor}
       />
     )
   }
@@ -1094,15 +1130,10 @@ function AddDocumentCard({ isDark, userId, existingDocs, householdMembers, initi
         'relative text-left rounded-2xl glass-light p-4'
       )}
     >
-      <div className="flex items-center gap-2 mb-3">
-        <div className="flex gap-1 flex-1">
-          {Array.from({ length: initialType ? 2 : 3 }).map((_, i) => (
-            <div key={i} className="h-1 flex-1 rounded-full bg-blue-400" />
-          ))}
-        </div>
-        <span className={t(isDark, 'text-[10px] text-slate-500 shrink-0', 'text-[10px] text-slate-400 shrink-0')}>
-          {translate('add_doc_step2_momentum')}
-        </span>
+      <div className="flex gap-1 mb-3">
+        {Array.from({ length: initialType ? 2 : 3 }).map((_, i) => (
+          <div key={i} className="h-1 flex-1 rounded-full bg-blue-400" />
+        ))}
       </div>
       <div className="flex justify-between items-center mb-3">
         <input
@@ -1165,9 +1196,13 @@ function AddDocumentCard({ isDark, userId, existingDocs, householdMembers, initi
                 : t(isDark, 'text-slate-400 hover:bg-white/5', 'text-slate-500 hover:bg-slate-100')
             }`}
           >
-            <span className={t(isDark, 'w-5 h-5 rounded-full bg-white/15 flex items-center justify-center', 'w-5 h-5 rounded-full bg-slate-300 flex items-center justify-center')}>
-              <Icon size={11}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></Icon>
-            </span>
+            {profilePhoto ? (
+              <img src={profilePhoto} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
+            ) : (
+              <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-white" style={{ backgroundColor: AVATAR_COLORS[profileColor] || AVATAR_COLORS[0] }}>
+                <Icon size={11}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></Icon>
+              </span>
+            )}
             {translate('add_doc_for_myself')}
           </button>
           {householdMembers.map((member) => (
@@ -1595,7 +1630,7 @@ function NewsPanel({ isDark }) {
                   href={a.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`glass-interactive w-full h-full shrink-0 flex flex-col rounded-xl overflow-hidden ${t(isDark, 'glass-dark', 'glass-light')}`}
+                  className={`glass-interactive glass-interactive-no-sweep w-full h-full shrink-0 flex flex-col rounded-xl overflow-hidden ${t(isDark, 'glass-dark', 'glass-light')}`}
                   style={{ scrollSnapAlign: 'start' }}
                 >
                   <NewsThumb src={a.image} isDark={isDark} />
@@ -3664,12 +3699,12 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                     onFlip={() => setFlippedIds((f) => ({ ...f, [doc.id]: !f[doc.id] }))}
                     front={
                       <div className={doc.urgency === 'ongoing' ? 'opacity-50' : ''}>
-                        <IDCardFront
+                        <DocumentCardFront
                           docType={doc.doc_type}
                           title={doc.title}
                           fields={doc.urgency === 'ongoing' ? {} : (doc.card_fields || {})}
                           expiryDate={doc.urgency === 'ongoing' ? '' : doc.expiry_date}
-                          editing={false}
+                          photoPath={doc.photo_path}
                         />
                       </div>
                     }
@@ -4437,10 +4472,22 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                 // Otherwise this whole area below the chart just sits empty,
                 // which for a brand new account with nothing tracked yet
                 // reads as "nothing here" rather than pointing at the one
-                // thing they should do next.
-                <div className="mt-10">
-                  <AddDocumentTile isDark={isDark} onClick={() => openAddDocument()} label={translate('add_orbit')} fullWidth />
-                </div>
+                // thing they should do next. Same card weight as the stat
+                // cards above it (rounded-2xl, p-5/p-6, glass material)
+                // instead of AddDocumentTile's compact dashed pill, so it
+                // doesn't read as an afterthought next to them.
+                <button
+                  type="button"
+                  onClick={() => openAddDocument()}
+                  className={`glass-interactive glass-interactive-no-sweep w-full flex items-center gap-3 mt-6 rounded-2xl p-5 md:p-6 border-2 border-dashed text-left ${t(isDark,
+                    'glass-dark border-white/15 hover:border-white/30 text-slate-400 hover:text-slate-200',
+                    'glass-light border-slate-300 hover:border-slate-400 text-slate-500 hover:text-slate-700'
+                  )}`}
+                  style={{ animation: 'rise-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.85s both' }}
+                >
+                  <Icon size={22}><path d="M12 5v14M5 12h14" /></Icon>
+                  <span className="text-sm font-medium">{translate('add_orbit')}</span>
+                </button>
               )}
             </div>
           ) : activeNav === 'reminders' ? (
@@ -4541,6 +4588,8 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
               initialAgency={pendingAgency}
               onAdded={(title) => { fetchDocuments(); setAddingDocument(false); logAction(`Added ${title}`, 'add') }}
               onCancel={() => setAddingDocument(false)}
+              profilePhoto={profilePhoto}
+              profileColor={profileColor}
             />
           </div>
         </div>

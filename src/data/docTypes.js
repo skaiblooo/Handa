@@ -1,55 +1,57 @@
 // Every Philippine government (and common supporting) document Orbit knows
 // about, plus the issuing agency each one belongs to. Centralizing agencies
 // here means every document from the same office shares one badge color and
-// one ID-card gradient, instead of each document type picking its own.
+// one ID-card background, instead of each document type picking its own.
 //
-// Badge/gradient values are complete, literal Tailwind class strings (never
+// Badge/card values are complete, literal Tailwind class strings (never
 // built with template interpolation) so Tailwind's build-time class scanner
 // can actually find and generate them — a computed class name like
-// `bg-${color}-600` would silently produce no CSS.
+// `bg-${color}-600` would silently produce no CSS. `card` is a flat single
+// color, not a gradient — a two-stop blend read as dull/dated once there
+// was something better to compare it against.
 const AGENCIES = {
-  PSA: { name: 'Philippine Statistics Authority', gov: true, badge: 'bg-orange-600', gradient: 'from-orange-600 to-orange-900' },
-  LCRO: { name: 'Local Civil Registry Office', gov: true, badge: 'bg-orange-700', gradient: 'from-orange-800 to-orange-950' },
-  COURT: { name: 'Philippine Courts', gov: true, badge: 'bg-zinc-600', gradient: 'from-zinc-700 to-zinc-950' },
-  DSWD: { name: 'Department of Social Welfare and Development', gov: true, badge: 'bg-pink-600', gradient: 'from-pink-700 to-pink-950' },
-  DFA: { name: 'Department of Foreign Affairs', gov: true, badge: 'bg-teal-600', gradient: 'from-teal-700 to-teal-950' },
-  BI: { name: 'Bureau of Immigration', gov: true, badge: 'bg-cyan-600', gradient: 'from-cyan-700 to-cyan-950' },
-  PRA: { name: 'Philippine Retirement Authority', gov: true, badge: 'bg-sky-600', gradient: 'from-sky-700 to-sky-950' },
-  LTO: { name: 'Land Transportation Office', gov: true, badge: 'bg-blue-600', gradient: 'from-blue-700 to-blue-950' },
-  SSS: { name: 'Social Security System', gov: true, badge: 'bg-emerald-600', gradient: 'from-emerald-700 to-emerald-950' },
-  GSIS: { name: 'Government Service Insurance System', gov: true, badge: 'bg-green-600', gradient: 'from-green-700 to-green-950' },
-  PH: { name: 'PhilHealth', gov: true, badge: 'bg-red-600', gradient: 'from-red-700 to-red-950' },
-  HDMF: { name: 'Pag-IBIG Fund', gov: true, badge: 'bg-yellow-600', gradient: 'from-yellow-600 to-yellow-900' },
-  OWWA: { name: 'Overseas Workers Welfare Administration', gov: true, badge: 'bg-violet-600', gradient: 'from-violet-700 to-violet-950' },
-  BIR: { name: 'Bureau of Internal Revenue', gov: true, badge: 'bg-slate-600', gradient: 'from-slate-700 to-slate-950' },
-  PRC: { name: 'Professional Regulation Commission', gov: true, badge: 'bg-indigo-600', gradient: 'from-indigo-700 to-indigo-950' },
-  IBP: { name: 'Integrated Bar of the Philippines', gov: false, badge: 'bg-fuchsia-600', gradient: 'from-fuchsia-700 to-fuchsia-950' },
-  CSC: { name: 'Civil Service Commission', gov: true, badge: 'bg-blue-800', gradient: 'from-blue-800 to-blue-950' },
-  MARINA: { name: 'Maritime Industry Authority', gov: true, badge: 'bg-cyan-800', gradient: 'from-cyan-800 to-cyan-950' },
-  NBI: { name: 'National Bureau of Investigation', gov: true, badge: 'bg-purple-600', gradient: 'from-purple-700 to-purple-950' },
-  PNP: { name: 'Philippine National Police', gov: true, badge: 'bg-blue-900', gradient: 'from-blue-900 to-slate-950' },
-  BRGY: { name: 'Barangay', gov: true, badge: 'bg-lime-600', gradient: 'from-lime-700 to-lime-950' },
-  BJMP: { name: 'Bureau of Jail Management and Penology', gov: true, badge: 'bg-neutral-600', gradient: 'from-neutral-700 to-neutral-950' },
-  BUCOR: { name: 'Bureau of Corrections', gov: true, badge: 'bg-stone-700', gradient: 'from-stone-800 to-stone-950' },
-  LGU: { name: 'Local Government Unit', gov: true, badge: 'bg-amber-700', gradient: 'from-amber-700 to-amber-950' },
-  OSCA: { name: 'Office for Senior Citizens Affairs', gov: true, badge: 'bg-purple-800', gradient: 'from-purple-800 to-purple-950' },
-  EMP: { name: 'Employer', gov: false, badge: 'bg-neutral-500', gradient: 'from-neutral-600 to-neutral-800' },
-  GOVT: { name: 'Government Agency', gov: true, badge: 'bg-slate-700', gradient: 'from-slate-800 to-slate-950' },
-  SCH: { name: 'School / University', gov: false, badge: 'bg-yellow-800', gradient: 'from-yellow-800 to-yellow-950' },
-  BANK: { name: 'Bank', gov: false, badge: 'bg-emerald-800', gradient: 'from-emerald-800 to-emerald-950' },
-  UTIL: { name: 'Utility Provider', gov: false, badge: 'bg-rose-600', gradient: 'from-rose-700 to-rose-950' },
-  RD: { name: 'Registry of Deeds', gov: true, badge: 'bg-orange-800', gradient: 'from-orange-800 to-stone-950' },
-  NOTARY: { name: 'Notary Public', gov: false, badge: 'bg-zinc-700', gradient: 'from-zinc-800 to-zinc-950' },
-  POST: { name: 'PhilPost', gov: true, badge: 'bg-red-800', gradient: 'from-red-800 to-red-950' },
-  COMELEC: { name: 'Commission on Elections', gov: true, badge: 'bg-sky-800', gradient: 'from-sky-800 to-sky-950' },
-  AFP: { name: 'Armed Forces of the Philippines', gov: true, badge: 'bg-green-800', gradient: 'from-green-800 to-green-950' },
-  PCG: { name: 'Philippine Coast Guard', gov: true, badge: 'bg-cyan-700', gradient: 'from-cyan-800 to-slate-950' },
-  PVAO: { name: 'Philippine Veterans Affairs Office', gov: true, badge: 'bg-green-900', gradient: 'from-green-900 to-slate-950' },
-  NCIP: { name: 'National Commission on Indigenous Peoples', gov: true, badge: 'bg-amber-900', gradient: 'from-amber-900 to-stone-950' },
-  NCMF: { name: 'National Commission on Muslim Filipinos', gov: true, badge: 'bg-emerald-900', gradient: 'from-emerald-900 to-slate-950' },
-  CHURCH: { name: 'Church', gov: false, badge: 'bg-purple-900', gradient: 'from-purple-900 to-stone-950' },
-  PRIVATE: { name: 'Private Individual', gov: false, badge: 'bg-neutral-700', gradient: 'from-neutral-800 to-neutral-950' },
-  FEO: { name: 'PNP Firearms and Explosives Office', gov: true, badge: 'bg-slate-900', gradient: 'from-slate-900 to-black' },
+  PSA: { name: 'Philippine Statistics Authority', gov: true, badge: 'bg-orange-600', card: 'bg-orange-900' },
+  LCRO: { name: 'Local Civil Registry Office', gov: true, badge: 'bg-orange-700', card: 'bg-orange-950' },
+  COURT: { name: 'Philippine Courts', gov: true, badge: 'bg-zinc-600', card: 'bg-zinc-950' },
+  DSWD: { name: 'Department of Social Welfare and Development', gov: true, badge: 'bg-pink-600', card: 'bg-pink-950' },
+  DFA: { name: 'Department of Foreign Affairs', gov: true, badge: 'bg-teal-600', card: 'bg-teal-950' },
+  BI: { name: 'Bureau of Immigration', gov: true, badge: 'bg-cyan-600', card: 'bg-cyan-950' },
+  PRA: { name: 'Philippine Retirement Authority', gov: true, badge: 'bg-sky-600', card: 'bg-sky-950' },
+  LTO: { name: 'Land Transportation Office', gov: true, badge: 'bg-blue-600', card: 'bg-blue-950' },
+  SSS: { name: 'Social Security System', gov: true, badge: 'bg-emerald-600', card: 'bg-emerald-950' },
+  GSIS: { name: 'Government Service Insurance System', gov: true, badge: 'bg-green-600', card: 'bg-green-950' },
+  PH: { name: 'PhilHealth', gov: true, badge: 'bg-red-600', card: 'bg-red-950' },
+  HDMF: { name: 'Pag-IBIG Fund', gov: true, badge: 'bg-yellow-600', card: 'bg-yellow-900' },
+  OWWA: { name: 'Overseas Workers Welfare Administration', gov: true, badge: 'bg-violet-600', card: 'bg-violet-950' },
+  BIR: { name: 'Bureau of Internal Revenue', gov: true, badge: 'bg-slate-600', card: 'bg-slate-950' },
+  PRC: { name: 'Professional Regulation Commission', gov: true, badge: 'bg-indigo-600', card: 'bg-indigo-950' },
+  IBP: { name: 'Integrated Bar of the Philippines', gov: false, badge: 'bg-fuchsia-600', card: 'bg-fuchsia-950' },
+  CSC: { name: 'Civil Service Commission', gov: true, badge: 'bg-blue-800', card: 'bg-blue-950' },
+  MARINA: { name: 'Maritime Industry Authority', gov: true, badge: 'bg-cyan-800', card: 'bg-cyan-950' },
+  NBI: { name: 'National Bureau of Investigation', gov: true, badge: 'bg-purple-600', card: 'bg-purple-950' },
+  PNP: { name: 'Philippine National Police', gov: true, badge: 'bg-blue-900', card: 'bg-slate-950' },
+  BRGY: { name: 'Barangay', gov: true, badge: 'bg-lime-600', card: 'bg-lime-950' },
+  BJMP: { name: 'Bureau of Jail Management and Penology', gov: true, badge: 'bg-neutral-600', card: 'bg-neutral-950' },
+  BUCOR: { name: 'Bureau of Corrections', gov: true, badge: 'bg-stone-700', card: 'bg-stone-950' },
+  LGU: { name: 'Local Government Unit', gov: true, badge: 'bg-amber-700', card: 'bg-amber-950' },
+  OSCA: { name: 'Office for Senior Citizens Affairs', gov: true, badge: 'bg-purple-800', card: 'bg-purple-950' },
+  EMP: { name: 'Employer', gov: false, badge: 'bg-neutral-500', card: 'bg-neutral-800' },
+  GOVT: { name: 'Government Agency', gov: true, badge: 'bg-slate-700', card: 'bg-slate-950' },
+  SCH: { name: 'School / University', gov: false, badge: 'bg-yellow-800', card: 'bg-yellow-950' },
+  BANK: { name: 'Bank', gov: false, badge: 'bg-emerald-800', card: 'bg-emerald-950' },
+  UTIL: { name: 'Utility Provider', gov: false, badge: 'bg-rose-600', card: 'bg-rose-950' },
+  RD: { name: 'Registry of Deeds', gov: true, badge: 'bg-orange-800', card: 'bg-stone-950' },
+  NOTARY: { name: 'Notary Public', gov: false, badge: 'bg-zinc-700', card: 'bg-zinc-950' },
+  POST: { name: 'PhilPost', gov: true, badge: 'bg-red-800', card: 'bg-red-950' },
+  COMELEC: { name: 'Commission on Elections', gov: true, badge: 'bg-sky-800', card: 'bg-sky-950' },
+  AFP: { name: 'Armed Forces of the Philippines', gov: true, badge: 'bg-green-800', card: 'bg-green-950' },
+  PCG: { name: 'Philippine Coast Guard', gov: true, badge: 'bg-cyan-700', card: 'bg-slate-950' },
+  PVAO: { name: 'Philippine Veterans Affairs Office', gov: true, badge: 'bg-green-900', card: 'bg-slate-950' },
+  NCIP: { name: 'National Commission on Indigenous Peoples', gov: true, badge: 'bg-amber-900', card: 'bg-stone-950' },
+  NCMF: { name: 'National Commission on Muslim Filipinos', gov: true, badge: 'bg-emerald-900', card: 'bg-slate-950' },
+  CHURCH: { name: 'Church', gov: false, badge: 'bg-purple-900', card: 'bg-stone-950' },
+  PRIVATE: { name: 'Private Individual', gov: false, badge: 'bg-neutral-700', card: 'bg-neutral-950' },
+  FEO: { name: 'PNP Firearms and Explosives Office', gov: true, badge: 'bg-slate-900', card: 'bg-black' },
 }
 
 export const AGENCY_NAMES = Object.fromEntries(Object.entries(AGENCIES).map(([code, a]) => [code, a.name]))
@@ -61,12 +63,12 @@ export const AGENCY_BADGE_COLOR = Object.fromEntries(Object.entries(AGENCIES).ma
 
 // category: one of the 8 featured categories below, or 'other'.
 // schema: optional card-front field list (falls back to a generic one).
-// themeOverride: optional { gradient } for documents whose real-world look
+// themeOverride: optional { card } for documents whose real-world look
 // doesn't match their issuing agency's default color (e.g. a passport's
 // red cover vs. DFA's teal badge).
 const DOC_TYPES = [
   // Civil Registry
-  { id: 'psa_birth_certificate', label: 'PSA Birth Certificate', agency: 'PSA', category: 'civil_registry', themeOverride: { gradient: 'from-amber-600 to-orange-900' },
+  { id: 'psa_birth_certificate', label: 'PSA Birth Certificate', agency: 'PSA', category: 'civil_registry', themeOverride: { card: 'bg-orange-900' },
     schema: [
       { key: 'fullName', label: 'Full Name', span: 2 },
       { key: 'dob', label: 'Date of Birth' },
@@ -175,7 +177,7 @@ const DOC_TYPES = [
   { id: 'vehicle_registration_record', label: 'Vehicle Registration Record', agency: 'LTO', category: 'transportation' },
 
   // Travel & Immigration
-  { id: 'passport', label: 'Passport', agency: 'DFA', category: 'travel', themeOverride: { gradient: 'from-red-900 to-stone-950' },
+  { id: 'passport', label: 'Passport', agency: 'DFA', category: 'travel', themeOverride: { card: 'bg-red-950' },
     schema: [
       { key: 'fullName', label: 'Surname, Given Names', span: 2 },
       { key: 'nationality', label: 'Nationality', default: 'FILIPINO' },
@@ -307,7 +309,7 @@ export const CARD_THEME = Object.fromEntries(
   DOC_TYPES.map((d) => {
     const agency = AGENCIES[d.agency]
     return [d.id, {
-      gradient: d.themeOverride?.gradient || agency.gradient,
+      card: d.themeOverride?.card || agency.card,
       agency: agency.gov ? 'REPUBLIC OF THE PHILIPPINES' : agency.name.toUpperCase(),
       office: agency.gov ? agency.name.toUpperCase() : '',
       docName: d.label.toUpperCase(),
