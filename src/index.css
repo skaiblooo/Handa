@@ -260,17 +260,12 @@ input:-webkit-autofill:active {
   background-image: linear-gradient(115deg, transparent 25%, rgba(255, 255, 255, 0.7) 50%, transparent 75%);
   background-size: 220% 100%;
   background-position: 160% 0;
-  /* background-position is listed here too (not just inside :hover) so the
-     sweep reliably resets when the mouse leaves. Relying on it being
-     absent from this base list to make the browser "snap back instantly"
-     when :hover's own transition drops away is standard CSS behavior in
-     theory, but in practice — combined with a React re-render landing on
-     the element mid-hover (a click opening a modal, a parent list
-     re-rendering while the cursor is still over a row) — that snap-back
-     doesn't reliably fire, and the sweep is left parked wherever it was,
-     reading as permanently smeared across the card. An explicit, fast
-     reverse transition here can't get stranded the same way. */
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, background-position 0.2s ease-out;
+  /* background-position is deliberately left out of this base transition
+     list — leaving hover should snap the sweep back to its resting
+     position instantly, not animate backwards. A visible reverse sweep on
+     mouse-out reads as a second, unwanted animation rather than a clean
+     reset. */
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   /* Browsers draw a rectangular focus ring on <button> even for a plain
      mouse click, which shows as straight leftover edges poking out past a
      rounded card's clipped corners. Mouse clicks don't trigger
@@ -333,27 +328,6 @@ input:-webkit-autofill:active {
 @utility glass-interactive-quick {
   &:hover {
     transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, background-position 0.26s ease-out;
-  }
-}
-
-/* Pair alongside glass-interactive (never instead of it) on a row that
-   spans nearly the full page width — My Orbits department headers,
-   notification rows, the full-width Add Orbit tile. Confirmed by a
-   screen recording: the sweep travels the same 220% of background-size
-   regardless of element width, but a row this wide covers that
-   percentage in far more physical pixels than the ~240px sidebar it was
-   tuned against, so at the same 0.5s duration the light crosses too much
-   ground too fast to read as a glide — it reads as a hard flashlight
-   wipe, and scanning down several rows leaves more than one mid-wipe at
-   once. Slows both directions down (roughly proportional to how much
-   wider these rows are than the sidebar) so the same travel reads as a
-   smooth, deliberate sweep instead of a flash — same gradient, same
-   distance, just given enough time to actually look like it's moving. */
-@utility glass-interactive-wide {
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, background-position 0.45s ease-out;
-
-  &:hover {
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, background-position 1.3s ease-out;
   }
 }
 
