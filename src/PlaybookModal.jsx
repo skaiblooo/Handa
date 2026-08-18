@@ -554,12 +554,12 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
                 key={i}
                 type="button"
                 onClick={() => goToStep(i)}
-                className={`glass-interactive rounded-xl border p-2.5 text-left ${
+                className={`glass-interactive glass-interactive-slow rounded-xl border p-2.5 text-left ${
                   active
                     ? accent === 'emerald'
                       ? t(isDark, 'border-emerald-400/50 bg-emerald-400/5', 'border-emerald-400 bg-emerald-50')
                       : t(isDark, 'border-blue-400/50 bg-blue-400/5', 'border-blue-400 bg-blue-50')
-                    : t(isDark, 'border-white/10 hover:bg-white/5', 'border-slate-200 hover:bg-slate-50')
+                    : t(isDark, 'glass-dark border-white/10', 'glass-light border-slate-200')
                 }`}
               >
                 <span

@@ -704,9 +704,9 @@ function DocTypePicker({ isDark, docTypeIds, onSelect, onBack, onCancel }) {
             key={opt.value}
             type="button"
             onClick={() => onSelect(opt.value)}
-            className={`glass-interactive ${t(isDark,
-              'flex flex-col items-center gap-1.5 p-3 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20',
-              'flex flex-col items-center gap-1.5 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+            className={`glass-interactive glass-interactive-slow ${t(isDark,
+              'glass-dark flex flex-col items-center gap-1.5 p-3 rounded-xl border border-white/10',
+              'glass-light flex flex-col items-center gap-1.5 p-3 rounded-xl border border-slate-200'
             )}`}
           >
             <AgencyBadge docType={opt.value} />
@@ -1899,7 +1899,7 @@ function NotificationsFeed({ isDark, documents, onSelectDoc }) {
               <div
                 key={n.id}
                 onClick={() => onSelectDoc?.(n.doc)}
-                className={`glass-interactive glass-interactive-quick cursor-pointer flex items-center gap-3 rounded-2xl p-3.5 border ${t(isDark, 'border-white/10 hover:bg-white/5', 'border-slate-200 hover:bg-slate-50')}`}
+                className={`glass-interactive glass-interactive-quick cursor-pointer flex items-center gap-3 rounded-2xl p-3.5 border ${t(isDark, 'glass-dark border-white/10', 'glass-light border-slate-200')}`}
                 style={{ animation: 'rise-in 0.4s cubic-bezier(0.16,1,0.3,1) both', animationDelay: `${Math.min(i * 0.04, 0.3)}s` }}
               >
                 <button
@@ -2463,7 +2463,7 @@ function OrbitAccordionItem({ isDark, orbit, isOpen, onToggle, renderContent, de
       <button
         type="button"
         onClick={onToggle}
-        className="glass-interactive glass-interactive-quick w-full flex items-center justify-between gap-3 p-5 text-left"
+        className={`glass-interactive w-full flex items-center justify-between gap-3 p-5 text-left ${t(isDark, 'glass-dark', 'glass-light')}`}
       >
         <div className="flex items-center gap-3 min-w-0">
           <AgencyBubble isDark={isDark} code={orbit.docType} size={40} ring={false} />
