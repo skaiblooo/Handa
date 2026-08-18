@@ -49,6 +49,7 @@ import documentIcon from './assets/document.png'
 import calendarSettingsIcon from './assets/calendar (1).png'
 import historyIcon from './assets/history.png'
 import settingsIcon from './assets/settings.png'
+import brokenImageIcon from './assets/image.png'
 import accountIcon from './assets/account.png'
 import contrastIcon from './assets/contrast.png'
 import languageIcon from './assets/language.png'
@@ -512,8 +513,8 @@ function AddDocumentTile({ isDark, onClick, tileRef, label, fullWidth }) {
       className={`glass-interactive flex items-center justify-center gap-3 rounded-2xl border-2 border-dashed ${
         fullWidth ? 'flex-row py-5' : 'flex-col min-h-[220px]'
       } ${t(isDark,
-        'border-white/15 hover:border-white/30 text-slate-500 hover:text-slate-300',
-        'border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-400 hover:text-slate-600'
+        'glass-dark border-white/15 hover:border-white/30 text-slate-500 hover:text-slate-300',
+        'glass-light border-slate-300 hover:border-slate-400 text-slate-400 hover:text-slate-600'
       )}`}
       style={{ animation: 'rise-in 0.5s cubic-bezier(0.16,1,0.3,1) both' }}
     >
@@ -537,11 +538,8 @@ function IntentPicker({ isDark, onSelect, onCancel }) {
         'relative text-left rounded-2xl glass-light p-5'
       )}
     >
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className={t(isDark, 'font-semibold text-slate-100', 'font-semibold text-slate-900')}>{translate('add_doc_choose_intent')}</h3>
-          <p className={t(isDark, 'text-xs text-slate-400', 'text-xs text-slate-500')}>{translate('add_doc_choose_intent_desc')}</p>
-        </div>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className={t(isDark, 'font-semibold text-slate-100', 'font-semibold text-slate-900')}>{translate('add_doc_choose_intent')}</h3>
         <button
           type="button"
           title={translate('add_doc_cancel')}
@@ -558,30 +556,21 @@ function IntentPicker({ isDark, onSelect, onCancel }) {
         <button
           type="button"
           onClick={() => onSelect('application')}
-          className={`glass-interactive ${t(isDark,
-            'flex flex-col items-center text-center gap-2 p-4 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20',
-            'flex flex-col items-center text-center gap-2 p-4 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
-          )}`}
+          className={`glass-interactive glass-accent flex flex-col items-center text-center gap-2.5 py-6 rounded-xl text-white`}
         >
-          <span className={t(isDark, 'w-9 h-9 rounded-full bg-blue-500/15 text-blue-300 flex items-center justify-center', 'w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center')}>
-            <Icon size={17}><path d="M12 5v14M5 12h14" /></Icon>
-          </span>
-          <span className={t(isDark, 'text-sm font-medium text-slate-100', 'text-sm font-medium text-slate-900')}>{translate('add_doc_intent_application')}</span>
-          <span className={t(isDark, 'text-[11px] text-slate-400 leading-tight', 'text-[11px] text-slate-500 leading-tight')}>{translate('add_doc_intent_application_desc')}</span>
+          <Icon size={26}><path d="M12 5v14M5 12h14" /></Icon>
+          <span className="text-sm font-semibold">{translate('add_doc_intent_application')}</span>
         </button>
         <button
           type="button"
           onClick={() => onSelect('renewal')}
-          className={`glass-interactive ${t(isDark,
-            'flex flex-col items-center text-center gap-2 p-4 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20',
-            'flex flex-col items-center text-center gap-2 p-4 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+          className={`glass-interactive flex flex-col items-center text-center gap-2.5 py-6 rounded-xl ${t(isDark,
+            'glass-dark text-slate-200',
+            'glass-light text-slate-700'
           )}`}
         >
-          <span className={t(isDark, 'w-9 h-9 rounded-full bg-emerald-500/15 text-emerald-300 flex items-center justify-center', 'w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center')}>
-            <Icon size={17}><path d="M3 12a9 9 0 0115.3-6.4M21 12a9 9 0 01-15.3 6.4" /><path d="M21 3v6h-6M3 21v-6h6" /></Icon>
-          </span>
-          <span className={t(isDark, 'text-sm font-medium text-slate-100', 'text-sm font-medium text-slate-900')}>{translate('add_doc_intent_renewal')}</span>
-          <span className={t(isDark, 'text-[11px] text-slate-400 leading-tight', 'text-[11px] text-slate-500 leading-tight')}>{translate('add_doc_intent_renewal_desc')}</span>
+          <Icon size={26}><path d="M3 12a9 9 0 0115.3-6.4M21 12a9 9 0 01-15.3 6.4" /><path d="M21 3v6h-6M3 21v-6h6" /></Icon>
+          <span className="text-sm font-semibold">{translate('add_doc_intent_renewal')}</span>
         </button>
       </div>
     </div>
@@ -618,11 +607,8 @@ function CategoryPicker({ isDark, onSelect, onCancel }) {
         'relative text-left rounded-2xl glass-light p-5'
       )}
     >
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className={t(isDark, 'font-semibold text-slate-100', 'font-semibold text-slate-900')}>{translate('add_doc_choose_type')}</h3>
-          <p className={t(isDark, 'text-xs text-slate-400', 'text-xs text-slate-500')}>{translate('add_doc_choose_type_desc')}</p>
-        </div>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className={t(isDark, 'font-semibold text-slate-100', 'font-semibold text-slate-900')}>{translate('add_doc_choose_type')}</h3>
         <button
           type="button"
           title={translate('add_doc_cancel')}
@@ -1215,8 +1201,8 @@ function AddDocumentCard({ isDark, userId, existingDocs, householdMembers, initi
         ) : (
           <label
             className={`glass-interactive glass-interactive-flat flex items-center justify-center gap-2 rounded-xl border border-dashed p-2.5 text-xs cursor-pointer ${t(isDark,
-              'border-white/15 text-slate-400 hover:text-slate-200',
-              'border-slate-300 text-slate-500 hover:text-slate-700'
+              'glass-dark border-white/15 text-slate-400 hover:text-slate-200',
+              'glass-light border-slate-300 text-slate-500 hover:text-slate-700'
             )}`}
           >
             <Icon size={14}><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" /><circle cx="12" cy="13" r="4" /></Icon>
@@ -1459,9 +1445,12 @@ function NewsThumb({ src, isDark }) {
           onError={() => setBroken(true)}
         />
       ) : (
-        <span className={t(isDark, 'text-slate-600', 'text-slate-300')}>
-          <Icon size={28}><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></Icon>
-        </span>
+        <img
+          src={brokenImageIcon}
+          alt=""
+          className="w-7 h-7 object-contain"
+          style={{ filter: isDark ? 'invert(1) brightness(1.3) opacity(0.6)' : 'brightness(0) opacity(0.35)' }}
+        />
       )}
     </div>
   )
@@ -1519,9 +1508,6 @@ function NewsPanel({ isDark }) {
     // default) instead of growing past it — extra articles page through
     // the fixed-height carousel below rather than pushing the panel taller.
     <div className={`h-full flex flex-col rounded-2xl p-5 ${t(isDark, 'glass-dark', 'glass-light')}`} style={{ animation: 'rise-in 0.6s cubic-bezier(0.16,1,0.3,1) 0.8s both' }}>
-      <p className={`text-xs font-semibold tracking-widest uppercase mb-4 shrink-0 ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>
-        {translate('news_panel_heading')}
-      </p>
       {articles === null ? (
         <p className={`text-sm ${t(isDark, 'text-slate-500', 'text-slate-400')}`}>{translate('news_panel_loading')}</p>
       ) : articles.length === 0 ? (
@@ -1560,19 +1546,17 @@ function NewsPanel({ isDark }) {
                   type="button"
                   onClick={() => goTo((activeIndex - 1 + articleCount) % articleCount)}
                   aria-label={translate('news_panel_prev')}
-                  className="glass-interactive absolute left-1.5 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center text-white/80 hover:text-white"
-                  style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.6))' }}
+                  className={`glass-interactive absolute left-1.5 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center text-white/80 hover:text-white ${t(isDark, 'glass-dark', 'glass-light')}`}
                 >
-                  <Icon size={22}><path d="M15 18l-6-6 6-6" /></Icon>
+                  <Icon size={18}><path d="M15 18l-6-6 6-6" /></Icon>
                 </button>
                 <button
                   type="button"
                   onClick={() => goTo((activeIndex + 1) % articleCount)}
                   aria-label={translate('news_panel_next')}
-                  className="glass-interactive absolute right-1.5 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center text-white/80 hover:text-white"
-                  style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.6))' }}
+                  className={`glass-interactive absolute right-1.5 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center text-white/80 hover:text-white ${t(isDark, 'glass-dark', 'glass-light')}`}
                 >
-                  <Icon size={22}><path d="M9 18l6-6-6-6" /></Icon>
+                  <Icon size={18}><path d="M9 18l6-6-6-6" /></Icon>
                 </button>
               </>
             )}
@@ -2405,8 +2389,8 @@ function HouseholdPanel({ isDark, userId, members, onRefresh }) {
             type="button"
             onClick={() => setAdding(true)}
             className={`glass-interactive glass-interactive-flat w-full flex items-center justify-center gap-2 rounded-xl border border-dashed p-3 text-sm ${t(isDark,
-              'border-white/15 text-slate-400 hover:text-slate-200',
-              'border-slate-300 text-slate-500 hover:text-slate-700'
+              'glass-dark border-white/15 text-slate-400 hover:text-slate-200',
+              'glass-light border-slate-300 text-slate-500 hover:text-slate-700'
             )}`}
           >
             <Icon size={14}><path d="M12 5v14M5 12h14" /></Icon>
@@ -4221,7 +4205,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                 </div>
               </div>
               {/* Full page width here, not squeezed into either column above. */}
-              {progressDocs.length > 0 && (
+              {progressDocs.length > 0 ? (
                 <div className="mt-10">
                   <p className={`text-xs font-semibold tracking-widest uppercase mb-4 ${t(isDark, 'text-slate-400', 'text-slate-500')}`}>
                     {translate('dashboard_progress_heading')}
@@ -4237,6 +4221,14 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                       />
                     ))}
                   </div>
+                </div>
+              ) : (
+                // Otherwise this whole area below the chart just sits empty,
+                // which for a brand new account with nothing tracked yet
+                // reads as "nothing here" rather than pointing at the one
+                // thing they should do next.
+                <div className="mt-10">
+                  <AddDocumentTile isDark={isDark} onClick={() => openAddDocument()} label={translate('add_orbit')} fullWidth />
                 </div>
               )}
             </div>

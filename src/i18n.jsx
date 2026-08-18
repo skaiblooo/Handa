@@ -9,7 +9,7 @@ export const translations = {
     // Nav
     nav_dashboard: 'My Space',
     nav_my_documents: 'My Orbits',
-    nav_reminders: 'Notifications',
+    nav_reminders: 'Notifs',
     nav_requirements: 'Documents',
     nav_appointments: 'Calendar',
     nav_history: 'History',
