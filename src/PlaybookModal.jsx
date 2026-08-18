@@ -144,6 +144,7 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
   const [viewingPhoto, setViewingPhoto] = useState(false)
   const [photoBusy, setPhotoBusy] = useState(false)
   const [photoErrorKey, setPhotoErrorKey] = useState(null)
+  const [shareCopied, setShareCopied] = useState(false)
   // Finishing the checklist doesn't, by itself, mean the physical document
   // is in hand yet — this is a separate, explicit "I actually got it" step
   // that rolls the document forward to its next cycle instead of leaving a
@@ -281,6 +282,56 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
   }
 
   const docLabel = activeDocType ? activeDocType.replace(/_/g, ' ').toUpperCase() : ''
+
+  // Plain text, not HTML/markdown — this is what both the share sheet and
+  // the clipboard fallback send, and neither renders formatting.
+  function buildShareText() {
+    const lines = [`${docLabel} — ${activePlaybook.title}`, '']
+    if (activePlaybook.requirements?.length > 0) {
+      lines.push(translate('playbook_requirements_heading'))
+      activePlaybook.requirements.forEach((r) => lines.push(`- ${r}`))
+      lines.push('')
+    }
+    lines.push(translate('playbook_all_steps'))
+    activePlaybook.steps.forEach((s, i) => {
+      const mark = completedSteps.includes(i) ? '[x]' : '[ ]'
+      lines.push(`${i + 1}. ${mark} ${s.title} — ${s.description}`)
+    })
+    lines.push('')
+    lines.push(`${translate('playbook_estimated_cost')}: ${activePlaybook.estimatedCost}`)
+    lines.push(`${translate('playbook_estimated_time')}: ${activePlaybook.estimatedTime}`)
+    if (activePlaybook.officialSite) {
+      lines.push(`${translate('playbook_official_site')}: ${activePlaybook.officialSite.url}`)
+    }
+    return lines.join('\n')
+  }
+
+  function handlePrint() {
+    window.print()
+  }
+
+  async function handleShare() {
+    const text = buildShareText()
+    const title = `${docLabel} — ${activePlaybook.title}`
+    // navigator.share only exists behind a user gesture and mostly on
+    // mobile/some desktop browsers — everywhere else falls back to putting
+    // the same text on the clipboard instead of just failing silently.
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text })
+      } catch {
+        // AbortError from the user dismissing the share sheet — not an error
+      }
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(text)
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 2000)
+    } catch {
+      // Clipboard API unavailable (e.g. insecure context) — nothing more we can do
+    }
+  }
 
   async function viewPhoto() {
     setViewingPhoto(true)
@@ -431,6 +482,26 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
                 />
               </label>
             )}
+            <button
+              type="button"
+              title={translate('playbook_print')}
+              onClick={handlePrint}
+              className={`glass-interactive glass-interactive-flat p-1.5 rounded-full ${t(isDark, 'text-slate-400 hover:text-slate-100', 'text-slate-500 hover:text-slate-900')}`}
+            >
+              <Icon size={15}><path d="M6 9V2h12v7" /><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" /><path d="M6 14h12v8H6z" /></Icon>
+            </button>
+            <button
+              type="button"
+              title={shareCopied ? translate('playbook_share_copied') : translate('playbook_share')}
+              onClick={handleShare}
+              className={`glass-interactive glass-interactive-flat p-1.5 rounded-full ${shareCopied ? 'text-emerald-400' : t(isDark, 'text-slate-400 hover:text-slate-100', 'text-slate-500 hover:text-slate-900')}`}
+            >
+              {shareCopied ? (
+                <Icon size={15}><path d="M20 6L9 17l-5-5" /></Icon>
+              ) : (
+                <Icon size={15}><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49" /></Icon>
+              )}
+            </button>
             <button onClick={onClose} className={t(isDark, 'text-slate-500 hover:text-slate-100 text-xl leading-none ml-1', 'text-slate-400 hover:text-slate-900 text-xl leading-none ml-1')}>&times;</button>
           </div>
         </div>
@@ -794,6 +865,45 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
                   </button>
                 </div>
               )}
+            </>
+          )}
+        </div>
+
+        {/* Only ever visible via @media print (src/index.css's .print-area
+            rule) — a full, un-paginated checklist for someone printing it
+            to bring to a government office, since the on-screen view only
+            ever shows one step at a time. */}
+        <div className="hidden print:block print-area text-black">
+          <h1 className="text-xl font-semibold mb-1">{docLabel} — {activePlaybook.title}</h1>
+          <p className="text-xs text-gray-600 mb-4">{translate('playbook_last_verified', { date: activePlaybook.lastVerified })}</p>
+
+          {activePlaybook.requirements?.length > 0 && (
+            <>
+              <h2 className="text-xs font-semibold tracking-widest uppercase mb-1.5 mt-4">{translate('playbook_requirements_heading')}</h2>
+              <ul className="list-disc pl-5 text-sm mb-2">
+                {activePlaybook.requirements.map((r, i) => <li key={i}>{r}</li>)}
+              </ul>
+            </>
+          )}
+
+          <h2 className="text-xs font-semibold tracking-widest uppercase mb-1.5 mt-4">{translate('playbook_all_steps')}</h2>
+          <ol className="text-sm space-y-2">
+            {activePlaybook.steps.map((s, i) => (
+              <li key={i}>
+                <span className="font-semibold">{completedSteps.includes(i) ? '[x]' : '[ ]'} {i + 1}. {s.title}</span>
+                <span> — {s.description}</span>
+              </li>
+            ))}
+          </ol>
+
+          <h2 className="text-xs font-semibold tracking-widest uppercase mb-1.5 mt-4">{translate('playbook_estimated_cost')}</h2>
+          <p className="text-sm mb-2">{activePlaybook.estimatedCost}</p>
+          <h2 className="text-xs font-semibold tracking-widest uppercase mb-1.5 mt-4">{translate('playbook_estimated_time')}</h2>
+          <p className="text-sm mb-2">{activePlaybook.estimatedTime}</p>
+          {activePlaybook.officialSite && (
+            <>
+              <h2 className="text-xs font-semibold tracking-widest uppercase mb-1.5 mt-4">{translate('playbook_official_site')}</h2>
+              <p className="text-sm">{activePlaybook.officialSite.name} — {activePlaybook.officialSite.url}</p>
             </>
           )}
         </div>

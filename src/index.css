@@ -638,3 +638,24 @@ input:-webkit-autofill:active {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Printing a document's checklist (PlaybookModal's print button) needs to
+   suppress the entire rest of the app — the modal backdrop, sidebar, glass
+   surfaces — none of which mean anything on paper. Rather than teach every
+   component to hide itself for print, the modal renders one dedicated
+   .print-area node (hidden on screen) and this makes it the only thing
+   visible when printing, regardless of where in the DOM it sits. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    inset: 0;
+    padding: 24px;
+  }
+}
