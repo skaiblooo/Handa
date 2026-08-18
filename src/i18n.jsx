@@ -81,6 +81,10 @@ export const translations = {
     guest_banner_text: "You're trying Orbit as a guest.",
     guest_banner_cta: 'Save my account',
     guest_leave_warning: "You'll lose everything you just added if you leave without an account.",
+
+    // Offline fallback
+    offline_banner_text: "You're offline — showing data from {time}.",
+    offline_banner_retry: 'Retry',
     guest_logout_title: "You're about to lose your data",
     guest_logout_desc: "You're using Orbit as a guest. Logging out now will erase everything you just tracked, since it was never saved to an account.",
     guest_logout_cancel: 'Stay and save my account',
@@ -467,6 +471,10 @@ export const translations = {
     guest_banner_text: 'Sinusubukan mo ang Orbit bilang guest.',
     guest_banner_cta: 'I-save ang account ko',
     guest_leave_warning: 'Mawawala lahat ng idinagdag mo kung aalis ka nang walang account.',
+
+    // Offline fallback
+    offline_banner_text: 'Offline ka ngayon — ipinapakita ang datos mula {time}.',
+    offline_banner_retry: 'Subukan ulit',
     guest_logout_title: 'Mawawala ang data mo',
     guest_logout_desc: 'Gumagamit ka ng Orbit bilang guest. Kapag nag-log out ka ngayon, mabubura lahat ng na-track mo dahil hindi pa ito naka-save sa isang account.',
     guest_logout_cancel: 'Manatili at i-save ang account ko',

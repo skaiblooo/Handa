@@ -2490,6 +2490,10 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
   const [documents, setDocuments] = useState([])
   const [householdMembers, setHouseholdMembers] = useState([])
   const [loading, setLoading] = useState(true)
+  // Set only when documents came from the offline cache fallback, not a
+  // live fetch — { cachedAt } drives the "you're offline" banner so
+  // cached data never gets mistaken for current.
+  const [offlineCacheInfo, setOfflineCacheInfo] = useState(null)
   const [activityLog, setActivityLog] = useState(() => getActivityLog(session.user.id))
   function logAction(text, type) {
     logActivity(session.user.id, text, type)
@@ -2839,20 +2843,54 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
     return () => clearTimeout(timer)
   }, [showNotifDropdown])
 
+  const documentsCacheKey = `orbit_documents_cache_${session.user.id}`
+
   async function fetchDocuments(options = {}) {
     if (!options.silent) setLoading(true)
-    const { data, error } = await supabase
-      .from('documents')
-      .select('*')
-      .order('expiry_date', { ascending: true })
+    let data, error
+    try {
+      // Without a hard deadline, an unreachable network can leave this
+      // request pending indefinitely (Supabase's own retry/auth-refresh
+      // logic doesn't give up on its own) — someone offline would be stuck
+      // on the loading spinner forever instead of ever reaching the cache
+      // fallback below.
+      ;({ data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .order('expiry_date', { ascending: true })
+        .abortSignal(AbortSignal.timeout(8000)))
+    } catch (err) {
+      error = err
+    }
 
     if (error) {
       console.error('Error fetching documents:', error)
+      // Likely offline (or Supabase unreachable) rather than a real
+      // failure — fall back to whatever was last successfully fetched so
+      // someone standing in a government office with no signal can still
+      // read an expiry date or ID number, instead of an empty screen.
+      // Household members aren't cached the same way: the data someone
+      // actually needs offline lives on the document itself.
+      try {
+        const cached = JSON.parse(localStorage.getItem(documentsCacheKey) || 'null')
+        if (cached?.documents) {
+          setDocuments(cached.documents)
+          setOfflineCacheInfo({ cachedAt: cached.cachedAt })
+        }
+      } catch {
+        // no usable cache either — leave documents as whatever it was
+      }
       if (!options.silent) setLoading(false)
       return
     }
 
     setDocuments(data)
+    setOfflineCacheInfo(null)
+    try {
+      localStorage.setItem(documentsCacheKey, JSON.stringify({ documents: data, cachedAt: new Date().toISOString() }))
+    } catch {
+      // best-effort — quota exceeded or private browsing just means no offline fallback next time
+    }
     if (!options.silent) setLoading(false)
     return data
   }
@@ -3701,6 +3739,22 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
               className="glass-accent glass-interactive shrink-0 text-xs font-semibold text-white px-3 py-1.5 rounded-lg"
             >
               {translate('guest_banner_cta')}
+            </button>
+          </div>
+        )}
+        {offlineCacheInfo && (
+          <div
+            className="shrink-0 flex items-center justify-between gap-3 rounded-xl px-4 py-2.5 text-sm backdrop-blur-xl backdrop-saturate-150"
+            style={{ backgroundColor: 'color-mix(in srgb, var(--accent-500) 15%, transparent)', border: '1px solid color-mix(in srgb, var(--accent-500) 30%, transparent)' }}
+          >
+            <span className={t(isDark, 'text-slate-300', 'text-slate-700')}>
+              {translate('offline_banner_text').replace('{time}', formatTimeAgo(offlineCacheInfo.cachedAt))}
+            </span>
+            <button
+              onClick={() => fetchDocuments()}
+              className="glass-accent glass-interactive shrink-0 text-xs font-semibold text-white px-3 py-1.5 rounded-lg"
+            >
+              {translate('offline_banner_retry')}
             </button>
           </div>
         )}

@@ -1,20 +1,61 @@
-// Minimal service worker: exists to satisfy the browser's installability
-// criteria (Chrome requires a registered fetch handler before it'll offer
-// "Add to Home Screen") and because iOS requires one in place before push
-// notifications can work there at all. No offline caching here on purpose —
-// this app's data changes too often for a cache strategy to be worth the
-// invalidation complexity that comes with it.
+// Caches the app shell (the HTML/JS/CSS Vite builds, not any document data —
+// that's the user's actual government-document records, which this worker
+// never touches; Dashboard.jsx handles that itself with a localStorage
+// fallback). Bump CACHE_VERSION on any change to what/how this worker
+// caches, so the activate handler drops the old cache instead of a stale
+// shell lingering forever.
+const CACHE_VERSION = 'orbit-shell-v1'
+
 self.addEventListener('install', () => {
   self.skipWaiting()
 })
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim())
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_VERSION).map((key) => caches.delete(key))))
+      .then(() => self.clients.claim())
+  )
 })
 
-self.addEventListener('fetch', () => {
-  // Plain network passthrough — no caching. Exists purely so the browser
-  // recognizes this as a real service worker for install-prompt purposes.
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url)
+  // Cross-origin requests (Supabase REST/auth, Google Fonts, etc.) are never
+  // intercepted — they carry per-user auth and change far too often for a
+  // cache to be anything but wrong.
+  if (url.origin !== self.location.origin) return
+  if (event.request.method !== 'GET') return
+
+  if (event.request.mode === 'navigate') {
+    // Network-first: always prefer the live page when one's reachable, and
+    // only fall back to the cached shell when the network fails outright —
+    // i.e. actually offline, not just "cache exists."
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone()
+          caches.open(CACHE_VERSION).then((cache) => cache.put(event.request, copy))
+          return response
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/')))
+    )
+    return
+  }
+
+  // Same-origin static assets (Vite's content-hashed JS/CSS/images): the
+  // hash in the filename means a cached copy is never stale, so cache-first
+  // is safe and skips the network round-trip entirely on repeat visits.
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached
+      return fetch(event.request).then((response) => {
+        const copy = response.clone()
+        caches.open(CACHE_VERSION).then((cache) => cache.put(event.request, copy))
+        return response
+      })
+    })
+  )
 })
 
 self.addEventListener('push', (event) => {
