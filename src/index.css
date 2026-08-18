@@ -331,6 +331,13 @@ input:-webkit-autofill:active {
   }
 }
 
+/* Pair alongside glass-interactive (never instead of it) to keep the
+   lift/shadow/color hover feedback but drop the sweep entirely — the
+   Notifs list, My Orbits department rows, and the Add Orbit tile. */
+@utility glass-interactive-no-sweep {
+  background-image: none;
+}
+
 /* Pair alongside glass-interactive on a plain menu row (search suggestions,
    dropdown items) that sits inside a surface that is already glass —
    glass-interactive's hover box-shadow includes a bright inset top edge

@@ -510,7 +510,7 @@ function AddDocumentTile({ isDark, onClick, tileRef, label, fullWidth }) {
       type="button"
       onClick={onClick}
       onMouseDown={(e) => e.stopPropagation()}
-      className={`glass-interactive glass-interactive-slow flex items-center justify-center gap-3 rounded-2xl border-2 border-dashed ${
+      className={`glass-interactive glass-interactive-slow ${fullWidth ? 'glass-interactive-no-sweep' : ''} flex items-center justify-center gap-3 rounded-2xl border-2 border-dashed ${
         fullWidth ? 'flex-row py-5' : 'flex-col min-h-[220px]'
       } ${t(isDark,
         'glass-dark border-white/15 hover:border-white/30 text-slate-500 hover:text-slate-300',
@@ -1899,7 +1899,7 @@ function NotificationsFeed({ isDark, documents, onSelectDoc }) {
               <div
                 key={n.id}
                 onClick={() => onSelectDoc?.(n.doc)}
-                className={`glass-interactive glass-interactive-quick cursor-pointer flex items-center gap-3 rounded-2xl p-3.5 border ${t(isDark, 'glass-dark border-white/10', 'glass-light border-slate-200')}`}
+                className={`glass-interactive glass-interactive-quick glass-interactive-no-sweep cursor-pointer flex items-center gap-3 rounded-2xl p-3.5 border ${t(isDark, 'glass-dark border-white/10', 'glass-light border-slate-200')}`}
                 style={{ animation: 'rise-in 0.4s cubic-bezier(0.16,1,0.3,1) both', animationDelay: `${Math.min(i * 0.04, 0.3)}s` }}
               >
                 <button
@@ -2463,7 +2463,7 @@ function OrbitAccordionItem({ isDark, orbit, isOpen, onToggle, renderContent, de
       <button
         type="button"
         onClick={onToggle}
-        className={`glass-interactive w-full flex items-center justify-between gap-3 p-5 text-left ${t(isDark, 'glass-dark', 'glass-light')}`}
+        className={`glass-interactive glass-interactive-no-sweep w-full flex items-center justify-between gap-3 p-5 text-left ${t(isDark, 'glass-dark', 'glass-light')}`}
       >
         <div className="flex items-center gap-3 min-w-0">
           <AgencyBubble isDark={isDark} code={orbit.docType} size={40} ring={false} />
