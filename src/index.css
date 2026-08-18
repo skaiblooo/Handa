@@ -355,6 +355,68 @@ input:-webkit-autofill:active {
   transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, background-position 0.5s ease-out;
 }
 
+/* A liquid-glass range input — the browser's own default slider is a flat,
+   solid-color bar that looks out of place next to everything else's glass
+   treatment. Track color is set by the paired -dark/-light utility so it
+   reads correctly against either theme's page background; the thumb picks
+   up the user's own accent color the same way avatars and buttons do. */
+@utility glass-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  outline: none;
+  background: transparent;
+
+  &::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 999px;
+  }
+  &::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+  }
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    margin-top: -6px;
+    border-radius: 50%;
+    background-color: color-mix(in srgb, var(--accent-500, #3b82f6) 85%, white 15%);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 2px 6px -1px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+  }
+  &::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: color-mix(in srgb, var(--accent-500, #3b82f6) 85%, white 15%);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 2px 6px -1px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+  }
+}
+
+@utility glass-range-dark {
+  &::-webkit-slider-runnable-track {
+    background-color: rgba(255, 255, 255, 0.14);
+  }
+  &::-moz-range-track {
+    background-color: rgba(255, 255, 255, 0.14);
+  }
+}
+
+@utility glass-range-light {
+  &::-webkit-slider-runnable-track {
+    background-color: rgba(15, 23, 42, 0.14);
+  }
+  &::-moz-range-track {
+    background-color: rgba(15, 23, 42, 0.14);
+  }
+}
+
 @keyframes dropdown-in {
   from {
     opacity: 0;

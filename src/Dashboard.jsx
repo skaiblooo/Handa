@@ -49,6 +49,12 @@ import documentIcon from './assets/document.png'
 import calendarSettingsIcon from './assets/calendar (1).png'
 import historyIcon from './assets/history.png'
 import settingsIcon from './assets/settings.png'
+import accountIcon from './assets/account.png'
+import contrastIcon from './assets/contrast.png'
+import languageIcon from './assets/language.png'
+import householdIcon from './assets/household.png'
+import shieldIcon from './assets/shield.png'
+import logoutIcon from './assets/logout.png'
 import bookmarkIcon from './assets/bookmark.png'
 import trashIcon from './assets/trash.png'
 
@@ -374,54 +380,24 @@ export const NAV_ITEMS = [
   { id: 'history', labelKey: 'nav_history', iconSrc: historyIcon },
 ]
 
-const PROFILE_ICON = <><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></>
-
 const SETTINGS_NAV = [
   {
     sectionKey: 'settings_section_general',
     items: [
       { id: 'general', labelKey: 'settings_tab_general', iconSrc: settingsIcon },
-      { id: 'account', labelKey: 'settings_tab_account', icon: PROFILE_ICON },
+      { id: 'account', labelKey: 'settings_tab_account', iconSrc: accountIcon },
     ],
   },
   {
     sectionKey: 'settings_section_system',
     items: [
-      {
-        id: 'theme',
-        labelKey: 'settings_tab_theme',
-        icon: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></>,
-      },
-      {
-        id: 'notifications',
-        labelKey: 'settings_tab_notifications',
-        iconSrc: notificationIcon,
-      },
-      {
-        id: 'linked_documents',
-        labelKey: 'settings_tab_linked_documents',
-        iconSrc: documentIcon,
-      },
-      {
-        id: 'language',
-        labelKey: 'settings_tab_language',
-        icon: <><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15 15 0 010 20 15 15 0 010-20z" /></>,
-      },
-      {
-        id: 'calendar',
-        labelKey: 'settings_tab_calendar',
-        iconSrc: calendarSettingsIcon,
-      },
-      {
-        id: 'household',
-        labelKey: 'settings_tab_household',
-        icon: <><circle cx="9" cy="7" r="4" /><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6" /><circle cx="17" cy="7" r="3" /><path d="M22 21c0-2.8-1.8-5-4.5-5.7" /></>,
-      },
-      {
-        id: 'data',
-        labelKey: 'settings_tab_data_privacy',
-        icon: <path d="M12 2L4 6v6c0 5.5 3.8 9 8 10 4.2-1 8-4.5 8-10V6l-8-4z" />,
-      },
+      { id: 'theme', labelKey: 'settings_tab_theme', iconSrc: contrastIcon },
+      { id: 'notifications', labelKey: 'settings_tab_notifications', iconSrc: notificationIcon },
+      { id: 'linked_documents', labelKey: 'settings_tab_linked_documents', iconSrc: documentIcon },
+      { id: 'language', labelKey: 'settings_tab_language', iconSrc: languageIcon },
+      { id: 'calendar', labelKey: 'settings_tab_calendar', iconSrc: calendarSettingsIcon },
+      { id: 'household', labelKey: 'settings_tab_household', iconSrc: householdIcon },
+      { id: 'data', labelKey: 'settings_tab_data_privacy', iconSrc: shieldIcon },
     ],
   },
 ]
@@ -1678,8 +1654,8 @@ function ToggleSwitch({ isDark, checked, onChange, disabled = false }) {
       aria-checked={checked}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative w-10 h-6 rounded-full shrink-0 transition-colors duration-75 disabled:opacity-40 disabled:cursor-not-allowed ${
-        checked ? 'bg-blue-500' : t(isDark, 'bg-white/10', 'bg-slate-200')
+      className={`glass-interactive relative w-10 h-6 rounded-full shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${
+        checked ? 'glass-accent' : t(isDark, 'glass-dark', 'glass-light')
       }`}
     >
       <span
@@ -1691,54 +1667,60 @@ function ToggleSwitch({ isDark, checked, onChange, disabled = false }) {
   )
 }
 
-function SettingsPanelHeader({ isDark, title, description }) {
+// No description line under the title — every settings tab already says
+// what it is via its own label and contents, so a repeated caption under
+// each one was just extra text to read past on the way to the controls.
+function SettingsPanelHeader({ isDark, title }) {
   return (
     <div className="mb-8">
-      <h1 className={t(isDark, 'font-instrument text-3xl text-slate-100 mb-2', 'font-instrument text-3xl text-slate-900 mb-2')}>{title}</h1>
-      <p className={t(isDark, 'text-sm text-slate-400', 'text-sm text-slate-500')}>{description}</p>
+      <h1 className={t(isDark, 'font-instrument text-3xl text-slate-100', 'font-instrument text-3xl text-slate-900')}>{title}</h1>
+    </div>
+  )
+}
+
+// A miniature of Orbit's own dashboard chrome (sidebar rail, search pill,
+// welcome header + chart, stat cards) rather than a generic wireframe, so
+// picking a theme previews what this app actually looks like in it.
+const THEME_MOCKUP_PALETTES = {
+  light: { bg: '#f4f7fb', sidebar: '#ffffff', card: '#ffffff', line: '#cbd5e1', accent: '#64748b', border: '#e5e7eb' },
+  dark: { bg: '#050505', sidebar: '#101014', card: '#1a1a1f', line: '#3f3f46', accent: '#71717a', border: '#000000' },
+}
+
+function ThemeMockupMini({ p }) {
+  return (
+    <div className="w-full h-full flex" style={{ backgroundColor: p.bg }}>
+      <div className="w-[22%] h-full flex flex-col gap-1 py-1.5 px-1" style={{ backgroundColor: p.sidebar }}>
+        {[0, 1, 2].map((i) => (
+          <span key={i} className="h-1.5 rounded-sm block" style={{ backgroundColor: i === 0 ? p.accent : p.line, opacity: i === 0 ? 1 : 0.6 }} />
+        ))}
+      </div>
+      <div className="flex-1 min-w-0 p-1.5 flex flex-col gap-1.5">
+        <span className="h-1.5 w-2/5 rounded-full block" style={{ backgroundColor: p.line }} />
+        <div className="flex-1 flex gap-1.5">
+          <div className="flex-1 rounded-sm" style={{ backgroundColor: p.card }} />
+          <div className="w-[26%] flex flex-col gap-1">
+            <div className="flex-1 rounded-sm" style={{ backgroundColor: p.card }} />
+            <div className="flex-1 rounded-sm" style={{ backgroundColor: p.card }} />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
 
 function ThemeMockupCard({ variant }) {
-  const palettes = {
-    light: { bar: '#e5e7eb', card: '#ffffff', line: '#d1d5db', content: '#9ca3af', border: '#e5e7eb' },
-    dark: { bar: '#27272a', card: '#3f3f46', line: '#71717a', content: '#a1a1aa', border: '#000000' },
-  }
   if (variant === 'system') {
     return (
       <div className="w-full h-20 rounded-lg overflow-hidden border border-black/10 flex">
-        {['light', 'dark'].map((half) => {
-          const p = palettes[half]
-          return (
-            <div key={half} className="w-1/2 h-full" style={{ backgroundColor: p.card }}>
-              <div className="h-3" style={{ backgroundColor: p.bar }} />
-              <div className="p-1.5 flex flex-col gap-1">
-                <span className="h-1 w-3/4 rounded-full block" style={{ backgroundColor: p.line }} />
-                <span className="h-1 w-1/2 rounded-full block" style={{ backgroundColor: p.line }} />
-              </div>
-            </div>
-          )
-        })}
+        <div className="w-1/2 h-full"><ThemeMockupMini p={THEME_MOCKUP_PALETTES.light} /></div>
+        <div className="w-1/2 h-full"><ThemeMockupMini p={THEME_MOCKUP_PALETTES.dark} /></div>
       </div>
     )
   }
-  const p = palettes[variant]
+  const p = THEME_MOCKUP_PALETTES[variant]
   return (
-    <div className="w-full h-20 rounded-lg overflow-hidden border" style={{ backgroundColor: p.card, borderColor: p.border }}>
-      <div className="h-3 flex items-center gap-1 px-2" style={{ backgroundColor: p.bar }}>
-        <span className="w-4 h-1 rounded-full" style={{ backgroundColor: p.line }} />
-        <span className="w-2 h-1 rounded-full ml-auto" style={{ backgroundColor: p.line }} />
-        <span className="w-2 h-1 rounded-full" style={{ backgroundColor: p.line }} />
-      </div>
-      <div className="flex gap-1.5 p-1.5">
-        <div className="w-1/3 flex flex-col gap-1 pt-0.5">
-          <span className="h-1 rounded-full block" style={{ backgroundColor: p.line }} />
-          <span className="h-1 rounded-full block" style={{ backgroundColor: p.line }} />
-          <span className="h-1 rounded-full block" style={{ backgroundColor: p.line }} />
-        </div>
-        <div className="flex-1 rounded h-10" style={{ backgroundColor: p.content }} />
-      </div>
+    <div className="w-full h-20 rounded-lg overflow-hidden border" style={{ borderColor: p.border }}>
+      <ThemeMockupMini p={p} />
     </div>
   )
 }
@@ -3713,7 +3695,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
             className={`glass-interactive flex items-center rounded-xl text-sm text-left ${sidebarOpen ? 'gap-3 py-2 px-2 whitespace-nowrap' : 'flex-col gap-0.5 py-2 px-1 justify-center text-center'} ${t(isDark, 'text-slate-400 hover:bg-white/5 hover:text-red-300', 'text-slate-500 hover:bg-slate-50 hover:text-red-500')}`}
           >
             <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0">
-              <Icon size={15}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /></Icon>
+              <img src={logoutIcon} alt="" className="w-[15px] h-[15px] object-contain" style={{ filter: isDark ? 'invert(1) brightness(1.3)' : 'brightness(0) opacity(0.6)' }} />
             </span>
             {sidebarOpen ? (
               translate('nav_logout')
@@ -4114,7 +4096,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                     onClick={() => { setShowSettings(true); setSettingsTab('account'); setShowUserDropdown(false) }}
                     className={`glass-interactive glass-interactive-flat w-full flex items-center gap-2.5 text-left px-3 py-2 rounded-lg text-sm ${t(isDark, 'text-slate-300 hover:bg-white/5', 'text-slate-600 hover:bg-slate-50')}`}
                   >
-                    <Icon size={15}>{PROFILE_ICON}</Icon>
+                    <img src={accountIcon} alt="" className="w-[15px] h-[15px] object-contain" style={{ filter: isDark ? 'invert(1) brightness(1.3)' : 'brightness(0) opacity(0.6)' }} />
                     {translate('settings_tab_account')}
                   </button>
                   <button
@@ -4132,7 +4114,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
                     onClick={() => { setConfirmLogout(true); setShowUserDropdown(false) }}
                     className={`glass-interactive glass-interactive-flat w-full flex items-center gap-2.5 text-left px-3 py-2 rounded-lg text-sm ${t(isDark, 'text-red-300 hover:bg-white/5', 'text-red-500 hover:bg-slate-50')}`}
                   >
-                    <Icon size={15}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /></Icon>
+                    <img src={logoutIcon} alt="" className="w-[15px] h-[15px] object-contain" style={{ filter: isDark ? 'invert(1) brightness(1.3)' : 'brightness(0) opacity(0.6)' }} />
                     {translate('nav_logout')}
                   </button>
                 </div>

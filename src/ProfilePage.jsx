@@ -2,11 +2,13 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabaseClient'
 import { useLanguage } from './i18n'
 import { AVATAR_COLORS } from './avatarColors'
-import emailIconSrc from './assets/email.png'
-import lockIconSrc from './assets/lock.png'
+import emailIconSrc from './assets/mail.png'
+import lockIconSrc from './assets/password.png'
 import phoneIconSrc from './assets/phone.png'
 import locationIconSrc from './assets/location.png'
-import shieldIconSrc from './assets/insurance.png'
+import shieldIconSrc from './assets/two factor.png'
+import zoomInIconSrc from './assets/zoom-in.png'
+import zoomOutIconSrc from './assets/zoom-out.png'
 
 function t(isDark, darkClasses, lightClasses) {
   return isDark ? darkClasses : lightClasses
@@ -374,26 +376,6 @@ function MobileRow({ isDark, editing, countryCode, onCountryChange, value, onCha
   )
 }
 
-function ToggleSwitch({ isDark, checked, onChange }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`relative w-10 h-6 rounded-full shrink-0 transition-colors duration-75 ${
-        checked ? 'bg-blue-500' : t(isDark, 'bg-white/10', 'bg-slate-200')
-      }`}
-    >
-      <span
-        className={`absolute left-0.5 top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-150 ${
-          checked ? 'translate-x-4' : 'translate-x-0'
-        }`}
-      />
-    </button>
-  )
-}
-
 // Keeps content mounted a beat past collapse so it fades out instead of
 // vanishing the instant the row closes — same trick used for the "My
 // Orbits" accordion in Dashboard.jsx.
@@ -420,7 +402,7 @@ function ExpandableRow({ isDark, iconSrc, title, subtitle, open, onToggle, child
       <button
         type="button"
         onClick={onToggle}
-        className={`glass-interactive glass-interactive-quick ${t(isDark,
+        className={`glass-interactive ${t(isDark,
           'w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-white/5',
           'w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-slate-50'
         )}`}
@@ -726,9 +708,17 @@ function TwoFactorSetupModal({ isDark, open, onClose, onEnabled }) {
         </div>
 
         {!enrollData ? (
-          <p className={t(isDark, 'text-sm text-slate-400 py-6 text-center', 'text-sm text-slate-500 py-6 text-center')}>
-            {translate('profile_2fa_loading')}
-          </p>
+          message?.type === 'error' ? (
+            <p className="text-sm text-red-400 py-6 text-center">{message.text}</p>
+          ) : (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <span
+                className={t(isDark, 'animate-spin w-6 h-6 rounded-full border-2 border-white/15', 'animate-spin w-6 h-6 rounded-full border-2 border-slate-200')}
+                style={{ borderTopColor: 'var(--accent-500, #3b82f6)' }}
+              />
+              <p className={t(isDark, 'text-sm text-slate-400', 'text-sm text-slate-500')}>{translate('profile_2fa_loading')}</p>
+            </div>
+          )
         ) : (
           <div className="flex flex-col gap-4 mt-3">
             <p className={t(isDark, 'text-xs text-slate-400', 'text-xs text-slate-500')}>
@@ -997,14 +987,25 @@ function AvatarCropModal({ isDark, imageUrl, onCancel, onConfirm }) {
           onMouseDown={onPointerDown}
           onWheel={onWheel}
         >
-          {/* Blurred backdrop — the whole picture, for context */}
+          {/* Blurred backdrop — the whole picture, for context. Floored to
+              whichever scale makes it fully cover the square container
+              (rather than reusing the foreground's "contain" scale), so a
+              non-square photo never leaves bare black letterboxing at the
+              edges. Purely decorative, so a little positional imprecision
+              at the floor scale doesn't matter. */}
           <img
             ref={imgRef}
             src={imageUrl}
             onLoad={handleImgLoad}
             draggable={false}
             alt=""
-            style={{ ...imgTransformStyle, filter: 'blur(10px) brightness(0.5)' }}
+            style={{
+              ...imgTransformStyle,
+              transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px) scale(${
+                naturalSize ? Math.max(scale, CONTAINER / baseW, CONTAINER / baseH) : scale
+              })`,
+              filter: 'blur(10px) brightness(0.5)',
+            }}
           />
           <div className="absolute inset-0 bg-black/25" />
           {/* Sharp circular window — exactly what gets saved */}
@@ -1015,7 +1016,7 @@ function AvatarCropModal({ isDark, imageUrl, onCancel, onConfirm }) {
           </div>
         </div>
         <div className="mt-5 flex items-center gap-3">
-          <Icon size={14}><circle cx="12" cy="12" r="3" /><path d="M19 12h2M3 12h2M12 3v2M12 19v2" /></Icon>
+          <img src={zoomOutIconSrc} alt="" className="w-4 h-4 object-contain shrink-0" style={{ filter: isDark ? 'invert(1) brightness(1.3)' : 'brightness(0) opacity(0.6)' }} />
           <input
             type="range"
             min="1"
@@ -1023,9 +1024,9 @@ function AvatarCropModal({ isDark, imageUrl, onCancel, onConfirm }) {
             step="0.02"
             value={scale}
             onChange={(e) => handleScaleInput(Number(e.target.value))}
-            className="flex-1 accent-blue-500"
+            className={`glass-range flex-1 ${t(isDark, 'glass-range-dark', 'glass-range-light')}`}
           />
-          <Icon size={20}><circle cx="12" cy="12" r="3" /><path d="M19 12h2M3 12h2M12 3v2M12 19v2" /></Icon>
+          <img src={zoomInIconSrc} alt="" className="w-5 h-5 object-contain shrink-0" style={{ filter: isDark ? 'invert(1) brightness(1.3)' : 'brightness(0) opacity(0.6)' }} />
         </div>
         <div className="flex justify-end gap-3 mt-6">
           <button
@@ -1161,7 +1162,16 @@ export default function ProfilePage({ isDark, session, photoUrl, onPhotoChange, 
                 <h1 className={t(isDark, 'text-2xl font-bold text-slate-100', 'text-2xl font-bold text-slate-900')}>{displayName}</h1>
                 <button
                   type="button"
-                  onClick={() => setIsEditing((e) => { if (e) onActivity?.('Updated profile details'); return !e })}
+                  onClick={() => setIsEditing((e) => {
+                    if (e) {
+                      // An incomplete date (e.g. just "05/" left mid-entry) isn't
+                      // a real birthdate — clear it on save rather than keep a
+                      // broken partial value around.
+                      if (dob.length > 0 && dob.length < DOB_MASK.length) setDob('')
+                      onActivity?.('Updated profile details')
+                    }
+                    return !e
+                  })}
                   className={t(isDark,
                     'glass-dark-sm glass-interactive flex items-center gap-1.5 text-xs font-medium text-slate-200 px-3 py-1.5 rounded-full',
                     'glass-light-sm glass-interactive flex items-center gap-1.5 text-xs font-medium text-slate-700 px-3 py-1.5 rounded-full'
@@ -1227,7 +1237,13 @@ export default function ProfilePage({ isDark, session, photoUrl, onPhotoChange, 
                 open={openSecurityPanel === '2fa'}
                 onToggle={() => setOpenSecurityPanel((p) => (p === '2fa' ? null : '2fa'))}
               >
-                <TwoFactorPanel isDark={isDark} onActivity={onActivity} />
+                {session.user.email ? (
+                  <TwoFactorPanel isDark={isDark} onActivity={onActivity} />
+                ) : (
+                  <p className={t(isDark, 'text-sm text-slate-400 px-1 py-2', 'text-sm text-slate-500 px-1 py-2')}>
+                    {translate('guest_2fa_locked')}
+                  </p>
+                )}
               </ExpandableRow>
             </div>
           </SectionCard>

@@ -88,6 +88,7 @@ export const translations = {
     guest_account_label: 'Guest session',
     guest_no_email: 'Not set yet',
     guest_password_locked: "Guests don't have a password yet. Create an account to set one.",
+    guest_2fa_locked: "Two-factor authentication needs a real account. Create one to turn it on.",
     theme_system: 'System',
 
     // Data & Privacy panel
@@ -125,7 +126,7 @@ export const translations = {
     language_title: 'Language',
     language_desc: 'Choose the language Orbit displays.',
     language_english: 'English',
-    language_filipino: 'Filipino',
+    language_filipino: 'Tagalog',
     language_note: 'Government process steps stay in English for accuracy.',
 
     // Calendar panel
@@ -467,6 +468,7 @@ export const translations = {
     guest_account_label: 'Guest session',
     guest_no_email: 'Wala pang naka-set',
     guest_password_locked: 'Wala pang password ang mga guest. Gumawa ng account para makapag-set ka.',
+    guest_2fa_locked: 'Kailangan ng tunay na account ang two-factor authentication. Gumawa ng account para i-on ito.',
     theme_light: 'Light Mode',
     theme_dark: 'Dark Mode',
     theme_system: 'System',
@@ -502,7 +504,7 @@ export const translations = {
     language_title: 'Wika',
     language_desc: 'Piliin ang wikang ipapakita ng Orbit.',
     language_english: 'English',
-    language_filipino: 'Filipino',
+    language_filipino: 'Tagalog',
     language_note: 'Nananatiling English ang mga hakbang ng proseso ng gobyerno para sa katumpakan.',
 
     calendar_title: 'Kalendaryo',
