@@ -15,7 +15,7 @@ export default function Hero({ onGetStarted }) {
           as a hard-edged cut between "video" and "gradient". */}
       <div
         className="absolute inset-x-0 bottom-0 h-64 pointer-events-none"
-        style={{ background: 'linear-gradient(180deg, transparent 0%, #010A17 100%)' }}
+        style={{ background: 'linear-gradient(180deg, transparent 0%, #020308 100%)' }}
       />
 
       <Navbar onGetStarted={onGetStarted} />

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import StarfieldBackground from '../StarfieldBackground'
 
 const FAQS = [
   {
@@ -94,12 +95,9 @@ export default function FAQFooter({ onOpenLegal }) {
   }
 
   return (
-    <section
-      id="faq"
-      className="relative w-full"
-      style={{ background: 'linear-gradient(180deg, #060c16 0%, #030609 100%)' }}
-    >
-      <div className="max-w-3xl mx-auto px-6 pt-28 pb-20">
+    <section id="faq" className="relative w-full overflow-hidden bg-[#020308]">
+      <StarfieldBackground />
+      <div className="relative max-w-3xl mx-auto px-6 pt-28 pb-20">
         <h2 className="font-instrument text-white text-4xl md:text-5xl text-center mb-16">Frequently asked</h2>
         <div>
           {FAQS.map((item, i) => (
@@ -114,7 +112,7 @@ export default function FAQFooter({ onOpenLegal }) {
         </div>
       </div>
 
-      <footer className="border-t border-white/10">
+      <footer className="relative border-t border-white/10">
         <div className="max-w-6xl mx-auto px-6 md:px-12 py-16 grid gap-12 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div>
             <span className="font-dancing text-white text-2xl">Orbit</span>

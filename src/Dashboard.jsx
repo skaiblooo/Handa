@@ -8,6 +8,7 @@ import { getActivityLog, logActivity } from './utils/activityLog'
 import { getActualPushSubscription, subscribeToPush, unsubscribeFromPush, isPushSupported } from './utils/push'
 import { validatePhotoFile, uploadDocumentPhoto } from './utils/documentPhotos'
 import { downloadIcs } from './utils/calendarExport'
+import StarfieldBackground from './StarfieldBackground'
 import { useLanguage } from './i18n'
 import { AVATAR_COLORS, AVATAR_ACCENT_HEX } from './avatarColors'
 import { DOC_TYPE_LABELS, AGENCY_BADGE, URGENCY_META, CARD_THEME, CARD_FIELD_SCHEMAS, DOC_CATEGORIES, AGENCY_NAMES, AGENCY_BADGE_COLOR } from './data/docTypes'
@@ -3548,52 +3549,10 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
           unmounting/remounting layers — that mount cost (new gradient
           layers, animations restarting from t=0) was why light→dark had a
           faint delay that dark→light never did, since the light branch
-          used to render fewer nodes than the dark one. */}
-      <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: isDark ? '#020308' : 'transparent' }} />
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage: isDark
-            ? `radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,0.9), transparent),
-                radial-gradient(1px 1px at 90px 80px, rgba(255,255,255,0.7), transparent),
-                radial-gradient(1.2px 1.2px at 150px 40px, rgba(255,255,255,0.85), transparent),
-                radial-gradient(1px 1px at 60px 130px, rgba(255,255,255,0.6), transparent),
-                radial-gradient(1.4px 1.4px at 170px 150px, rgba(255,255,255,0.9), transparent),
-                radial-gradient(1px 1px at 190px 10px, rgba(255,255,255,0.6), transparent)`
-            : `radial-gradient(1px 1px at 20px 30px, rgba(71,85,105,0.35), transparent),
-                radial-gradient(1px 1px at 90px 80px, rgba(71,85,105,0.28), transparent),
-                radial-gradient(1.2px 1.2px at 150px 40px, rgba(71,85,105,0.32), transparent),
-                radial-gradient(1px 1px at 60px 130px, rgba(71,85,105,0.24), transparent),
-                radial-gradient(1.4px 1.4px at 170px 150px, rgba(71,85,105,0.35), transparent),
-                radial-gradient(1px 1px at 190px 10px, rgba(71,85,105,0.24), transparent)`,
-          backgroundRepeat: 'repeat',
-          backgroundSize: '200px 200px',
-          animation: 'starfield-drift 150s linear infinite alternate',
-        }}
-      />
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage: isDark
-            ? `radial-gradient(0.8px 0.8px at 40px 60px, rgba(255,255,255,0.5), transparent),
-                radial-gradient(0.8px 0.8px at 110px 20px, rgba(255,255,255,0.4), transparent),
-                radial-gradient(1px 1px at 160px 110px, rgba(255,255,255,0.55), transparent),
-                radial-gradient(0.8px 0.8px at 20px 160px, rgba(255,255,255,0.4), transparent),
-                radial-gradient(0.8px 0.8px at 230px 90px, rgba(255,255,255,0.45), transparent)`
-            : `radial-gradient(0.8px 0.8px at 40px 60px, rgba(71,85,105,0.2), transparent),
-                radial-gradient(0.8px 0.8px at 110px 20px, rgba(71,85,105,0.16), transparent),
-                radial-gradient(1px 1px at 160px 110px, rgba(71,85,105,0.22), transparent),
-                radial-gradient(0.8px 0.8px at 20px 160px, rgba(71,85,105,0.16), transparent),
-                radial-gradient(0.8px 0.8px at 230px 90px, rgba(71,85,105,0.18), transparent)`,
-          backgroundRepeat: 'repeat',
-          backgroundSize: '260px 260px',
-          animation: 'starfield-drift 220s linear infinite alternate-reverse',
-        }}
-      />
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: isDark ? 'linear-gradient(180deg, rgba(2,3,10,0.15) 0%, rgba(2,3,10,0.4) 100%)' : 'transparent' }}
-      />
+          used to render fewer nodes than the dark one. Shared with the
+          landing page's demo/FAQ sections so "night mode" means the exact
+          same background everywhere, not just a similar one. */}
+      <StarfieldBackground isDark={isDark} />
 
       <div className="relative z-10 h-full w-full flex overflow-hidden p-3 gap-3">
       {/* Sidebar */}

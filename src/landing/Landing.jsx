@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Hero from './Hero'
 import DashboardShowcase from './DashboardShowcase'
+import NotificationShowcase from './NotificationShowcase'
 import FAQFooter from './FAQFooter'
 import LegalPage from './LegalPage'
 import loginBg from '../assets/login-bg.webp'
@@ -28,6 +29,7 @@ export default function Landing({ onGetStarted }) {
     <div className="bg-[#0a0608]">
       <Hero onGetStarted={onGetStarted} />
       <DashboardShowcase />
+      <NotificationShowcase />
       <FAQFooter onOpenLegal={setLegalPage} />
     </div>
   )

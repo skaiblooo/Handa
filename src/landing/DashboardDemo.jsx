@@ -872,15 +872,19 @@ export default function DashboardDemo() {
 
   return (
     <div className="w-full">
-      <div className="text-center mb-8 px-6">
-        <h2 className="font-instrument text-white text-3xl md:text-4xl">See Orbit in action</h2>
-        <p className="text-white/50 text-sm mt-3">A quick look at tracking a document from start to finish.</p>
-      </div>
-      <div className="w-full max-w-7xl mx-auto px-6">
+      {/* perspective on the outer box, the actual rotation on the mockup
+          itself — the whole browser-window plane tilts as one rigid unit
+          in 3D space (like a screenshot mockup tool), so everything inside
+          it keeps its exact same relative layout, just viewed at an angle. */}
+      <div className="w-full" style={{ perspective: '1800px' }}>
+      <div style={{ transformStyle: 'preserve-3d', transform: 'rotateX(4deg) rotateY(-22deg) rotate(-1deg)' }}>
       <div
         ref={containerRef}
-        className="relative w-full rounded-2xl overflow-hidden shadow-2xl glass-panel"
-        style={{ aspectRatio: '16 / 9.2' }}
+        className="relative w-full rounded-2xl overflow-hidden glass-panel"
+        style={{
+          aspectRatio: '16 / 9.2',
+          boxShadow: '0 70px 120px -30px rgba(0,0,0,0.75), 0 25px 50px -20px rgba(0,0,0,0.55)',
+        }}
       >
         <div
           className="absolute inset-0 pointer-events-none"
@@ -903,6 +907,15 @@ export default function DashboardDemo() {
         </div>
 
         {cursor.visible && !reducedMotion && <CursorGlyph x={cursor.x} y={cursor.y} clicking={clicking} />}
+
+        {/* Radial focus vignette: sharp center, soft dark edges, matching
+            the tilted-mockup look of a real product screenshot rather than
+            a flat, evenly-lit rectangle. */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(120% 100% at 50% 45%, transparent 55%, rgba(0,0,0,0.35) 100%)' }}
+        />
+      </div>
       </div>
       </div>
     </div>

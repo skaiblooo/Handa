@@ -1,34 +1,18 @@
 import DashboardDemo from './DashboardDemo'
-import showcaseBg from '../assets/orbit-background.webp'
+import StarfieldBackground from '../StarfieldBackground'
 
-// Carries the background from Hero's video down to FAQFooter's dark tone
-// (so the page doesn't jump straight from video to FAQ), and hosts a
-// looping, scripted replica of the real dashboard demonstrating the core
-// add-a-document flow end to end. The orbit/satellite photo is this
-// section's own backdrop — the mockup inside no longer carries its own
-// separate background image, so the two don't compete.
+// Same deep-space backdrop as the real dashboard's night mode (see
+// StarfieldBackground), not a separate photo, so the demo reads as a
+// preview of the actual product rather than generic space decoration.
 export default function DashboardShowcase() {
   return (
-    <section id="demo" className="relative w-full py-20 md:py-28 overflow-hidden bg-[#010A17]">
-      {/* A plain background-image div rather than an <img> so it can drift
-          via the same earth-drift keyframe (background-position pan) the
-          real dashboard's Earth backdrop uses — reads as a slow "orbit"
-          rather than a static photo, and stays consistent with how the app
-          already animates this kind of background elsewhere. */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage: `url(${showcaseBg})`,
-          backgroundSize: 'cover',
-          backgroundRepeat: 'no-repeat',
-          animation: 'earth-drift 90s ease-in-out infinite alternate',
-        }}
-      />
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: 'linear-gradient(180deg, #010A17 0%, transparent 18%, transparent 75%, #060c16 100%)' }}
-      />
-      <div className="relative">
+    <section id="demo" className="relative w-full py-20 md:py-28 overflow-hidden bg-[#020308]">
+      <StarfieldBackground />
+      <div className="relative max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-[0.85fr_1.15fr] items-center gap-12 lg:gap-8">
+        <div className="text-center lg:text-left">
+          <h2 className="font-instrument text-white text-3xl md:text-4xl">See Orbit in action</h2>
+          <p className="text-white/50 text-sm mt-3 max-w-sm mx-auto lg:mx-0">A quick look at tracking a document from start to finish.</p>
+        </div>
         <DashboardDemo />
       </div>
     </section>
