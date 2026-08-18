@@ -3616,11 +3616,16 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
           </div>
         </div>
 
-        {/* Document cards */}
+        {/* Document cards. contain: layout below — the sidebar's collapse/
+            expand animates its own width, which without this forces every
+            card in this grid to reflow on every animation frame. With a
+            lot of documents tracked, that reflow cost is what actually
+            reads as "the sidebar is laggy" even though the sidebar itself
+            is cheap. */}
         {loading ? (
           <p className="text-slate-500">{translate('loading')}</p>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4" style={{ contain: 'layout' }}>
             <AddDocumentTile
               isDark={isDark}
               onClick={() => openAddDocument(undefined, activeNav === 'my_documents' ? selectedOrbit : null)}
@@ -3756,7 +3761,7 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
       <aside
         ref={sidebarRef}
         onClick={() => { if (!sidebarOpen) setSidebarOpen(true) }}
-        className={`hidden md:flex flex-col h-full rounded-2xl py-6 shrink-0 overflow-hidden transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-64 px-5 cursor-default' : 'w-20 px-3 cursor-pointer'}`}
+        className={`hidden md:flex flex-col h-full rounded-2xl py-6 shrink-0 overflow-hidden transition-[width,padding] duration-300 ease-in-out ${sidebarOpen ? 'w-64 px-5 cursor-default' : 'w-20 px-3 cursor-pointer'}`}
       >
         <div className={`flex items-center mb-10 ${sidebarOpen ? 'justify-between px-2' : 'justify-center'}`}>
           {showSettings ? (
