@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import orbitLogo from '../assets/orbit logo.png'
 import PeekingBlip from './PeekingBlip'
-import { AmbientGlow, ScreenGrain } from './ScreenTexture'
+import { ScreenGrain } from './ScreenTexture'
 
 // Mirrors the real push notification format send-reminders actually
 // sends (title "Documents expiring soon", body "<document> expires in
@@ -83,7 +83,7 @@ export default function AnimatedPhone() {
           <div
             className="relative w-[272px] h-[588px] rounded-[3.1rem] p-[3px]"
             style={{
-              background: 'linear-gradient(160deg, #2a2d34 0%, #0a0b0d 55%, #08090c 100%)',
+              backgroundColor: '#101216',
               boxShadow: '0 40px 80px -20px rgba(0,0,0,0.7), inset 0 1px 0 0 rgba(255,255,255,0.12)',
             }}
           >
@@ -94,7 +94,6 @@ export default function AnimatedPhone() {
             <div className="absolute -right-[3px] top-[150px] w-[3px] h-20 rounded-r-sm bg-[#151619]" />
 
             <div className="relative w-full h-full rounded-[2.85rem] overflow-hidden bg-[#020308] border border-white/[0.06] sheen-once">
-              <AmbientGlow reducedMotion={reducedMotion} />
               <StarfieldBackgroundInline reducedMotion={reducedMotion} />
               <ScreenGrain />
               {/* Dynamic island */}

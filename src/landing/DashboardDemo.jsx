@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { DOC_TYPE_LABELS, AGENCY_BADGE, AGENCY_BADGE_COLOR, CARD_THEME, CARD_FIELD_SCHEMAS, DOC_CATEGORIES } from '../data/docTypes'
 import PeekingBlip from './PeekingBlip'
-import { AmbientGlow, ScreenGrain } from './ScreenTexture'
+import { ScreenGrain } from './ScreenTexture'
 import satellitesIcon from '../assets/satellites.png'
 import spaceTravelIcon from '../assets/space-travel.png'
 import notificationIcon from '../assets/notification.png'
@@ -912,7 +912,7 @@ export default function DashboardDemo() {
       <div
         className="relative w-full rounded-[1.6rem] p-[3px]"
         style={{
-          background: 'linear-gradient(160deg, #2a2d34 0%, #0a0b0d 55%, #08090c 100%)',
+          backgroundColor: '#101216',
           boxShadow: '0 70px 120px -30px rgba(0,0,0,0.75), 0 25px 50px -20px rgba(0,0,0,0.55), inset 0 1px 0 0 rgba(255,255,255,0.12)',
         }}
       >
@@ -938,11 +938,10 @@ export default function DashboardDemo() {
               aspectRatio: '4 / 3.7',
             }}
           >
-            <AmbientGlow reducedMotion={reducedMotion} className="w-80 h-48 -top-16" />
             <ScreenGrain />
             <div
               className="absolute inset-0 pointer-events-none"
-              style={{ background: 'linear-gradient(180deg, rgba(3,6,10,0.28) 0%, rgba(3,6,10,0.48) 100%)' }}
+              style={{ backgroundColor: 'rgba(3,6,10,0.38)' }}
             />
             <div className="relative flex h-full">
               <Sidebar page={step.page} hoveredId={hoveredId} pressedId={pressedId} register={register} />
@@ -961,14 +960,6 @@ export default function DashboardDemo() {
             </div>
 
             {cursor.visible && !reducedMotion && <CursorGlyph x={cursor.x} y={cursor.y} clicking={clicking} />}
-
-            {/* Radial focus vignette: sharp center, soft dark edges, matching
-                the tilted-mockup look of a real product screenshot rather than
-                a flat, evenly-lit rectangle. */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{ background: 'radial-gradient(120% 100% at 50% 45%, transparent 55%, rgba(0,0,0,0.35) 100%)' }}
-            />
           </div>
         </div>
       </div>

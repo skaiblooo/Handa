@@ -1,26 +1,8 @@
 // Shared "make it feel like a real, physical screen" texture layer used by
 // both AnimatedPhone and DashboardDemo — a flat color fill under UI content
-// reads as a mockup; these two small pieces are what real product photos
-// have and screenshots don't: a soft glow from the display itself, and a
-// faint grain from the panel/anti-glare coating.
-
-// Soft breathing glow behind the top of a screen, tinted with the app's
-// accent color, so the mockup reads as an actively-lit display rather than
-// flat wallpaper. `className` carries the size/position (each call site
-// passes one complete literal string — see CLAUDE.md on why Tailwind
-// classes must never be built from interpolation).
-export function AmbientGlow({ reducedMotion, className = 'w-56 h-40 -top-10' }) {
-  return (
-    <div
-      className={`absolute left-1/2 -translate-x-1/2 rounded-full pointer-events-none ${className}`}
-      style={{
-        background: 'radial-gradient(closest-side, color-mix(in srgb, var(--accent-500, #3b82f6) 35%, transparent), transparent)',
-        filter: 'blur(18px)',
-        animation: reducedMotion ? 'none' : 'ambient-glow-pulse 5s ease-in-out infinite',
-      }}
-    />
-  )
-}
+// reads as a mockup; a faint grain from the panel/anti-glare coating is
+// what real product photos have and screenshots don't. No gradients or
+// glows here on purpose — this app doesn't use them anywhere else either.
 
 // Very faint turbulence texture over the whole screen — a perfectly flat
 // color fill reads as a UI mockup; real OLED/LCD panels have a subtle grain

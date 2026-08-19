@@ -540,13 +540,6 @@ input:-webkit-autofill:active {
   50% { opacity: calc(var(--star-opacity, 0.6) * 0.25); }
 }
 
-/* Slow breathing glow behind AnimatedPhone's lock screen — gives the
-   mockup an actively-lit feel rather than a static wallpaper. */
-@keyframes ambient-glow-pulse {
-  0%, 100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
-  50% { opacity: 1; transform: translateX(-50%) scale(1.08); }
-}
-
 @keyframes float-y {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
