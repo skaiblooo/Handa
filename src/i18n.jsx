@@ -370,7 +370,6 @@ export const translations = {
     // Playbook modal (renewal steps)
     playbook_last_verified: 'Last verified {date}',
     playbook_no_info_title: "We don't have a guide for this one yet",
-    playbook_no_info_body: "We haven't put together step-by-step renewal or application instructions for this document yet. You can still track it here — we'll add the guide as soon as it's ready.",
     playbook_view_photo: 'View photo',
     playbook_replace_photo: 'Replace photo',
     playbook_remove_photo: 'Remove photo',
@@ -761,7 +760,6 @@ export const translations = {
 
     playbook_last_verified: 'Huling beripikado {date}',
     playbook_no_info_title: 'Wala pa kaming gabay para dito',
-    playbook_no_info_body: 'Wala pa kaming hakbang-hakbang na gabay sa pag-renew o pag-apply para sa dokumentong ito. Masusubaybayan mo pa rin ito dito — idadagdag namin ang gabay kapag handa na.',
     playbook_view_photo: 'Tingnan ang larawan',
     playbook_replace_photo: 'Palitan ang larawan',
     playbook_remove_photo: 'Alisin ang larawan',

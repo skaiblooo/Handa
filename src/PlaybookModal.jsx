@@ -4,6 +4,7 @@ import { useLanguage } from './i18n'
 import { validatePhotoFile, uploadDocumentPhoto, deleteDocumentPhoto, getDocumentPhotoUrl } from './utils/documentPhotos'
 import { AVATAR_COLORS } from './avatarColors'
 import { AGENCY_BADGE, TYPICAL_VALIDITY_YEARS } from './data/docTypes'
+import BlipIllustration from './landing/BlipIllustration'
 
 // Keeps the modal mounted for `duration` after it's told to close, so the
 // exit animation actually gets to play instead of the element just vanishing.
@@ -225,15 +226,14 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
         >
-          <div className="flex items-start justify-between gap-3 mb-4">
-            <span className={t(isDark, 'w-9 h-9 rounded-xl bg-blue-500/15 text-blue-300 flex items-center justify-center shrink-0', 'w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0')}>
-              <Icon size={17}><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" /><path d="M12 17h.01" /></Icon>
-            </span>
+          <div className="flex justify-end mb-1">
             <button onClick={onClose} className={t(isDark, 'text-slate-500 hover:text-slate-100 text-xl leading-none', 'text-slate-400 hover:text-slate-900 text-xl leading-none')}>&times;</button>
           </div>
-          <p className={t(isDark, 'text-xs font-semibold tracking-widest text-slate-400 mb-1', 'text-xs font-semibold tracking-widest text-slate-500 mb-1')}>{docLabel}</p>
-          <h2 className={t(isDark, 'text-lg font-semibold text-slate-100 mb-2', 'text-lg font-semibold text-slate-900 mb-2')}>{translate('playbook_no_info_title')}</h2>
-          <p className={t(isDark, 'text-sm text-slate-400', 'text-sm text-slate-500')}>{translate('playbook_no_info_body')}</p>
+          <div className="flex flex-col items-center text-center pb-2">
+            <BlipIllustration size={80} />
+            <p className={t(isDark, 'text-xs font-semibold tracking-widest text-slate-400 mt-4 mb-1', 'text-xs font-semibold tracking-widest text-slate-500 mt-4 mb-1')}>{docLabel}</p>
+            <h2 className={t(isDark, 'text-lg font-semibold text-slate-100', 'text-lg font-semibold text-slate-900')}>{translate('playbook_no_info_title')}</h2>
+          </div>
         </div>
       </div>
     )
