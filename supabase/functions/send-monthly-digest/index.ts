@@ -55,7 +55,12 @@ Deno.serve(async (req) => {
   for (const doc of documents) {
     if (!byUser[doc.user_id]) byUser[doc.user_id] = { total: 0, dueSoon: [] }
     byUser[doc.user_id].total++
-    if (new Date(doc.expiry_date) <= lookaheadEnd) {
+    // A null expiry_date (the user chose to track this document without
+    // one — e.g. a lifetime ID) has nothing to compare against
+    // lookaheadEnd; without this guard, `new Date(null)` resolves to the
+    // 1970 epoch, which is always "due soon" and would falsely flag a
+    // document that never expires.
+    if (doc.expiry_date && new Date(doc.expiry_date) <= lookaheadEnd) {
       byUser[doc.user_id].dueSoon.push({ title: doc.title, expiry_date: doc.expiry_date })
     }
   }

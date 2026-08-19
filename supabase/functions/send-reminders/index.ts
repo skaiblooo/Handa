@@ -82,10 +82,15 @@ const today = toDateOnly(new Date())
   // Application-intent documents don't exist yet, so their expiry_date is
   // only an internal placeholder — never real. Excluding them here is what
   // keeps that placeholder from ever turning into a misleading email.
+  // expiry_date can also be genuinely null now (a document the user chose
+  // to track without an expiry, e.g. a lifetime ID) — excluded for the same
+  // reason: there's no real date here for the threshold math below to run
+  // against.
   const { data: documents, error } = await supabaseAdmin
     .from('documents')
     .select('id, title, doc_type, expiry_date, user_id')
     .eq('intent', 'renewal')
+    .not('expiry_date', 'is', null)
 
   if (error) {
     console.error('send-reminders: failed to fetch documents', error)

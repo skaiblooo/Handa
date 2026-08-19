@@ -302,6 +302,11 @@ export const URGENCY_META = {
   // so it gets its own neutral status instead of being forced into the
   // expiry-driven scale.
   ongoing: { label: 'Ongoing', dot: 'bg-blue-400', bar: 'bg-blue-400', badgeDark: 'bg-blue-400/10 text-blue-300', badgeLight: 'bg-blue-100 text-blue-700', fill: 30 },
+  // A document the user chose to track without an expiry date at all (a
+  // permanent ID, a reference number) — never due, never urgent, so it
+  // gets a calm neutral badge rather than being forced through the
+  // expiry-driven scale like `safe` would imply a countdown exists.
+  no_expiry: { label: 'No Expiry', dot: 'bg-slate-400', bar: 'bg-slate-400', badgeDark: 'bg-slate-400/10 text-slate-300', badgeLight: 'bg-slate-100 text-slate-600', fill: 100 },
 }
 
 // Only document types with a well-established, fixed official validity

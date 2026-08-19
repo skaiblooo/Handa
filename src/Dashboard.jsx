@@ -222,8 +222,10 @@ export function IDCardBack({ docType, doc, meta, playbook, totalSteps, completed
   return (
     <IDCardFace docType={docType}>
       <div className="p-4 flex flex-col flex-1">
-        {doc.urgency === 'ongoing' ? (
-          <p className="text-[11px] opacity-90 mb-3">{translate('card_status_ongoing_desc')}</p>
+        {doc.urgency === 'ongoing' || doc.urgency === 'no_expiry' ? (
+          <p className="text-[11px] opacity-90 mb-3">
+            {translate(doc.urgency === 'ongoing' ? 'card_status_ongoing_desc' : 'card_status_no_expiry_desc')}
+          </p>
         ) : (
           <>
             <div className="flex justify-between items-center text-[11px] mb-1.5 opacity-90">
@@ -1030,13 +1032,16 @@ function AddDocumentCard({ isDark, userId, existingDocs, householdMembers, initi
     setFields((f) => ({ ...f, [key]: value }))
   }
 
-  const expiryRequired = !isApplication || docType === 'custom'
+  // "Applying, don't have it in hand yet" (not a custom entry) is the one
+  // case that still needs a placeholder expiry — the 'confirm' step never
+  // collects real card fields or a real date for it. Every other save is a
+  // real, already-in-hand document, and its expiry is optional: some
+  // documents (a permanent ID, a reference number) genuinely never expire,
+  // and forcing a fake date onto those just to satisfy a form field would
+  // be misleading rather than helpful.
+  const isPendingApplication = isApplication && docType !== 'custom'
 
   async function handleSave() {
-    if (expiryRequired && !expiryDate) {
-      setErrorMsg('Please set an expiry date.')
-      return
-    }
     setSaving(true)
     setErrorMsg('')
 
@@ -1055,8 +1060,8 @@ function AddDocumentCard({ isDark, userId, existingDocs, householdMembers, initi
       user_id: userId,
       title: title.trim() || DOC_TYPE_LABELS[docType],
       doc_type: docType,
-      expiry_date: expiryRequired ? expiryDate : placeholderExpiryForApplication(docType),
-      card_fields: expiryRequired ? fields : {},
+      expiry_date: isPendingApplication ? placeholderExpiryForApplication(docType) : (expiryDate || null),
+      card_fields: isPendingApplication ? {} : fields,
       // A custom entry always has a real expiry the moment it's saved —
       // 'application' elsewhere means "no real expiry yet, still in
       // progress," which was never true for one of these regardless of
@@ -1242,6 +1247,9 @@ function AddDocumentCard({ isDark, userId, existingDocs, householdMembers, initi
         onExpiryChange={setExpiryDate}
         editing
       />
+      <p className={`text-[11px] mt-1.5 mb-2 ${t(isDark, 'text-slate-500', 'text-slate-400')}`}>
+        {translate('add_doc_expiry_optional_hint')}
+      </p>
 
       <div className="mt-3">
         {photoPreviewUrl ? (
@@ -1716,7 +1724,7 @@ function DocumentProgressCard({ isDark, doc, onSelect, delay }) {
             </p>
           </div>
         </div>
-        {doc.urgency !== 'ongoing' && (
+        {doc.urgency !== 'ongoing' && doc.urgency !== 'no_expiry' && (
           <span className={`shrink-0 text-[11px] whitespace-nowrap mt-0.5 ${t(isDark, 'text-slate-500', 'text-slate-400')}`}>
             {doc.urgency === 'expired' ? translate('card_status_expired') : formatExpiryDisplay(doc.daysUntil, doc.expiry_date)}
           </span>
@@ -1863,6 +1871,7 @@ function ThemePanel({ isDark, themeMode, onSetMode, accentColor, onSetAccentColo
 function notificationMessage(doc) {
   const sub = formatDaysUntil(doc.daysUntil)
   if (doc.urgency === 'ongoing') return { title: `Your ${doc.title} application is in progress.`, sub: '' }
+  if (doc.urgency === 'no_expiry') return { title: `${doc.title} is tracked — no expiry set.`, sub: '' }
   if (doc.urgency === 'expired') return { title: `${doc.title} has expired.`, sub }
   if (doc.urgency === 'critical') return { title: `${doc.title} is about to expire.`, sub }
   if (doc.urgency === 'urgent') return { title: `${doc.title} is expiring soon.`, sub }
@@ -3318,10 +3327,19 @@ export default function Dashboard({ session, isGuest = false, onUpgradeAccount }
   }
 
   const enriched = documents.map((doc) => {
-    const daysUntil = getDaysUntilExpiry(doc.expiry_date)
     // Applying for a document has no real expiry to be "on track" or "due
     // soon" against — it gets its own status instead of a fabricated one.
-    const urgency = doc.intent === 'application' ? 'ongoing' : getUrgencyLevel(daysUntil)
+    // A doc with no expiry_date at all (the user chose not to set one —
+    // e.g. a lifetime ID) gets a similar treatment: Infinity keeps every
+    // days-until sort/comparison well-defined without a NaN, and pushes it
+    // to the end of any "soonest first" ordering, which is exactly right
+    // for something that's never actually due.
+    const daysUntil = doc.expiry_date ? getDaysUntilExpiry(doc.expiry_date) : Infinity
+    const urgency = doc.intent === 'application'
+      ? 'ongoing'
+      : !doc.expiry_date
+        ? 'no_expiry'
+        : getUrgencyLevel(daysUntil)
     return { ...doc, daysUntil, urgency }
   })
   // Documents with an actual step checklist (a playbook), soonest-deadline
