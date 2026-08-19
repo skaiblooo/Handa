@@ -156,7 +156,11 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
   const [renewBusy, setRenewBusy] = useState(false)
   const [renewError, setRenewError] = useState('')
 
-  const isOpen = !!playbook
+  // Opens for any selected document, not just ones with a real playbook —
+  // a doc_type without a written guide yet still needs the modal to open
+  // and say so, rather than clicking it doing nothing at all (see the
+  // no-playbook branch below).
+  const isOpen = !!doc
   const shouldRender = useDelayedUnmount(isOpen)
   const [snapshot, setSnapshot] = useState({ playbook, doc, docType })
 
@@ -171,9 +175,13 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
       setShowRenewForm(false)
       setRenewError('')
       // Resume wherever they left off, instead of always starting back at step 1.
-      const completed = doc?.completed_steps || []
-      const firstIncomplete = playbook.steps.findIndex((_, i) => !completed.includes(i))
-      setCurrentStep(firstIncomplete === -1 ? playbook.steps.length - 1 : firstIncomplete)
+      // No-op when there's no real playbook (steps is undefined) — the
+      // no-playbook branch below never reads currentStep at all.
+      if (playbook) {
+        const completed = doc?.completed_steps || []
+        const firstIncomplete = playbook.steps.findIndex((_, i) => !completed.includes(i))
+        setCurrentStep(firstIncomplete === -1 ? playbook.steps.length - 1 : firstIncomplete)
+      }
     }
     // Keyed on doc?.id alone, not on the doc/playbook/docType objects: both
     // `doc` (refetched after every toggleStep) and `playbook` (rebuilt as a
@@ -192,6 +200,44 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
   const activePlaybook = isOpen ? playbook : snapshot.playbook
   const activeDoc = isOpen ? doc : snapshot.doc
   const activeDocType = isOpen ? docType : snapshot.docType
+  const docLabel = activeDocType ? activeDocType.replace(/_/g, ' ').toUpperCase() : ''
+
+  // A document type without a written renewal/application guide yet (the
+  // catalog has ~76 types, only a handful have a real playbook so far) used
+  // to mean this modal just silently never opened — clicking the document
+  // looked like nothing happened at all. It should still open, just with an
+  // honest "we don't have this yet" instead of a step checklist that
+  // doesn't exist.
+  if (!activePlaybook) {
+    return (
+      <div
+        className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50"
+        style={{ animation: isOpen ? 'backdrop-in 150ms ease-out' : 'backdrop-out 180ms ease-in forwards' }}
+        onClick={onClose}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div
+          className={t(isDark,
+            'bg-[#0a0a0f] border border-white/10 rounded-2xl max-w-md w-full p-6 md:p-8',
+            'bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 md:p-8'
+          )}
+          style={{ animation: isOpen ? 'modal-in 180ms ease-out' : 'modal-out 180ms ease-in forwards' }}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <span className={t(isDark, 'w-9 h-9 rounded-xl bg-blue-500/15 text-blue-300 flex items-center justify-center shrink-0', 'w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0')}>
+              <Icon size={17}><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" /><path d="M12 17h.01" /></Icon>
+            </span>
+            <button onClick={onClose} className={t(isDark, 'text-slate-500 hover:text-slate-100 text-xl leading-none', 'text-slate-400 hover:text-slate-900 text-xl leading-none')}>&times;</button>
+          </div>
+          <p className={t(isDark, 'text-xs font-semibold tracking-widest text-slate-400 mb-1', 'text-xs font-semibold tracking-widest text-slate-500 mb-1')}>{docLabel}</p>
+          <h2 className={t(isDark, 'text-lg font-semibold text-slate-100 mb-2', 'text-lg font-semibold text-slate-900 mb-2')}>{translate('playbook_no_info_title')}</h2>
+          <p className={t(isDark, 'text-sm text-slate-400', 'text-sm text-slate-500')}>{translate('playbook_no_info_body')}</p>
+        </div>
+      </div>
+    )
+  }
 
   const completedSteps = optimisticCompleted ?? (activeDoc?.completed_steps || [])
   const totalSteps = activePlaybook.steps.length
@@ -280,8 +326,6 @@ export default function PlaybookModal({ isDark, playbook, docType, userId, doc, 
     setFeedbackGiven(true)
     if (!wasAccurate) setShowCommentBox(false)
   }
-
-  const docLabel = activeDocType ? activeDocType.replace(/_/g, ' ').toUpperCase() : ''
 
   // Plain text, not HTML/markdown — this is what both the share sheet and
   // the clipboard fallback send, and neither renders formatting.
