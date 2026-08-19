@@ -115,10 +115,38 @@ function useTypewriter(text, { startDelay = 0, speed = 42 } = {}) {
   return text.slice(0, count)
 }
 
+// Ticks a stat up from 0 to `target` on mount, ease-out — the classic
+// promo-video "number that lands" beat. Since DashboardPage/DemoChart only
+// exist in the tree while step.page === 'dashboard', they get a fresh
+// mount (and a fresh count-up) every time the loop comes back around.
+function useCountUp(target, { duration = 900, delay = 0 } = {}) {
+  const prefersReduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  const [value, setValue] = useState(prefersReduced ? target : 0)
+  useEffect(() => {
+    if (prefersReduced) return
+    let raf
+    const startTimer = setTimeout(() => {
+      const start = performance.now()
+      const tick = (now) => {
+        const t = Math.min(1, (now - start) / duration)
+        setValue(Math.round((1 - Math.pow(1 - t, 3)) * target))
+        if (t < 1) raf = requestAnimationFrame(tick)
+      }
+      raf = requestAnimationFrame(tick)
+    }, delay)
+    return () => {
+      clearTimeout(startTimer)
+      cancelAnimationFrame(raf)
+    }
+  }, [target, duration, delay, prefersReduced])
+  return value
+}
+
 // Windows-style arrow pointer (white glyph, dark outline) — positioned by
 // its tip rather than centered, like a real cursor. Tilts and shrinks
-// slightly on "click" instead of drawing a separate ripple, so it reads as
-// the cursor itself clicking rather than an overlay effect.
+// slightly on "click" for the cursor's own feedback; the expanding ring
+// (ClickRipple, rendered alongside it) is the separate "something just
+// happened here" beat borrowed from real product-demo ads.
 function CursorGlyph({ x, y, clicking }) {
   return (
     <div
@@ -147,25 +175,48 @@ function CursorGlyph({ x, y, clicking }) {
   )
 }
 
+// Expanding ring at the click point, keyed by stepIndex so every "click"
+// beat in the timeline remounts (and replays) a fresh one. Solid
+// currentColor ring instead of a gradient — see CLAUDE.md/memory on why
+// this app doesn't use gradients for effects like this.
+function ClickRipple({ x, y }) {
+  return (
+    <div
+      className="absolute rounded-full pointer-events-none z-20"
+      style={{
+        left: x,
+        top: y,
+        width: 10,
+        height: 10,
+        marginLeft: -5,
+        marginTop: -5,
+        border: '2px solid var(--accent-400, #60a5fa)',
+        animation: 'click-ripple 0.5s cubic-bezier(0.16,1,0.3,1) both',
+      }}
+    />
+  )
+}
+
 // Twelve timeline "beats" driving the whole loop: which page/modal to show,
 // where the fake cursor should travel to (a registered ref id), how long to
-// rest there, and whether a click fires before advancing.
+// rest there, whether a click fires before advancing, and a short caption
+// (rendered below the mockup) narrating that beat like a promo-video subtitle.
 const STEPS = [
-  { page: 'dashboard', modal: null, target: null, hold: 2200 },
-  { page: 'dashboard', modal: null, target: 'nav-my-orbits', hold: 400, click: true },
-  { page: 'my_orbits', modal: null, target: null, hold: 800 },
-  { page: 'my_orbits', modal: null, target: 'add-orbit-tile', hold: 400, click: true },
-  { page: 'my_orbits', modal: 'intent', target: null, hold: 550 },
-  { page: 'my_orbits', modal: 'intent', target: 'intent-renewal', hold: 400, click: true },
-  { page: 'my_orbits', modal: 'category', target: null, hold: 550 },
-  { page: 'my_orbits', modal: 'category', target: 'category-travel', hold: 400, click: true },
-  { page: 'my_orbits', modal: 'doctype', target: null, hold: 550 },
-  { page: 'my_orbits', modal: 'doctype', target: 'doctype-passport', hold: 400, click: true },
-  { page: 'my_orbits', modal: 'fill', target: null, hold: 2900 },
-  { page: 'my_orbits', modal: 'fill', target: 'save-check', hold: 400, click: true },
-  { page: 'my_orbits_saved', modal: null, target: null, hold: 900 },
-  { page: 'my_orbits_saved', modal: null, target: 'saved-orbit-card', hold: 400, click: true },
-  { page: 'my_orbits_saved', modal: 'steps', target: null, hold: 4400 },
+  { page: 'dashboard', modal: null, target: null, hold: 2200, caption: 'Every renewal, tracked in one place.' },
+  { page: 'dashboard', modal: null, target: 'nav-my-orbits', hold: 400, click: true, caption: 'Every renewal, tracked in one place.' },
+  { page: 'my_orbits', modal: null, target: null, hold: 800, caption: 'Organized by agency, at a glance.' },
+  { page: 'my_orbits', modal: null, target: 'add-orbit-tile', hold: 400, click: true, caption: 'Add a new document in seconds.' },
+  { page: 'my_orbits', modal: 'intent', target: null, hold: 550, caption: "Tell us what you're renewing." },
+  { page: 'my_orbits', modal: 'intent', target: 'intent-renewal', hold: 400, click: true, caption: "Tell us what you're renewing." },
+  { page: 'my_orbits', modal: 'category', target: null, hold: 550, caption: 'Pick a category.' },
+  { page: 'my_orbits', modal: 'category', target: 'category-travel', hold: 400, click: true, caption: 'Pick a category.' },
+  { page: 'my_orbits', modal: 'doctype', target: null, hold: 550, caption: 'Choose the exact document.' },
+  { page: 'my_orbits', modal: 'doctype', target: 'doctype-passport', hold: 400, click: true, caption: 'Choose the exact document.' },
+  { page: 'my_orbits', modal: 'fill', target: null, hold: 2900, caption: 'We prefill the details for you.' },
+  { page: 'my_orbits', modal: 'fill', target: 'save-check', hold: 400, click: true, caption: 'One tap to save.' },
+  { page: 'my_orbits_saved', modal: null, target: null, hold: 900, caption: 'Saved. Ready to track.' },
+  { page: 'my_orbits_saved', modal: null, target: 'saved-orbit-card', hold: 400, click: true, caption: 'See the full renewal guide.' },
+  { page: 'my_orbits_saved', modal: 'steps', target: null, hold: 4400, caption: 'Step-by-step guidance, every time.' },
 ]
 
 // Collapses to icon-only once on My Orbits, matching the real dashboard's
@@ -280,6 +331,7 @@ function DemoChart() {
   const bottomPad = 24
   const maxCount = Math.max(1, ...CHART_MONTHS.map((m) => m.count))
   const totalUpcoming = CHART_MONTHS.reduce((sum, m) => sum + m.count, 0)
+  const displayedTotal = useCountUp(totalUpcoming, { duration: 900, delay: 600 })
   const points = CHART_MONTHS.map((m, i) => ({
     x: (i / (CHART_MONTHS.length - 1)) * width,
     y: height - bottomPad - (m.count / maxCount) * (height - topPad - bottomPad),
@@ -290,7 +342,7 @@ function DemoChart() {
   return (
     <div className="glass-dark rounded-2xl p-5 mt-6" style={{ animation: 'rise-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.75s both' }}>
       <p className="text-xs font-semibold tracking-widest uppercase text-slate-400">UPCOMING EXPIRATIONS</p>
-      <p className="font-instrument text-4xl mt-1.5 text-slate-100">{totalUpcoming}</p>
+      <p className="font-instrument text-4xl mt-1.5 text-slate-100">{displayedTotal}</p>
       <p className="text-xs mt-0.5 text-slate-500 mb-4">Due over the next 6 months</p>
       <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="w-full" style={{ height: 120, display: 'block' }}>
         <defs>
@@ -335,10 +387,12 @@ function DemoChart() {
 // card chrome matches so this column reads as the same two-card stack the
 // actual dashboard shows, not an invented layout.
 function DemoCostCard() {
+  const low = useCountUp(715, { duration: 900, delay: 700 })
+  const high = useCountUp(1430, { duration: 900, delay: 700 })
   return (
     <div className="glass-dark rounded-2xl p-5 mt-4" style={{ animation: 'rise-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.85s both' }}>
       <p className="text-xs font-semibold tracking-widest uppercase text-slate-400">ESTIMATED RENEWAL COSTS</p>
-      <p className="font-instrument text-4xl mt-1.5 text-slate-100">&#8369;715&ndash;&#8369;1,430</p>
+      <p className="font-instrument text-4xl mt-1.5 text-slate-100">&#8369;{low.toLocaleString('en-US')}&ndash;&#8369;{high.toLocaleString('en-US')}</p>
       <p className="text-xs mt-0.5 text-slate-500">Across 3 tracked documents</p>
     </div>
   )
@@ -890,6 +944,7 @@ export default function DashboardDemo() {
   }, [stepIndex, paused, reducedMotion])
 
   const step = STEPS[stepIndex]
+  const caption = step.caption
 
   return (
     <div className="relative w-full">
@@ -960,10 +1015,26 @@ export default function DashboardDemo() {
             </div>
 
             {cursor.visible && !reducedMotion && <CursorGlyph x={cursor.x} y={cursor.y} clicking={clicking} />}
+            {step.click && cursor.visible && !reducedMotion && <ClickRipple key={stepIndex} x={cursor.x} y={cursor.y} />}
           </div>
         </div>
       </div>
       </div>
+      </div>
+      {/* Floating "ad caption" strip, deliberately outside the tilted/
+          perspective group above (flat, not tilted with the screen) — the
+          beat that makes this read as a promo video rather than an app
+          just idling: a short line of copy that changes in sync with what
+          the cursor is doing, the same way product-demo ads caption each
+          shot instead of leaving it silent. */}
+      <div className="flex justify-center mt-5">
+        <span
+          key={caption}
+          className="glass-chip-dark rounded-full px-4 py-1.5 text-xs text-slate-300 tracking-wide"
+          style={{ animation: reducedMotion ? 'none' : 'fade-slide-in 0.5s cubic-bezier(0.16,1,0.3,1) both' }}
+        >
+          {caption}
+        </span>
       </div>
     </div>
   )
