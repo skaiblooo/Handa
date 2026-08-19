@@ -179,16 +179,27 @@ function CursorGlyph({ x, y, clicking }) {
 // rest there, whether a click fires before advancing, and whether the whole
 // screen should punch in on that spot (see the zoom transform below) so a
 // viewer's eye is pointed at the same thing the cursor is doing.
+//
+// `zoom` is deliberately marked on more than just the click beats: the
+// intent/category/doctype modal-picking run (steps 4-9) is three clicks in
+// quick succession, and zooming out to show the full page between each one
+// just to zoom straight back in on the next tiny option was the "too much
+// zooming" complaint — those in-between "modal just opened" beats stay
+// zoomed (zoom:true, no target of their own) so the screen only pans to the
+// next spot instead of pulsing out and back in every ~500ms. Steps that are
+// a genuine new full-page view worth seeing whole (my_orbits list, the fill
+// modal's typing animation, the saved list, the final steps modal) are left
+// zoom:false so the loop actually zooms out there instead of never resting.
 const STEPS = [
   { page: 'dashboard', modal: null, target: null, hold: 2200 },
   { page: 'dashboard', modal: null, target: 'nav-my-orbits', hold: 400, click: true, zoom: true },
   { page: 'my_orbits', modal: null, target: null, hold: 800 },
   { page: 'my_orbits', modal: null, target: 'add-orbit-tile', hold: 400, click: true, zoom: true },
-  { page: 'my_orbits', modal: 'intent', target: null, hold: 550 },
+  { page: 'my_orbits', modal: 'intent', target: null, hold: 550, zoom: true },
   { page: 'my_orbits', modal: 'intent', target: 'intent-renewal', hold: 400, click: true, zoom: true },
-  { page: 'my_orbits', modal: 'category', target: null, hold: 550 },
+  { page: 'my_orbits', modal: 'category', target: null, hold: 550, zoom: true },
   { page: 'my_orbits', modal: 'category', target: 'category-travel', hold: 400, click: true, zoom: true },
-  { page: 'my_orbits', modal: 'doctype', target: null, hold: 550 },
+  { page: 'my_orbits', modal: 'doctype', target: null, hold: 550, zoom: true },
   { page: 'my_orbits', modal: 'doctype', target: 'doctype-passport', hold: 400, click: true, zoom: true },
   { page: 'my_orbits', modal: 'fill', target: null, hold: 2900 },
   { page: 'my_orbits', modal: 'fill', target: 'save-check', hold: 400, click: true, zoom: true },
@@ -849,6 +860,27 @@ function StepsModal() {
   )
 }
 
+// Layout-only position of `el` relative to `ancestor`, walking the
+// offsetParent chain rather than reading getBoundingClientRect(). The
+// difference matters here specifically: the target elements the cursor aims
+// at live inside the zoomed content wrapper below, and getBoundingClientRect
+// reports the current *painted* (transform-affected) position, which is
+// wrong mid-transition — it was why clicks landed off-target whenever a
+// zoom from the previous step hadn't finished settling yet. offsetLeft/Top
+// are pure CSS-box-model values, untouched by transform, so this stays
+// accurate regardless of what the zoom is doing at measurement time.
+function offsetWithin(el, ancestor) {
+  let x = 0
+  let y = 0
+  let node = el
+  while (node && node !== ancestor) {
+    x += node.offsetLeft
+    y += node.offsetTop
+    node = node.offsetParent
+  }
+  return { x, y }
+}
+
 export default function DashboardDemo() {
   const [stepIndex, setStepIndex] = useState(0)
   const [cursor, setCursor] = useState({ x: 0, y: 0, visible: false })
@@ -882,11 +914,10 @@ export default function DashboardDemo() {
         const el = refs.current[step.target]
         const container = containerRef.current
         if (el && container) {
-          const elRect = el.getBoundingClientRect()
-          const containerRect = container.getBoundingClientRect()
+          const { x: ox, y: oy } = offsetWithin(el, container)
           setCursor({
-            x: elRect.left - containerRect.left + elRect.width / 2,
-            y: elRect.top - containerRect.top + elRect.height / 2,
+            x: ox + el.offsetWidth / 2,
+            y: oy + el.offsetHeight / 2,
             visible: true,
           })
         }
@@ -922,16 +953,19 @@ export default function DashboardDemo() {
   }, [stepIndex, paused, reducedMotion])
 
   const step = STEPS[stepIndex]
-  // Punches the whole screen in on the cursor's target during a "click"
-  // beat, transform-origin pinned to that exact point, then eases back out
-  // to scale(1) on the steps in between — the camera move that points a
-  // viewer's eye at the same spot the cursor is about to act on, instead of
-  // leaving them to find it in a static-scale screenshot.
+  // Nudges the screen in on the cursor's target during a "click" beat,
+  // transform-origin pinned to that exact point, then eases back out to
+  // scale(1) once the loop reaches a genuine full-page rest (see the STEPS
+  // comment above for which beats count as "still zoomed"). Kept gentle
+  // (1.08, not a dramatic punch-in) and transform/transform-origin share one
+  // transition so the pivot point and the scale move in lockstep instead of
+  // drifting at different speeds, which read as a swimmy, disorienting
+  // motion rather than a clean camera move.
   const zoomActive = step.zoom && cursor.visible
   const zoomStyle = {
-    transform: zoomActive ? 'scale(1.16)' : 'scale(1)',
+    transform: zoomActive ? 'scale(1.08)' : 'scale(1)',
     transformOrigin: zoomActive ? `${cursor.x}px ${cursor.y}px` : '50% 50%',
-    transition: reducedMotion ? 'none' : 'transform 0.7s cubic-bezier(0.16,1,0.3,1), transform-origin 0.5s cubic-bezier(0.16,1,0.3,1)',
+    transition: reducedMotion ? 'none' : 'transform 0.6s cubic-bezier(0.16,1,0.3,1), transform-origin 0.6s cubic-bezier(0.16,1,0.3,1)',
   }
 
   return (
