@@ -551,12 +551,6 @@ input:-webkit-autofill:active {
   100% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0); }
 }
 
-/* Expanding-ring click feedback for DashboardDemo's scripted cursor. */
-@keyframes click-ripple {
-  0% { transform: scale(0.3); opacity: 0.9; }
-  100% { transform: scale(5.5); opacity: 0; }
-}
-
 /* Simulates a slowly rotating globe from a single static photo — panning
    the oversized background back and forth (rather than looping 0%->100%,
    which would need a seamless tile to avoid a jump cut) reads as a planet

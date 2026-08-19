@@ -144,9 +144,8 @@ function useCountUp(target, { duration = 900, delay = 0 } = {}) {
 
 // Windows-style arrow pointer (white glyph, dark outline) — positioned by
 // its tip rather than centered, like a real cursor. Tilts and shrinks
-// slightly on "click" for the cursor's own feedback; the expanding ring
-// (ClickRipple, rendered alongside it) is the separate "something just
-// happened here" beat borrowed from real product-demo ads.
+// slightly on "click" instead of drawing a separate ripple, so it reads as
+// the cursor itself clicking rather than an overlay effect.
 function CursorGlyph({ x, y, clicking }) {
   return (
     <div
@@ -175,48 +174,27 @@ function CursorGlyph({ x, y, clicking }) {
   )
 }
 
-// Expanding ring at the click point, keyed by stepIndex so every "click"
-// beat in the timeline remounts (and replays) a fresh one. Solid
-// currentColor ring instead of a gradient — see CLAUDE.md/memory on why
-// this app doesn't use gradients for effects like this.
-function ClickRipple({ x, y }) {
-  return (
-    <div
-      className="absolute rounded-full pointer-events-none z-20"
-      style={{
-        left: x,
-        top: y,
-        width: 10,
-        height: 10,
-        marginLeft: -5,
-        marginTop: -5,
-        border: '2px solid var(--accent-400, #60a5fa)',
-        animation: 'click-ripple 0.5s cubic-bezier(0.16,1,0.3,1) both',
-      }}
-    />
-  )
-}
-
 // Twelve timeline "beats" driving the whole loop: which page/modal to show,
 // where the fake cursor should travel to (a registered ref id), how long to
-// rest there, whether a click fires before advancing, and a short caption
-// (rendered below the mockup) narrating that beat like a promo-video subtitle.
+// rest there, whether a click fires before advancing, and whether the whole
+// screen should punch in on that spot (see the zoom transform below) so a
+// viewer's eye is pointed at the same thing the cursor is doing.
 const STEPS = [
-  { page: 'dashboard', modal: null, target: null, hold: 2200, caption: 'Every renewal, tracked in one place.' },
-  { page: 'dashboard', modal: null, target: 'nav-my-orbits', hold: 400, click: true, caption: 'Every renewal, tracked in one place.' },
-  { page: 'my_orbits', modal: null, target: null, hold: 800, caption: 'Organized by agency, at a glance.' },
-  { page: 'my_orbits', modal: null, target: 'add-orbit-tile', hold: 400, click: true, caption: 'Add a new document in seconds.' },
-  { page: 'my_orbits', modal: 'intent', target: null, hold: 550, caption: "Tell us what you're renewing." },
-  { page: 'my_orbits', modal: 'intent', target: 'intent-renewal', hold: 400, click: true, caption: "Tell us what you're renewing." },
-  { page: 'my_orbits', modal: 'category', target: null, hold: 550, caption: 'Pick a category.' },
-  { page: 'my_orbits', modal: 'category', target: 'category-travel', hold: 400, click: true, caption: 'Pick a category.' },
-  { page: 'my_orbits', modal: 'doctype', target: null, hold: 550, caption: 'Choose the exact document.' },
-  { page: 'my_orbits', modal: 'doctype', target: 'doctype-passport', hold: 400, click: true, caption: 'Choose the exact document.' },
-  { page: 'my_orbits', modal: 'fill', target: null, hold: 2900, caption: 'We prefill the details for you.' },
-  { page: 'my_orbits', modal: 'fill', target: 'save-check', hold: 400, click: true, caption: 'One tap to save.' },
-  { page: 'my_orbits_saved', modal: null, target: null, hold: 900, caption: 'Saved. Ready to track.' },
-  { page: 'my_orbits_saved', modal: null, target: 'saved-orbit-card', hold: 400, click: true, caption: 'See the full renewal guide.' },
-  { page: 'my_orbits_saved', modal: 'steps', target: null, hold: 4400, caption: 'Step-by-step guidance, every time.' },
+  { page: 'dashboard', modal: null, target: null, hold: 2200 },
+  { page: 'dashboard', modal: null, target: 'nav-my-orbits', hold: 400, click: true, zoom: true },
+  { page: 'my_orbits', modal: null, target: null, hold: 800 },
+  { page: 'my_orbits', modal: null, target: 'add-orbit-tile', hold: 400, click: true, zoom: true },
+  { page: 'my_orbits', modal: 'intent', target: null, hold: 550 },
+  { page: 'my_orbits', modal: 'intent', target: 'intent-renewal', hold: 400, click: true, zoom: true },
+  { page: 'my_orbits', modal: 'category', target: null, hold: 550 },
+  { page: 'my_orbits', modal: 'category', target: 'category-travel', hold: 400, click: true, zoom: true },
+  { page: 'my_orbits', modal: 'doctype', target: null, hold: 550 },
+  { page: 'my_orbits', modal: 'doctype', target: 'doctype-passport', hold: 400, click: true, zoom: true },
+  { page: 'my_orbits', modal: 'fill', target: null, hold: 2900 },
+  { page: 'my_orbits', modal: 'fill', target: 'save-check', hold: 400, click: true, zoom: true },
+  { page: 'my_orbits_saved', modal: null, target: null, hold: 900 },
+  { page: 'my_orbits_saved', modal: null, target: 'saved-orbit-card', hold: 400, click: true, zoom: true },
+  { page: 'my_orbits_saved', modal: 'steps', target: null, hold: 4400 },
 ]
 
 // Collapses to icon-only once on My Orbits, matching the real dashboard's
@@ -944,7 +922,17 @@ export default function DashboardDemo() {
   }, [stepIndex, paused, reducedMotion])
 
   const step = STEPS[stepIndex]
-  const caption = step.caption
+  // Punches the whole screen in on the cursor's target during a "click"
+  // beat, transform-origin pinned to that exact point, then eases back out
+  // to scale(1) on the steps in between — the camera move that points a
+  // viewer's eye at the same spot the cursor is about to act on, instead of
+  // leaving them to find it in a static-scale screenshot.
+  const zoomActive = step.zoom && cursor.visible
+  const zoomStyle = {
+    transform: zoomActive ? 'scale(1.16)' : 'scale(1)',
+    transformOrigin: zoomActive ? `${cursor.x}px ${cursor.y}px` : '50% 50%',
+    transition: reducedMotion ? 'none' : 'transform 0.7s cubic-bezier(0.16,1,0.3,1), transform-origin 0.5s cubic-bezier(0.16,1,0.3,1)',
+  }
 
   return (
     <div className="relative w-full">
@@ -998,7 +986,7 @@ export default function DashboardDemo() {
               className="absolute inset-0 pointer-events-none"
               style={{ backgroundColor: 'rgba(3,6,10,0.38)' }}
             />
-            <div className="relative flex h-full">
+            <div className="relative flex h-full" style={zoomStyle}>
               <Sidebar page={step.page} hoveredId={hoveredId} pressedId={pressedId} register={register} />
               <div className="flex-1 min-w-0 p-6 pt-5 relative overflow-hidden">
                 <Topbar />
@@ -1015,26 +1003,10 @@ export default function DashboardDemo() {
             </div>
 
             {cursor.visible && !reducedMotion && <CursorGlyph x={cursor.x} y={cursor.y} clicking={clicking} />}
-            {step.click && cursor.visible && !reducedMotion && <ClickRipple key={stepIndex} x={cursor.x} y={cursor.y} />}
           </div>
         </div>
       </div>
       </div>
-      </div>
-      {/* Floating "ad caption" strip, deliberately outside the tilted/
-          perspective group above (flat, not tilted with the screen) — the
-          beat that makes this read as a promo video rather than an app
-          just idling: a short line of copy that changes in sync with what
-          the cursor is doing, the same way product-demo ads caption each
-          shot instead of leaving it silent. */}
-      <div className="flex justify-center mt-5">
-        <span
-          key={caption}
-          className="glass-chip-dark rounded-full px-4 py-1.5 text-xs text-slate-300 tracking-wide"
-          style={{ animation: reducedMotion ? 'none' : 'fade-slide-in 0.5s cubic-bezier(0.16,1,0.3,1) both' }}
-        >
-          {caption}
-        </span>
       </div>
     </div>
   )
