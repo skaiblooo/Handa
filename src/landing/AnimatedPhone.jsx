@@ -92,8 +92,10 @@ export default function AnimatedPhone() {
             <div className="absolute -left-[3px] top-[172px] w-[3px] h-14 rounded-l-sm bg-[#151619]" />
             <div className="absolute -right-[3px] top-[150px] w-[3px] h-20 rounded-r-sm bg-[#151619]" />
 
-            <div className="relative w-full h-full rounded-[2.85rem] overflow-hidden bg-[#020308] border border-white/[0.06]">
-              <StarfieldBackgroundInline />
+            <div className="relative w-full h-full rounded-[2.85rem] overflow-hidden bg-[#020308] border border-white/[0.06] sheen-once">
+              <AmbientGlow reducedMotion={reducedMotion} />
+              <StarfieldBackgroundInline reducedMotion={reducedMotion} />
+              <ScreenGrain />
               {/* Dynamic island */}
               <div className="absolute top-3 left-1/2 -translate-x-1/2 w-[92px] h-[26px] rounded-full bg-black z-20" />
               {/* Lock-screen clock, then the notification in normal flow below
@@ -122,21 +124,83 @@ export default function AnimatedPhone() {
 
 // A lighter-weight starfield just for the small phone screen — the shared
 // StarfieldBackground's two full drifting layers are tuned for a full
-// section-width backdrop and read as too busy at this scale.
-function StarfieldBackgroundInline() {
+// section-width backdrop and read as too busy at this scale. A drifting
+// dot-pattern alone reads as a flat printed wallpaper rather than a live
+// screen, so a handful of the dots are promoted to individually twinkling
+// stars (reusing the existing `twinkle` keyframe) on top of it.
+const TWINKLE_STARS = [
+  { top: '8%', left: '22%', size: 1.6, opacity: 0.9, duration: 2.6, delay: 0 },
+  { top: '16%', left: '78%', size: 1.3, opacity: 0.7, duration: 3.4, delay: 0.6 },
+  { top: '28%', left: '12%', size: 1.4, opacity: 0.8, duration: 2.9, delay: 1.4 },
+  { top: '38%', left: '85%', size: 1.2, opacity: 0.6, duration: 3.8, delay: 0.3 },
+  { top: '52%', left: '30%', size: 1.5, opacity: 0.85, duration: 3.1, delay: 1.8 },
+  { top: '64%', left: '68%', size: 1.3, opacity: 0.7, duration: 2.7, delay: 0.9 },
+  { top: '74%', left: '18%', size: 1.2, opacity: 0.6, duration: 3.5, delay: 2.2 },
+  { top: '86%', left: '55%', size: 1.4, opacity: 0.75, duration: 3.0, delay: 1.1 },
+]
+
+function StarfieldBackgroundInline({ reducedMotion }) {
+  return (
+    <div className="absolute inset-0 pointer-events-none">
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,0.8), transparent),
+            radial-gradient(1px 1px at 90px 80px, rgba(255,255,255,0.6), transparent),
+            radial-gradient(1.2px 1.2px at 150px 200px, rgba(255,255,255,0.75), transparent),
+            radial-gradient(1px 1px at 60px 260px, rgba(255,255,255,0.5), transparent),
+            radial-gradient(1px 1px at 190px 340px, rgba(255,255,255,0.6), transparent),
+            radial-gradient(1px 1px at 40px 420px, rgba(255,255,255,0.5), transparent)`,
+          backgroundRepeat: 'repeat',
+          backgroundSize: '220px 480px',
+          animation: reducedMotion ? 'none' : 'starfield-drift 150s linear infinite alternate',
+        }}
+      />
+      {!reducedMotion && TWINKLE_STARS.map((s, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full bg-white"
+          style={{
+            top: s.top,
+            left: s.left,
+            width: s.size,
+            height: s.size,
+            '--star-opacity': s.opacity,
+            animation: `twinkle ${s.duration}s ease-in-out ${s.delay}s infinite`,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+// Soft breathing glow behind the top of the screen, tinted with the app's
+// accent color — without it the lock screen is just static wallpaper +
+// text; this is what makes it read as an actively-lit display.
+function AmbientGlow({ reducedMotion }) {
   return (
     <div
-      className="absolute inset-0 pointer-events-none"
+      className="absolute -top-10 left-1/2 -translate-x-1/2 w-56 h-40 rounded-full pointer-events-none"
       style={{
-        backgroundImage: `radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,0.8), transparent),
-          radial-gradient(1px 1px at 90px 80px, rgba(255,255,255,0.6), transparent),
-          radial-gradient(1.2px 1.2px at 150px 200px, rgba(255,255,255,0.75), transparent),
-          radial-gradient(1px 1px at 60px 260px, rgba(255,255,255,0.5), transparent),
-          radial-gradient(1px 1px at 190px 340px, rgba(255,255,255,0.6), transparent),
-          radial-gradient(1px 1px at 40px 420px, rgba(255,255,255,0.5), transparent)`,
-        backgroundRepeat: 'repeat',
-        backgroundSize: '220px 480px',
-        animation: 'starfield-drift 150s linear infinite alternate',
+        background: 'radial-gradient(closest-side, color-mix(in srgb, var(--accent-500, #3b82f6) 35%, transparent), transparent)',
+        filter: 'blur(18px)',
+        animation: reducedMotion ? 'none' : 'ambient-glow-pulse 5s ease-in-out infinite',
+      }}
+    />
+  )
+}
+
+// Very faint turbulence texture over the whole screen — a perfectly flat
+// color fill reads as a UI mockup; real OLED/anti-glare panels have a
+// subtle grain to them even in product photography.
+function ScreenGrain() {
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none mix-blend-overlay"
+      style={{
+        opacity: 0.05,
+        backgroundImage:
+          "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
       }}
     />
   )
