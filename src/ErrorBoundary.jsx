@@ -39,9 +39,10 @@ class ErrorBoundary extends Component {
         }}
       >
         <div style={{ maxWidth: 380 }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
             <BlipIllustration size={96} />
           </div>
+          <p style={{ fontSize: 14, color: '#94a3b8', margin: '0 0 20px' }}>Something went wrong.</p>
           <button
             onClick={() => window.location.reload()}
             style={{

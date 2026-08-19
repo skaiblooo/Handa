@@ -73,7 +73,6 @@ export default function BlipIllustration({ size = 64, look, lookAt = 'up', reduc
 
         {/* body */}
         <rect x="60" y="52" width="80" height="76" rx="28" fill={`url(#${bodyGradId})`} />
-        <path d="M64 56 Q66 90 64 122" stroke="#fff" strokeWidth="4" opacity="0.35" fill="none" strokeLinecap="round" />
 
         {/* lens with glow + highlight that glances on trigger */}
         <g filter={`url(#${glowId})`}>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { DOC_TYPE_LABELS, AGENCY_BADGE, AGENCY_BADGE_COLOR, CARD_THEME, CARD_FIELD_SCHEMAS, DOC_CATEGORIES } from '../data/docTypes'
 import PeekingBlip from './PeekingBlip'
+import { AmbientGlow, ScreenGrain } from './ScreenTexture'
 import satellitesIcon from '../assets/satellites.png'
 import spaceTravelIcon from '../assets/space-travel.png'
 import notificationIcon from '../assets/notification.png'
@@ -904,48 +905,72 @@ export default function DashboardDemo() {
           it keeps its exact same relative layout, just viewed at an angle. */}
       <div className="w-full" style={{ perspective: '1800px' }}>
       <div style={{ transformStyle: 'preserve-3d', transform: 'rotateX(4deg) rotateY(-22deg) rotate(-1deg)' }}>
+      {/* Metal bezel + browser-chrome strip, the same "real device" treatment
+          as the phone mockup — without it this was just a screenshot in a
+          rounded div, which reads as flat/cheap next to the phone's bezel,
+          buttons, glow and grain. */}
       <div
-        ref={containerRef}
-        className="relative w-full rounded-2xl overflow-hidden glass-panel"
+        className="relative w-full rounded-[1.6rem] p-[3px]"
         style={{
-          // Taller than a typical 16:9 screenshot on purpose — the actual
-          // My Space page stacks two full stat cards (Upcoming Expirations,
-          // Estimated Renewal Costs) under the greeting, and a wide/short
-          // box was clipping the second card and the chart's own bottom
-          // edge rather than actually showing "the real dashboard."
-          aspectRatio: '4 / 3.7',
-          boxShadow: '0 70px 120px -30px rgba(0,0,0,0.75), 0 25px 50px -20px rgba(0,0,0,0.55)',
+          background: 'linear-gradient(160deg, #2a2d34 0%, #0a0b0d 55%, #08090c 100%)',
+          boxShadow: '0 70px 120px -30px rgba(0,0,0,0.75), 0 25px 50px -20px rgba(0,0,0,0.55), inset 0 1px 0 0 rgba(255,255,255,0.12)',
         }}
       >
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: 'linear-gradient(180deg, rgba(3,6,10,0.28) 0%, rgba(3,6,10,0.48) 100%)' }}
-        />
-        <div className="relative flex h-full">
-          <Sidebar page={step.page} hoveredId={hoveredId} pressedId={pressedId} register={register} />
-          <div className="flex-1 min-w-0 p-6 pt-5 relative overflow-hidden">
-            <Topbar />
-            {step.page === 'dashboard' && <DashboardPage />}
-            {(step.page === 'my_orbits' || step.page === 'my_orbits_saved') && (
-              <MyOrbitsPage page={step.page} hoveredId={hoveredId} pressedId={pressedId} register={register} />
-            )}
-            {step.modal === 'intent' && <IntentModal hoveredId={hoveredId} pressedId={pressedId} register={register} />}
-            {step.modal === 'category' && <CategoryModal hoveredId={hoveredId} pressedId={pressedId} register={register} />}
-            {step.modal === 'doctype' && <DocTypeModal hoveredId={hoveredId} pressedId={pressedId} register={register} />}
-            {step.modal === 'fill' && <FillModal hoveredId={hoveredId} pressedId={pressedId} register={register} />}
-            {step.modal === 'steps' && <StepsModal />}
+        <div className="relative w-full rounded-[1.4rem] overflow-hidden">
+          <div className="relative h-8 flex items-center gap-1.5 px-4 bg-[#0b0d11]">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+            <div className="flex-1 flex justify-center">
+              <span className="text-[10px] text-white/35 px-3 py-[3px] rounded-full bg-white/[0.05] tracking-wide">orbit.app/dashboard</span>
+            </div>
+            <div className="w-[38px]" />
+          </div>
+          <div
+            ref={containerRef}
+            className="relative w-full overflow-hidden glass-panel"
+            style={{
+              // Taller than a typical 16:9 screenshot on purpose — the actual
+              // My Space page stacks two full stat cards (Upcoming Expirations,
+              // Estimated Renewal Costs) under the greeting, and a wide/short
+              // box was clipping the second card and the chart's own bottom
+              // edge rather than actually showing "the real dashboard."
+              aspectRatio: '4 / 3.7',
+            }}
+          >
+            <AmbientGlow reducedMotion={reducedMotion} className="w-80 h-48 -top-16" />
+            <ScreenGrain />
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: 'linear-gradient(180deg, rgba(3,6,10,0.28) 0%, rgba(3,6,10,0.48) 100%)' }}
+            />
+            <div className="relative flex h-full">
+              <Sidebar page={step.page} hoveredId={hoveredId} pressedId={pressedId} register={register} />
+              <div className="flex-1 min-w-0 p-6 pt-5 relative overflow-hidden">
+                <Topbar />
+                {step.page === 'dashboard' && <DashboardPage />}
+                {(step.page === 'my_orbits' || step.page === 'my_orbits_saved') && (
+                  <MyOrbitsPage page={step.page} hoveredId={hoveredId} pressedId={pressedId} register={register} />
+                )}
+                {step.modal === 'intent' && <IntentModal hoveredId={hoveredId} pressedId={pressedId} register={register} />}
+                {step.modal === 'category' && <CategoryModal hoveredId={hoveredId} pressedId={pressedId} register={register} />}
+                {step.modal === 'doctype' && <DocTypeModal hoveredId={hoveredId} pressedId={pressedId} register={register} />}
+                {step.modal === 'fill' && <FillModal hoveredId={hoveredId} pressedId={pressedId} register={register} />}
+                {step.modal === 'steps' && <StepsModal />}
+              </div>
+            </div>
+
+            {cursor.visible && !reducedMotion && <CursorGlyph x={cursor.x} y={cursor.y} clicking={clicking} />}
+
+            {/* Radial focus vignette: sharp center, soft dark edges, matching
+                the tilted-mockup look of a real product screenshot rather than
+                a flat, evenly-lit rectangle. */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: 'radial-gradient(120% 100% at 50% 45%, transparent 55%, rgba(0,0,0,0.35) 100%)' }}
+            />
           </div>
         </div>
-
-        {cursor.visible && !reducedMotion && <CursorGlyph x={cursor.x} y={cursor.y} clicking={clicking} />}
-
-        {/* Radial focus vignette: sharp center, soft dark edges, matching
-            the tilted-mockup look of a real product screenshot rather than
-            a flat, evenly-lit rectangle. */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(120% 100% at 50% 45%, transparent 55%, rgba(0,0,0,0.35) 100%)' }}
-        />
       </div>
       </div>
       </div>
