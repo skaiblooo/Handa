@@ -19,7 +19,7 @@ import orbitLogo from '../assets/orbit logo.png'
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'My Space', iconSrc: satellitesIcon },
   { id: 'my_orbits', label: 'My Orbits', iconSrc: spaceTravelIcon },
-  { id: 'notifications', label: 'Notifications', iconSrc: notificationIcon },
+  { id: 'notifications', label: 'Notifs', iconSrc: notificationIcon },
   { id: 'documents', label: 'Documents', iconSrc: documentIcon },
   { id: 'calendar', label: 'Calendar', iconSrc: calendarSettingsIcon },
   { id: 'history', label: 'History', iconSrc: historyIcon },
@@ -278,6 +278,7 @@ function DemoChart() {
   const topPad = 18
   const bottomPad = 24
   const maxCount = Math.max(1, ...CHART_MONTHS.map((m) => m.count))
+  const totalUpcoming = CHART_MONTHS.reduce((sum, m) => sum + m.count, 0)
   const points = CHART_MONTHS.map((m, i) => ({
     x: (i / (CHART_MONTHS.length - 1)) * width,
     y: height - bottomPad - (m.count / maxCount) * (height - topPad - bottomPad),
@@ -286,8 +287,11 @@ function DemoChart() {
   const fillPath = `${linePath} L ${width},${height} L 0,${height} Z`
 
   return (
-    <div className="mt-8" style={{ animation: 'rise-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.75s both' }}>
-      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="w-full" style={{ height: 140, display: 'block' }}>
+    <div className="glass-dark rounded-2xl p-5 mt-6" style={{ animation: 'rise-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.75s both' }}>
+      <p className="text-xs font-semibold tracking-widest uppercase text-slate-400">UPCOMING EXPIRATIONS</p>
+      <p className="font-instrument text-4xl mt-1.5 text-slate-100">{totalUpcoming}</p>
+      <p className="text-xs mt-0.5 text-slate-500 mb-4">Due over the next 6 months</p>
+      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="w-full" style={{ height: 120, display: 'block' }}>
         <defs>
           <linearGradient id="demo-chart-line" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
@@ -321,6 +325,20 @@ function DemoChart() {
           <span key={`${m.label}-${i}`} className={`text-xs ${i === 0 ? 'text-slate-100 font-semibold' : 'text-slate-500'}`}>{m.label}</span>
         ))}
       </div>
+    </div>
+  )
+}
+
+// Mirrors the real My Space's second stat card (Estimated Renewal Costs) —
+// static numbers here since the demo has no real documents to sum, but the
+// card chrome matches so this column reads as the same two-card stack the
+// actual dashboard shows, not an invented layout.
+function DemoCostCard() {
+  return (
+    <div className="glass-dark rounded-2xl p-5 mt-4" style={{ animation: 'rise-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.85s both' }}>
+      <p className="text-xs font-semibold tracking-widest uppercase text-slate-400">ESTIMATED RENEWAL COSTS</p>
+      <p className="font-instrument text-4xl mt-1.5 text-slate-100">&#8369;715&ndash;&#8369;1,430</p>
+      <p className="text-xs mt-0.5 text-slate-500">Across 3 tracked documents</p>
     </div>
   )
 }
@@ -382,6 +400,7 @@ function DashboardPage() {
           You're all set. Everything is up to date.
         </p>
         <DemoChart />
+        <DemoCostCard />
       </div>
       <UrgentRail />
     </div>
@@ -889,7 +908,12 @@ export default function DashboardDemo() {
         ref={containerRef}
         className="relative w-full rounded-2xl overflow-hidden glass-panel"
         style={{
-          aspectRatio: '16 / 9.2',
+          // Taller than a typical 16:9 screenshot on purpose — the actual
+          // My Space page stacks two full stat cards (Upcoming Expirations,
+          // Estimated Renewal Costs) under the greeting, and a wide/short
+          // box was clipping the second card and the chart's own bottom
+          // edge rather than actually showing "the real dashboard."
+          aspectRatio: '4 / 3.7',
           boxShadow: '0 70px 120px -30px rgba(0,0,0,0.75), 0 25px 50px -20px rgba(0,0,0,0.55)',
         }}
       >

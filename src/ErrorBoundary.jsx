@@ -1,9 +1,12 @@
 import { Component } from 'react'
+import BlipIllustration from './landing/BlipIllustration'
 
 // A class component because React has no hook-based equivalent of
 // componentDidCatch/getDerivedStateFromError yet. Deliberately styled with
 // inline styles and no i18n/context lookups — if App itself (including
 // LanguageProvider) is what threw, this fallback still has to render.
+// BlipIllustration is safe to pull in alongside that: it's pure SVG with
+// no context/data dependencies of its own.
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props)
@@ -36,9 +39,9 @@ class ErrorBoundary extends Component {
         }}
       >
         <div style={{ maxWidth: 380 }}>
-          <p style={{ fontSize: 15, color: '#94a3b8', marginBottom: 20, lineHeight: 1.5 }}>
-            Something went wrong. Reloading usually fixes it — your data is safe.
-          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+            <BlipIllustration size={96} />
+          </div>
           <button
             onClick={() => window.location.reload()}
             style={{
