@@ -11,7 +11,6 @@
 // was something better to compare it against.
 const AGENCIES = {
   PSA: { name: 'Philippine Statistics Authority', gov: true, badge: 'bg-orange-600', card: 'bg-orange-900' },
-  LCRO: { name: 'Local Civil Registry Office', gov: true, badge: 'bg-orange-700', card: 'bg-orange-950' },
   COURT: { name: 'Philippine Courts', gov: true, badge: 'bg-zinc-600', card: 'bg-zinc-950' },
   DSWD: { name: 'Department of Social Welfare and Development', gov: true, badge: 'bg-pink-600', card: 'bg-pink-950' },
   DFA: { name: 'Department of Foreign Affairs', gov: true, badge: 'bg-teal-600', card: 'bg-teal-950' },
@@ -30,18 +29,9 @@ const AGENCIES = {
   MARINA: { name: 'Maritime Industry Authority', gov: true, badge: 'bg-cyan-800', card: 'bg-cyan-950' },
   NBI: { name: 'National Bureau of Investigation', gov: true, badge: 'bg-purple-600', card: 'bg-purple-950' },
   PNP: { name: 'Philippine National Police', gov: true, badge: 'bg-blue-900', card: 'bg-slate-950' },
-  BRGY: { name: 'Barangay', gov: true, badge: 'bg-lime-600', card: 'bg-lime-950' },
   BJMP: { name: 'Bureau of Jail Management and Penology', gov: true, badge: 'bg-neutral-600', card: 'bg-neutral-950' },
   BUCOR: { name: 'Bureau of Corrections', gov: true, badge: 'bg-stone-700', card: 'bg-stone-950' },
-  LGU: { name: 'Local Government Unit', gov: true, badge: 'bg-amber-700', card: 'bg-amber-950' },
-  OSCA: { name: 'Office for Senior Citizens Affairs', gov: true, badge: 'bg-purple-800', card: 'bg-purple-950' },
-  EMP: { name: 'Employer', gov: false, badge: 'bg-neutral-500', card: 'bg-neutral-800' },
-  GOVT: { name: 'Government Agency', gov: true, badge: 'bg-slate-700', card: 'bg-slate-950' },
-  SCH: { name: 'School / University', gov: false, badge: 'bg-yellow-800', card: 'bg-yellow-950' },
-  BANK: { name: 'Bank', gov: false, badge: 'bg-emerald-800', card: 'bg-emerald-950' },
-  UTIL: { name: 'Utility Provider', gov: false, badge: 'bg-rose-600', card: 'bg-rose-950' },
   RD: { name: 'Registry of Deeds', gov: true, badge: 'bg-orange-800', card: 'bg-stone-950' },
-  NOTARY: { name: 'Notary Public', gov: false, badge: 'bg-zinc-700', card: 'bg-zinc-950' },
   POST: { name: 'PhilPost', gov: true, badge: 'bg-red-800', card: 'bg-red-950' },
   COMELEC: { name: 'Commission on Elections', gov: true, badge: 'bg-sky-800', card: 'bg-sky-950' },
   AFP: { name: 'Armed Forces of the Philippines', gov: true, badge: 'bg-green-800', card: 'bg-green-950' },
@@ -49,7 +39,6 @@ const AGENCIES = {
   PVAO: { name: 'Philippine Veterans Affairs Office', gov: true, badge: 'bg-green-900', card: 'bg-slate-950' },
   NCIP: { name: 'National Commission on Indigenous Peoples', gov: true, badge: 'bg-amber-900', card: 'bg-stone-950' },
   NCMF: { name: 'National Commission on Muslim Filipinos', gov: true, badge: 'bg-emerald-900', card: 'bg-slate-950' },
-  CHURCH: { name: 'Church', gov: false, badge: 'bg-purple-900', card: 'bg-stone-950' },
   PRIVATE: { name: 'Private Individual', gov: false, badge: 'bg-neutral-700', card: 'bg-neutral-950' },
   FEO: { name: 'PNP Firearms and Explosives Office', gov: true, badge: 'bg-slate-900', card: 'bg-black' },
 }
@@ -82,19 +71,9 @@ const DOC_TYPES = [
   { id: 'certificate_no_death_record', label: 'Certificate of No Death Record', agency: 'PSA', category: 'civil_registry' },
   { id: 'report_of_birth', label: 'Report of Birth', agency: 'PSA', category: 'civil_registry' },
   { id: 'certificate_of_foundling', label: 'Certificate of Foundling', agency: 'PSA', category: 'civil_registry' },
-  { id: 'lcro_birth_certificate', label: 'Local Civil Registry Birth Certificate', agency: 'LCRO', category: 'civil_registry' },
   { id: 'adoption_papers', label: 'Adoption Papers', agency: 'COURT', category: 'civil_registry' },
   { id: 'court_order_name_change', label: 'Court Order for Name Change', agency: 'COURT', category: 'civil_registry' },
   { id: 'court_order_correction_entry', label: 'Court Order for Correction of Entry', agency: 'COURT', category: 'civil_registry' },
-
-  // Local Government
-  { id: 'barangay_id', label: 'Barangay ID', agency: 'BRGY', category: 'local_gov' },
-  { id: 'barangay_clearance', label: 'Barangay Clearance', agency: 'BRGY', category: 'local_gov' },
-  { id: 'barangay_certificate', label: 'Barangay Certificate', agency: 'BRGY', category: 'local_gov' },
-  { id: 'cedula', label: 'Cedula (Community Tax Certificate)', agency: 'LGU', category: 'local_gov' },
-  { id: 'city_id', label: 'City ID', agency: 'LGU', category: 'local_gov' },
-  { id: 'municipal_id', label: 'Municipal ID', agency: 'LGU', category: 'local_gov' },
-  { id: 'residence_certificate', label: 'Residence Certificate', agency: 'LGU', category: 'local_gov' },
 
   // Identification
   { id: 'national_id', label: 'National ID (PhilSys)', agency: 'PSA', category: 'identification',
@@ -201,47 +180,11 @@ const DOC_TYPES = [
   { id: 'marina_professional_id', label: 'MARINA Professional ID', agency: 'MARINA', category: 'other' },
 
   // Other — Social Welfare IDs
-  { id: 'senior_citizen_id', label: 'Senior Citizen ID', agency: 'OSCA', category: 'other' },
-  { id: 'pwd_id', label: 'PWD ID', agency: 'LGU', category: 'other' },
   { id: 'solo_parent_id', label: 'Solo Parent ID', agency: 'DSWD', category: 'other' },
-
-  // Other — Employment Documents
-  { id: 'employee_id', label: 'Employee ID', agency: 'EMP', category: 'other' },
-  { id: 'certificate_of_employment', label: 'Certificate of Employment (COE)', agency: 'EMP', category: 'other' },
-  { id: 'employment_contract', label: 'Employment Contract', agency: 'EMP', category: 'other' },
-  { id: 'payslip', label: 'Payslip', agency: 'EMP', category: 'other' },
-  { id: 'service_record', label: 'Service Record', agency: 'GOVT', category: 'other' },
-  { id: 'appointment_paper', label: 'Appointment Paper', agency: 'GOVT', category: 'other' },
-
-  // Other — Education Documents
-  { id: 'school_id', label: 'School ID', agency: 'SCH', category: 'other' },
-  { id: 'diploma', label: 'Diploma', agency: 'SCH', category: 'other' },
-  { id: 'transcript_of_records', label: 'Transcript of Records (TOR)', agency: 'SCH', category: 'other' },
-  { id: 'form_137', label: 'Form 137', agency: 'SCH', category: 'other' },
-  { id: 'form_138', label: 'Form 138 / Report Card', agency: 'SCH', category: 'other' },
-  { id: 'cor_school', label: 'Certificate of Registration (COR)', agency: 'SCH', category: 'other' },
-  { id: 'certificate_of_graduation', label: 'Certificate of Graduation', agency: 'SCH', category: 'other' },
-  { id: 'good_moral_certificate', label: 'Good Moral Certificate', agency: 'SCH', category: 'other' },
-  { id: 'enrollment_record', label: 'Enrollment Record', agency: 'SCH', category: 'other' },
-  { id: 'alumni_id', label: 'Alumni ID', agency: 'SCH', category: 'other' },
-
-  // Other — Banking & Financial Documents
-  { id: 'atm_card', label: 'ATM Card', agency: 'BANK', category: 'other' },
-  { id: 'debit_card', label: 'Debit Card', agency: 'BANK', category: 'other' },
-  { id: 'credit_card', label: 'Credit Card', agency: 'BANK', category: 'other' },
-  { id: 'bank_passbook', label: 'Bank Passbook', agency: 'BANK', category: 'other' },
-  { id: 'bank_statement', label: 'Bank Statement', agency: 'BANK', category: 'other' },
-  { id: 'bank_certificate', label: 'Bank Certificate', agency: 'BANK', category: 'other' },
-  { id: 'loan_documents', label: 'Loan Documents', agency: 'BANK', category: 'other' },
-  { id: 'proof_of_billing', label: 'Proof of Billing', agency: 'UTIL', category: 'other' },
 
   // Other — Property & Real Estate
   { id: 'tct', label: 'Transfer Certificate of Title (TCT)', agency: 'RD', category: 'other' },
   { id: 'oct', label: 'Original Certificate of Title (OCT)', agency: 'RD', category: 'other' },
-  { id: 'tax_declaration', label: 'Tax Declaration', agency: 'LGU', category: 'other' },
-  { id: 'real_property_tax_receipt', label: 'Real Property Tax Receipt', agency: 'LGU', category: 'other' },
-  { id: 'deed_of_sale', label: 'Deed of Sale', agency: 'NOTARY', category: 'other' },
-  { id: 'lease_contract', label: 'Lease Contract', agency: 'NOTARY', category: 'other' },
 
   // Other — Postal & Communications
   { id: 'postal_id', label: 'Postal ID', agency: 'POST', category: 'other' },
@@ -273,17 +216,8 @@ const DOC_TYPES = [
   // Other — Indigenous / Special Groups
   { id: 'ncip_certificate', label: 'NCIP Certificate of Confirmation', agency: 'NCIP', category: 'other' },
   { id: 'cipm', label: 'Certificate of Indigenous Peoples Membership (CIPM)', agency: 'NCIP', category: 'other' },
-  { id: 'tribal_id', label: 'Tribal ID', agency: 'LGU', category: 'other' },
   { id: 'ncmf_membership_certificate', label: 'NCMF Membership Certificate', agency: 'NCMF', category: 'other' },
 
-  // Other — Common Supporting Documents of Identity
-  { id: 'baptismal_certificate', label: 'Baptismal Certificate', agency: 'CHURCH', category: 'other' },
-  { id: 'utility_bill', label: 'Utility Bill', agency: 'UTIL', category: 'other' },
-  { id: 'proof_of_address', label: 'Proof of Address', agency: 'UTIL', category: 'other' },
-  { id: 'affidavit_of_loss', label: 'Affidavit of Loss', agency: 'NOTARY', category: 'other' },
-  { id: 'affidavit_of_support', label: 'Affidavit of Support', agency: 'NOTARY', category: 'other' },
-  { id: 'spa', label: 'Special Power of Attorney (SPA)', agency: 'NOTARY', category: 'other' },
-  { id: 'authorization_letter', label: 'Authorization Letter', agency: 'PRIVATE', category: 'other' },
   // Not tied to one category — DocTypePicker appends this as a bonus tile
   // to every category's grid, not just "Other"'s, since the thing someone
   // can't find might belong anywhere. A single shared type rather than a
@@ -323,11 +257,10 @@ export const CARD_FIELD_SCHEMAS = Object.fromEntries(
 
 // Categories shown as the first step of "what are you adding" — ordered
 // roughly by how many Filipinos of any age are likely to hold at least one
-// document from that category (civil registry and barangay paperwork cover
-// nearly everyone; a passport or driver's license doesn't).
+// document from that category (civil registry paperwork covers nearly
+// everyone; a passport or driver's license doesn't).
 const CATEGORY_ORDER = [
   { id: 'civil_registry', label: 'Civil Registry' },
-  { id: 'local_gov', label: 'Local Government' },
   { id: 'identification', label: 'Identification' },
   { id: 'social_security', label: 'Social Security & Benefits' },
   { id: 'background_checks', label: 'Background Checks & Clearances' },

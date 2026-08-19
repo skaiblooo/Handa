@@ -119,6 +119,9 @@ export default function FAQFooter({ onOpenLegal }) {
             <p className="text-white/60 text-sm mt-3 max-w-xs">
               A simplified tracker for all of your documents.
             </p>
+            <a href="tel:+639611374148" className="text-white/60 hover:text-white text-sm mt-2 inline-block transition-colors duration-300">
+              0961-137-4148
+            </a>
             <a
               href={GITHUB_URL}
               target="_blank"
